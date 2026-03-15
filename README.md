@@ -1,165 +1,312 @@
-```markdown
-# 🛠️ Brikolik
+<div align="center">
 
-**The easiest way to find trusted local workers for your home in Morocco.**
+<br/>
 
-A modern mobile marketplace that connects homeowners and tenants with skilled professionals — plumbers, electricians, cleaners, painters, handymen, and more.
+<img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat&logo=flutter&logoColor=white" />
+<img src="https://img.shields.io/badge/Platform-Android%20%7C%20iOS-lightgrey?style=flat" />
+<img src="https://img.shields.io/badge/Status-MVP%20Development-E8650A?style=flat" />
+<img src="https://img.shields.io/badge/Made%20in-Morocco%20🇲🇦-red?style=flat" />
 
-**Launching first in Morocco** — built for speed, trust, and simplicity.
+<br/><br/>
+
+```
+  ██████╗ ██████╗ ██╗██╗  ██╗ ██████╗ ██╗     ██╗██╗  ██╗
+  ██╔══██╗██╔══██╗██║██║ ██╔╝██╔═══██╗██║     ██║██║ ██╔╝
+  ██████╔╝██████╔╝██║█████╔╝ ██║   ██║██║     ██║█████╔╝ 
+  ██╔══██╗██╔══██╗██║██╔═██╗ ██║   ██║██║     ██║██╔═██╗ 
+  ██████╔╝██║  ██║██║██║  ██╗╚██████╔╝███████╗██║██║  ██╗
+  ╚═════╝ ╚═╝  ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝╚═╝  ╚═╝
+```
+
+### **Services à domicile · Morocco's Home Services Marketplace**
+
+*Connecting homeowners with trusted local professionals — fast, simple, reliable.*
+
+<br/>
+
+[**View Demo**](#) · [**Report Bug**](../../issues) · [**Request Feature**](../../issues) · [**Contact**](#-contact)
+
+<br/>
 
 ---
 
-## ✨ Features
+</div>
 
-### For Customers
-- Post a job in seconds ("I need a plumber in Casablanca")
-- See nearby workers with real profiles, ratings & reviews
+<br/>
+
+## ◈ What is Brikolik?
+
+**Brikolik** is a mobile-first marketplace that bridges the gap between Moroccan homeowners and skilled local artisans. Whether you need a plumber at midnight or a painter for the weekend, Brikolik connects you in seconds.
+
+> *"بريكوليك — لأن بيتك يستحق الأفضل"*
+> *"Brikolik — because your home deserves the best"*
+
+<br/>
+
+## ◈ Core Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 🏠 For Customers
+- Post a job in under 60 seconds
+- Browse verified workers nearby
 - Real-time chat & instant quotes
-- Secure payments & job tracking
-- Moroccan dirham (MAD) support
+- Track jobs from request to completion
+- Rate & review after every service
+- Full MAD (درهم) support
 
-### For Workers
-- Receive job alerts in your area
-- Apply with one tap & show your availability
-- Build your profile & reputation
-- Get paid directly through the app
-- Grow your business locally
+</td>
+<td width="50%">
 
-### Shared
-- Location-based matching (GPS + neighborhoods)
-- Verified profiles & background checks
-- Rating & review system
-- 24/7 support in Arabic, French & English
-- Dark mode + fully responsive mobile-first design
+### 🔧 For Workers
+- Receive geo-targeted job alerts
+- One-tap applications
+- Build a public reputation profile
+- Manage availability & schedule
+- Direct in-app payments
+- Grow your local client base
 
----
+</td>
+</tr>
+</table>
 
-## 📱 App Screenshots
+<br/>
 
-*(Add your screenshots here — 4-6 images recommended)*
+## ◈ App Screens
 
-![Home Screen](screenshots/home.png)
-![Job Posting](screenshots/post-job.png)
-![Worker Profile](screenshots/worker-profile.png)
+| Login | Role Select | Job List | Job Details |
+|:---:|:---:|:---:|:---:|
+| ![](screenshots/login.png) | ![](screenshots/role.png) | ![](screenshots/jobs.png) | ![](screenshots/details.png) |
 
----
+| Post Job | Worker Profile | Chat | Rating |
+|:---:|:---:|:---:|:---:|
+| ![](screenshots/post.png) | ![](screenshots/worker.png) | ![](screenshots/chat.png) | ![](screenshots/rating.png) |
 
-## 🛠️ Tech Stack
+<br/>
 
-| Layer              | Technology                          |
-|--------------------|-------------------------------------|
-| Mobile App         | Flutter (iOS + Android)             |
-| Backend            | Firebase (or Supabase / Node.js)    |
-| Database           | Firestore / PostgreSQL              |
-| Authentication     | Firebase Auth + Phone OTP           |
-| Maps               | Google Maps + OpenStreetMap         |
-| Payments           | Stripe + Moroccan gateways (CMI, WafaCash) |
-| Notifications      | Firebase Cloud Messaging            |
-| State Management   | Riverpod / Provider                 |
-| CI/CD              | GitHub Actions                      |
+## ◈ Tech Stack
 
-*(Update this table with your exact stack)*
+```
+┌─────────────────────────────────────────────────────────┐
+│                      BRIKOLIK MVP                        │
+├──────────────────┬──────────────────────────────────────┤
+│  Mobile          │  Flutter 3.x  (iOS + Android)        │
+│  UI              │  Material 3 · Custom Design System   │
+│  State           │  Provider / Riverpod                 │
+│  Backend         │  Firebase · Firestore                │
+│  Auth            │  Firebase Auth · Phone OTP           │
+│  Storage         │  Firebase Storage                    │
+│  Maps            │  Google Maps SDK                     │
+│  Payments        │  Stripe · CMI · WafaCash             │
+│  Notifications   │  Firebase Cloud Messaging            │
+│  CI/CD           │  GitHub Actions                      │
+└──────────────────┴──────────────────────────────────────┘
+```
 
----
+<br/>
 
-## 🚀 Getting Started
+## ◈ Project Structure
+
+```
+brikolik_mvp/
+│
+├── lib/
+│   ├── models/
+│   │   └── app_models.dart          # Data models
+│   │
+│   ├── screens/
+│   │   ├── login_screen.dart        # Auth (login + signup)
+│   │   ├── role_screen.dart         # Customer / Worker selection
+│   │   ├── customer_profile_screen.dart
+│   │   ├── worker_profile_screen.dart
+│   │   ├── job_list_screen.dart     # Home feed
+│   │   ├── job_details_screen.dart
+│   │   ├── post_job_screen.dart     # 3-step job wizard
+│   │   ├── chat_screen.dart
+│   │   └── rating_screen.dart
+│   │
+│   ├── theme/
+│   │   ├── app_theme.dart           # Design system + tokens
+│   │   └── widgets.dart             # Shared reusable components
+│   │
+│   └── main.dart                    # Routes + app entry
+│
+├── assets/
+│   └── fonts/
+│       └── Nunito/
+│
+├── android/
+├── ios/
+└── pubspec.yaml
+```
+
+<br/>
+
+## ◈ Design System
+
+The app uses a custom design system built on top of Material 3.
+
+```dart
+// Primary palette
+BrikolikColors.primary       →  #E8650A  (Amber Orange)
+BrikolikColors.primaryLight  →  #FFF0E6
+BrikolikColors.background    →  #F8F7F5
+BrikolikColors.surface       →  #FFFFFF
+BrikolikColors.textPrimary   →  #1A1512
+BrikolikColors.textSecondary →  #6B6560
+
+// Shared components
+BrikolikButton    →  Primary / Outlined / Loading states
+BrikolikInput     →  Styled text fields with icons
+BrikolikAvatar    →  Circle avatars with initials fallback
+StatusBadge       →  Open / In Progress / Done
+StarRating        →  Inline rating display
+CategoryChip      →  Animated filter chips
+```
+
+<br/>
+
+## ◈ Getting Started
 
 ### Prerequisites
-- Flutter 3.19+ installed
-- Android Studio / Xcode
-- Firebase project created
+
+| Tool | Version |
+|---|---|
+| Flutter | 3.19+ |
+| Dart | 3.x |
+| Android Studio | Hedgehog+ |
+| Android SDK | 36+ |
 
 ### Installation
 
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/brikolik.git
-cd brikolik
+# 1 — Clone
+git clone https://github.com/yourusername/brikolik_mvp.git
+cd brikolik_mvp
 
-# Install dependencies
+# 2 — Install dependencies
 flutter pub get
 
-# Run the app
+# 3 — Run
 flutter run
 ```
 
-### Environment Setup
+### Navigation Routes
 
-1. Copy `.env.example` → `.env`
-2. Add your Firebase config & API keys
-3. Run `flutter pub run build_runner build` for code generation
-
----
-
-## 📂 Project Structure
-
-```
-brikolik/
-├── lib/
-│   ├── core/           # constants, theme, extensions
-│   ├── features/
-│   │   ├── auth/
-│   │   ├── customer/
-│   │   ├── worker/
-│   │   └── marketplace/
-│   ├── shared/         # widgets, models, services
-│   └── main.dart
-├── assets/
-├── screenshots/
-├── test/
-└── pubspec.yaml
+```dart
+'/login'            →  LoginScreen
+'/role'             →  RoleScreen
+'/customer-profile' →  CustomerProfileScreen
+'/worker-profile'   →  WorkerProfileScreen
+'/jobs'             →  JobListScreen
+'/job-details'      →  JobDetailsScreen
+'/post-job'         →  PostJobScreen
+'/chat'             →  ChatScreen
+'/rating'           →  RatingScreen
 ```
 
----
+### Dev Commands
 
-## 🤝 Contributing
-
-We ❤️ contributions!
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/amazing-thing`)
-3. Commit your changes (`git commit -m 'Add amazing thing'`)
-4. Push to the branch (`git push origin feature/amazing-thing`)
-5. Open a Pull Request
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
-
----
-
-## 📍 Made with ❤️ in Morocco
-
-**Brikolik** — Helping Moroccan families and skilled artisans connect easier.
-
-- Website: [brikolik.ma](https://brikolik.ma) *(coming soon)*
-- Email: hello@brikolik.ma
-- Instagram: [@brikolik.ma](https://instagram.com/brikolik.ma)
-
----
-
-**Star the repo if you like the project!** ⭐  
-Your support helps us build the best home services app for Morocco.
+```bash
+r          # Hot Reload  — UI changes
+R          # Hot Restart — logic / route changes
+flutter run --release   # Production build
+flutter build apk       # Generate APK
 ```
 
+<br/>
+
+## ◈ Roadmap
+
+- [x] Authentication (Login / Signup)
+- [x] Role selection (Customer / Worker)
+- [x] Job posting — 3-step wizard
+- [x] Job list with search & filters
+- [x] Job details with offer system
+- [x] Worker profile with verification
+- [x] Rating & review system
+- [x] Chat screen
+- [ ] Firebase backend integration
+- [ ] Real-time notifications
+- [ ] GPS-based job matching
+- [ ] In-app payments (MAD)
+- [ ] Arabic language support
+- [ ] iOS release
+- [ ] Production launch 🚀
+
+<br/>
+
+## ◈ Contributing
+
+Contributions are welcome and appreciated.
+
+```bash
+# 1 — Fork the project
+# 2 — Create your branch
+git checkout -b feature/your-feature-name
+
+# 3 — Commit
+git commit -m "feat: add your feature"
+
+# 4 — Push
+git push origin feature/your-feature-name
+
+# 5 — Open a Pull Request
+```
+
+Please follow [conventional commits](https://www.conventionalcommits.org/) for commit messages.
+
+<br/>
+
+## ◈ Contact
+
+<table>
+<tr>
+<td><strong>Project</strong></td>
+<td>Brikolik — Home Services Marketplace</td>
+</tr>
+<tr>
+<td><strong>Region</strong></td>
+<td>Morocco 🇲🇦 — Casablanca first</td>
+</tr>
+<tr>
+<td><strong>Website</strong></td>
+<td><a href="https://brikolik.ma">brikolik.ma</a> <em>(coming soon)</em></td>
+</tr>
+<tr>
+<td><strong>Email</strong></td>
+<td>hello@brikolik.ma</td>
+</tr>
+<tr>
+<td><strong>Instagram</strong></td>
+<td><a href="https://instagram.com/brikolik.ma">@brikolik.ma</a></td>
+</tr>
+</table>
+
+<br/>
+
+## ◈ License
+
+```
+MIT License — Copyright (c) 2026 Brikolik
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software to use, copy, modify, merge, publish, and
+distribute, subject to the conditions of the MIT License.
+```
+
+See [LICENSE](LICENSE) for full details.
+
+<br/>
+
 ---
 
-**✅ How to use this README:**
+<div align="center">
 
-1. Copy everything above
-2. Paste into a new file called **`README.md`** in your repository root
-3. Replace the placeholders (your GitHub username, screenshots folder, exact tech stack, links, etc.)
-4. Add your real screenshots in a `screenshots/` folder
+**Built with ❤️ in Morocco**
 
-This README is professional, clean, modern, and perfect for a startup — investors, contributors, and users will love it.
+*If this project helped you, consider giving it a* ⭐
 
-Want me to:
-- Add Arabic version?
-- Make it for React Native instead of Flutter?
-- Include a dark version or badges?
-
-Just say the word and I’ll update it instantly! 🚀
+</div>
