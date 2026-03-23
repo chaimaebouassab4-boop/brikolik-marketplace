@@ -33,23 +33,30 @@ class _RatingScreenState extends State<RatingScreen> {
       backgroundColor: BrikolikColors.background,
       appBar: AppBar(
         title: const Text('Évaluation'),
+        backgroundColor: BrikolikColors.surface,
+        foregroundColor: BrikolikColors.textPrimary,
+        elevation: 0,
         automaticallyImplyLeading: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: BrikolikColors.border, height: 1),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             _buildWorkerCard(),
-            const SizedBox(height: 28),
-            _buildRatingSection(),
             const SizedBox(height: 24),
+            _buildRatingSection(),
+            const SizedBox(height: 20),
             if (_rating > 0 && _availableTags.isNotEmpty) ...[
               _buildTagsSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
             ],
             if (_rating > 0) ...[
               _buildCommentSection(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
               _buildSubmitButton(),
             ],
             const SizedBox(height: 24),
@@ -66,29 +73,54 @@ class _RatingScreenState extends State<RatingScreen> {
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(BrikolikRadius.xl),
         border: Border.all(color: BrikolikColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: BrikolikColors.primary.withValues(alpha: 0.05),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          const BrikolikAvatar(name: 'Hamid Tazi', size: 72),
-          const SizedBox(height: 12),
+          // Gradient ring avatar
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              gradient: BrikolikColors.brandGradient,
+              shape: BoxShape.circle,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+              ),
+              child: const BrikolikAvatar(name: 'Hamid Tazi', size: 72),
+            ),
+          ),
+          const SizedBox(height: 14),
           Text('Hamid Tazi',
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 4),
           Text('Plombier professionnel',
               style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: BrikolikColors.surfaceVariant,
+              color: BrikolikColors.successLight,
               borderRadius: BorderRadius.circular(BrikolikRadius.md),
+              border: Border.all(
+                  color: BrikolikColors.success.withValues(alpha: 0.25)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_outline_rounded,
+              children: const [
+                Icon(Icons.check_circle_outline_rounded,
                     size: 16, color: BrikolikColors.success),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
                   'Mission terminée',
                   style: TextStyle(
@@ -107,142 +139,238 @@ class _RatingScreenState extends State<RatingScreen> {
   }
 
   Widget _buildRatingSection() {
-    final labels = ['', 'Mauvais', 'Passable', 'Bien', 'Très bien', 'Excellent'];
+    final labels = [
+      '',
+      'Mauvais',
+      'Passable',
+      'Bien',
+      'Très bien',
+      'Excellent',
+    ];
     final colors = [
       Colors.transparent,
       BrikolikColors.error,
       BrikolikColors.warning,
       BrikolikColors.warning,
       BrikolikColors.success,
-      BrikolikColors.success,
+      BrikolikColors.accent,
     ];
 
-    return Column(
-      children: [
-        Text(
-          'Comment s\'est passée la mission ?',
-          style: Theme.of(context).textTheme.headlineSmall,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Votre avis aide les autres clients à choisir',
-          style: Theme.of(context).textTheme.bodyMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 28),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (i) {
-            final starIndex = i + 1;
-            return GestureDetector(
-              onTap: () => setState(() => _rating = starIndex),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: AnimatedScale(
-                  scale: _rating >= starIndex ? 1.15 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(
-                    _rating >= starIndex
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    size: 44,
-                    color: _rating >= starIndex
-                        ? BrikolikColors.star
-                        : BrikolikColors.border,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: BrikolikColors.heroGradient,
+        borderRadius: BorderRadius.circular(BrikolikRadius.xl),
+        border: Border.all(color: BrikolikColors.border),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Comment s\'est passée la mission ?',
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Votre avis aide les autres clients à choisir',
+            style: Theme.of(context).textTheme.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              final starIndex = i + 1;
+              return GestureDetector(
+                onTap: () => setState(() => _rating = starIndex),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: AnimatedScale(
+                    scale: _rating >= starIndex ? 1.2 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      _rating >= starIndex
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 44,
+                      color: _rating >= starIndex
+                          ? BrikolikColors.star
+                          : BrikolikColors.frostSilver,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ),
-        if (_rating > 0) ...[
-          const SizedBox(height: 12),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              labels[_rating],
-              key: ValueKey(_rating),
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: colors[_rating],
+              );
+            }),
+          ),
+          if (_rating > 0) ...[
+            const SizedBox(height: 14),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                labels[_rating],
+                key: ValueKey(_rating),
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: colors[_rating],
+                ),
               ),
             ),
-          ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildTagsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('En quelques mots',
-            style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _availableTags.map((tag) {
-            final selected = _tags.contains(tag);
-            return CategoryChip(
-              label: tag,
-              selected: selected,
-              onTap: () {
-                setState(() {
-                  if (selected) {
-                    _tags.remove(tag);
-                  } else {
-                    _tags.add(tag);
-                  }
-                });
-              },
-            );
-          }).toList(),
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(color: BrikolikColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('En quelques mots',
+              style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _availableTags.map((tag) {
+              final selected = _tags.contains(tag);
+              return CategoryChip(
+                label: tag,
+                selected: selected,
+                onTap: () {
+                  setState(() {
+                    if (selected) {
+                      _tags.remove(tag);
+                    } else {
+                      _tags.add(tag);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildCommentSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text('Commentaire', style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(width: 8),
-            Text('(optionnel)',
-                style: Theme.of(context).textTheme.bodyMedium),
-          ],
-        ),
-        const SizedBox(height: 12),
-        BrikolikInput(
-          hint: 'Partagez votre expérience avec ce prestataire...',
-          controller: _commentCtrl,
-          maxLines: 4,
-        ),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(color: BrikolikColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Commentaire',
+                  style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: BrikolikColors.mutedLight,
+                  borderRadius:
+                      BorderRadius.circular(BrikolikRadius.full),
+                ),
+                child: Text(
+                  'optionnel',
+                  style: TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: BrikolikColors.muted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          BrikolikInput(
+            hint: 'Partagez votre expérience avec ce prestataire...',
+            controller: _commentCtrl,
+            maxLines: 4,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSubmitButton() {
     return Column(
       children: [
-        BrikolikButton(
-          label: 'Publier mon avis',
-          onPressed: _submitRating,
-          isLoading: _isLoading,
-          icon: Icons.rate_review_rounded,
+        GestureDetector(
+          onTap: _isLoading ? null : _submitRating,
+          child: Container(
+            height: 52,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: BrikolikColors.brandGradient,
+              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+              boxShadow: [
+                BoxShadow(
+                  color: BrikolikColors.accent.withValues(alpha: 0.28),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Center(
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white),
+                      ),
+                    )
+                  : const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.rate_review_rounded,
+                            color: Colors.white, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Publier mon avis',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/jobs'),
-          child: const Text('Passer pour l\'instant'),
+          child: const Text(
+            'Passer pour l\'instant',
+            style: TextStyle(
+              fontFamily: 'Nunito',
+              color: BrikolikColors.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ],
     );
@@ -270,14 +398,21 @@ class _RatingScreenState extends State<RatingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 72,
-                height: 72,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: BrikolikColors.successLight,
+                  gradient: BrikolikColors.brandGradient,
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: BrikolikColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: const Icon(Icons.check_rounded,
-                    size: 36, color: BrikolikColors.success),
+                    size: 40, color: Colors.white),
               ),
               const SizedBox(height: 20),
               Text('Merci !',
@@ -289,12 +424,31 @@ class _RatingScreenState extends State<RatingScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              BrikolikButton(
-                label: 'Retour à l\'accueil',
-                onPressed: () {
+              GestureDetector(
+                onTap: () {
                   Navigator.of(context).pop();
                   Navigator.pushReplacementNamed(context, '/jobs');
                 },
+                child: Container(
+                  height: 50,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: BrikolikColors.brandGradient,
+                    borderRadius:
+                        BorderRadius.circular(BrikolikRadius.md),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Retour à l\'accueil',
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

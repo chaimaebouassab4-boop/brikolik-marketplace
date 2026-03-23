@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
 // ─────────────────────────────────────────────
-//  BRIKOLIK SHARED WIDGETS
+//  BRIKOLIK SHARED WIDGETS – Retro Purple & Blues
 // ─────────────────────────────────────────────
 
 // ── Primary CTA Button ────────────────────────
@@ -13,6 +13,8 @@ class BrikolikButton extends StatelessWidget {
   final bool outlined;
   final IconData? icon;
   final double? height;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   const BrikolikButton({
     super.key,
@@ -22,29 +24,31 @@ class BrikolikButton extends StatelessWidget {
     this.outlined = false,
     this.icon,
     this.height,
+    this.backgroundColor,
+    this.foregroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final child = isLoading
         ? const SizedBox(
-      width: 22,
-      height: 22,
-      child: CircularProgressIndicator(
-        strokeWidth: 2.5,
-        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-      ),
-    )
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          )
         : Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (icon != null) ...[
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-        ],
-        Text(label),
-      ],
-    );
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 18),
+                const SizedBox(width: 8),
+              ],
+              Text(label),
+            ],
+          );
 
     if (outlined) {
       return SizedBox(
@@ -52,6 +56,11 @@ class BrikolikButton extends StatelessWidget {
         width: double.infinity,
         child: OutlinedButton(
           onPressed: isLoading ? null : onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: foregroundColor ?? BrikolikColors.primary,
+            side: BorderSide(
+                color: foregroundColor ?? BrikolikColors.primary, width: 1.5),
+          ),
           child: child,
         ),
       );
@@ -62,7 +71,53 @@ class BrikolikButton extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor ?? BrikolikColors.accent,
+          foregroundColor: foregroundColor ?? Colors.white,
+        ),
         child: child,
+      ),
+    );
+  }
+}
+
+// ── Secondary/Ghost Button ────────────────────
+class BrikolikSecondaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final double? height;
+
+  const BrikolikSecondaryButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.icon,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: height ?? 52,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: BrikolikColors.primary,
+          side: const BorderSide(color: BrikolikColors.border, width: 1.5),
+          backgroundColor: BrikolikColors.surfaceVariant,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 18),
+              const SizedBox(width: 8),
+            ],
+            Text(label),
+          ],
+        ),
       ),
     );
   }
@@ -117,7 +172,7 @@ class BrikolikInput extends StatelessWidget {
         hintText: hint,
         labelText: label,
         prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, size: 20, color: BrikolikColors.textHint)
+            ? Icon(prefixIcon, size: 20, color: BrikolikColors.muted)
             : null,
         suffixIcon: suffixWidget,
       ),
@@ -152,7 +207,15 @@ class SectionHeader extends StatelessWidget {
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: Text(actionLabel!),
+            child: Text(
+              actionLabel!,
+              style: const TextStyle(
+                color: BrikolikColors.accent,
+                fontFamily: 'Nunito',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
       ],
     );
@@ -173,22 +236,22 @@ class StatusBadge extends StatelessWidget {
   });
 
   factory StatusBadge.open() => const StatusBadge(
-    label: 'Ouvert',
-    color: BrikolikColors.success,
-    bgColor: BrikolikColors.successLight,
-  );
+        label: 'Ouvert',
+        color: BrikolikColors.success,
+        bgColor: BrikolikColors.successLight,
+      );
 
   factory StatusBadge.inProgress() => const StatusBadge(
-    label: 'En cours',
-    color: BrikolikColors.warning,
-    bgColor: BrikolikColors.warningLight,
-  );
+        label: 'En cours',
+        color: BrikolikColors.warning,
+        bgColor: BrikolikColors.warningLight,
+      );
 
   factory StatusBadge.closed() => const StatusBadge(
-    label: 'Terminé',
-    color: BrikolikColors.textSecondary,
-    bgColor: BrikolikColors.surfaceVariant,
-  );
+        label: 'Terminé',
+        color: BrikolikColors.textSecondary,
+        bgColor: BrikolikColors.surfaceVariant,
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -238,26 +301,26 @@ class BrikolikAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: BrikolikColors.primaryLight,
+        gradient: imageUrl == null ? BrikolikColors.brandGradient : null,
         image: imageUrl != null
             ? DecorationImage(
-          image: NetworkImage(imageUrl!),
-          fit: BoxFit.cover,
-        )
+                image: NetworkImage(imageUrl!),
+                fit: BoxFit.cover,
+              )
             : null,
       ),
       child: imageUrl == null
           ? Center(
-        child: Text(
-          _initials,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: size * 0.36,
-            fontWeight: FontWeight.w800,
-            color: BrikolikColors.primary,
-          ),
-        ),
-      )
+              child: Text(
+                _initials,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: size * 0.36,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            )
           : null,
     );
   }
@@ -321,10 +384,13 @@ class DividerWithLabel extends StatelessWidget {
       children: [
         const Expanded(child: Divider()),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             label,
-            style: Theme.of(context).textTheme.bodySmall,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: BrikolikColors.muted,
+                ),
           ),
         ),
         const Expanded(child: Divider()),
@@ -333,7 +399,7 @@ class DividerWithLabel extends StatelessWidget {
   }
 }
 
-// ── Info Chip (category tag) ──────────────────
+// ── Category Chip ─────────────────────────────
 class CategoryChip extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -362,6 +428,15 @@ class CategoryChip extends StatelessWidget {
             color: selected ? BrikolikColors.primary : BrikolikColors.border,
             width: 1.5,
           ),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: BrikolikColors.primary.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -370,7 +445,7 @@ class CategoryChip extends StatelessWidget {
               Icon(
                 icon,
                 size: 15,
-                color: selected ? Colors.white : BrikolikColors.textSecondary,
+                color: selected ? Colors.white : BrikolikColors.muted,
               ),
               const SizedBox(width: 6),
             ],
@@ -416,13 +491,14 @@ class EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: BrikolikColors.primaryLight,
+                gradient: BrikolikColors.heroGradient,
                 shape: BoxShape.circle,
+                border: Border.all(color: BrikolikColors.border, width: 1),
               ),
-              child: Icon(icon, size: 36, color: BrikolikColors.primary),
+              child: Icon(icon, size: 38, color: BrikolikColors.primary),
             ),
             const SizedBox(height: 20),
             Text(title,
@@ -442,6 +518,40 @@ class EmptyState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Gradient Brand Logo Box ───────────────────
+class BrikolikLogoBox extends StatelessWidget {
+  final double size;
+  final double iconSize;
+  final IconData icon;
+
+  const BrikolikLogoBox({
+    super.key,
+    this.size = 56,
+    this.iconSize = 28,
+    this.icon = Icons.build_rounded,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: BrikolikColors.brandGradient,
+        borderRadius: BorderRadius.circular(BrikolikRadius.md),
+        boxShadow: [
+          BoxShadow(
+            color: BrikolikColors.primary.withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Icon(icon, color: Colors.white, size: iconSize),
     );
   }
 }

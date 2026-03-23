@@ -12,67 +12,66 @@ class JobListScreen extends StatefulWidget {
 
 class _JobListScreenState extends State<JobListScreen> {
   int _selectedCategory = 0;
-  int _bottomNavIndex = 0;
+  int _bottomNavIndex   = 0;
   final _searchCtrl = TextEditingController();
 
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'Tous', 'icon': Icons.grid_view_rounded},
-    {'label': 'Plomberie', 'icon': Icons.water_drop_outlined},
+    {'label': 'Tous',        'icon': Icons.grid_view_rounded},
+    {'label': 'Plomberie',   'icon': Icons.water_drop_outlined},
     {'label': 'Électricité', 'icon': Icons.bolt_outlined},
-    {'label': 'Nettoyage', 'icon': Icons.cleaning_services_outlined},
-    {'label': 'Peinture', 'icon': Icons.format_paint_outlined},
-    {'label': 'Jardinage', 'icon': Icons.grass_outlined},
+    {'label': 'Nettoyage',   'icon': Icons.cleaning_services_outlined},
+    {'label': 'Peinture',    'icon': Icons.format_paint_outlined},
+    {'label': 'Jardinage',   'icon': Icons.grass_outlined},
   ];
 
-  // Mock data
   final List<Map<String, dynamic>> _jobs = [
     {
-      'title': 'Réparation fuite eau salle de bain',
+      'title':    'Réparation fuite eau salle de bain',
       'category': 'Plomberie',
-      'icon': Icons.water_drop_outlined,
+      'icon':     Icons.water_drop_outlined,
       'location': 'Casablanca, Maarif',
-      'budget': '200–400 MAD',
-      'time': 'Il y a 15 min',
-      'status': 'open',
-      'offers': 3,
-      'name': 'Karim B.',
-      'rating': 4.8,
+      'budget':   '200–400 MAD',
+      'time':     'Il y a 15 min',
+      'status':   'open',
+      'offers':   3,
+      'name':     'Karim B.',
+      'rating':   4.8,
     },
     {
-      'title': 'Installation tableau électrique',
+      'title':    'Installation tableau électrique',
       'category': 'Électricité',
-      'icon': Icons.bolt_outlined,
+      'icon':     Icons.bolt_outlined,
       'location': 'Rabat, Agdal',
-      'budget': '600–900 MAD',
-      'time': 'Il y a 1h',
-      'status': 'open',
-      'offers': 1,
-      'name': 'Samira K.',
-      'rating': 4.5,
+      'budget':   '600–900 MAD',
+      'time':     'Il y a 1h',
+      'status':   'open',
+      'offers':   1,
+      'name':     'Samira K.',
+      'rating':   4.5,
     },
     {
-      'title': 'Nettoyage appartement 3 pièces',
+      'title':    'Nettoyage appartement 3 pièces',
       'category': 'Nettoyage',
-      'icon': Icons.cleaning_services_outlined,
+      'icon':     Icons.cleaning_services_outlined,
       'location': 'Marrakech, Guéliz',
-      'budget': '150–250 MAD',
-      'time': 'Il y a 3h',
-      'status': 'inprogress',
-      'offers': 5,
-      'name': 'Fatima A.',
-      'rating': 4.9,
+      'budget':   '150–250 MAD',
+      'time':     'Il y a 3h',
+      'status':   'inprogress',
+      'offers':   5,
+      'name':     'Fatima A.',
+      'rating':   4.9,
     },
     {
-      'title': 'Peinture salon et couloir',
+      'title':    'Peinture salon et couloir',
       'category': 'Peinture',
-      'icon': Icons.format_paint_outlined,
+      'icon':     Icons.format_paint_outlined,
       'location': 'Fès, Saïss',
-      'budget': '800–1200 MAD',
-      'time': 'Il y a 5h',
-      'status': 'open',
-      'offers': 0,
-      'name': 'Youssef M.',
-      'rating': 4.6,
+      'budget':   '800–1200 MAD',
+      'time':     'Il y a 5h',
+      'status':   'open',
+      'offers':   0,
+      'name':     'Youssef M.',
+      'rating':   4.6,
     },
   ];
 
@@ -91,28 +90,53 @@ class _JobListScreenState extends State<JobListScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/post-job'),
-        backgroundColor: BrikolikColors.primary,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text(
-          'Poster un service',
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.w700,
-            fontSize: 14,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: BrikolikColors.brandGradient,
+          borderRadius: BorderRadius.circular(BrikolikRadius.full),
+          boxShadow: [
+            BoxShadow(
+              color: BrikolikColors.accent.withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(BrikolikRadius.full),
+            onTap: () => Navigator.pushNamed(context, '/post-job'),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Poster un service',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        elevation: 4,
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
 
   Widget _buildTopBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    return Container(
+      color: BrikolikColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
       child: Row(
         children: [
           Expanded(
@@ -121,7 +145,10 @@ class _JobListScreenState extends State<JobListScreen> {
               children: [
                 Text(
                   'Bonjour 👋',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: BrikolikColors.muted),
                 ),
                 Text(
                   'Services disponibles',
@@ -130,31 +157,45 @@ class _JobListScreenState extends State<JobListScreen> {
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {},
-            icon: Stack(
-              children: [
-                const Icon(Icons.notifications_outlined,
-                    size: 26, color: BrikolikColors.textPrimary),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: BrikolikColors.primary,
-                      shape: BoxShape.circle,
-                    ),
+          // Notification bell
+          Stack(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: BrikolikColors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                  border: Border.all(color: BrikolikColors.border),
+                ),
+                child: IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.notifications_outlined,
+                      size: 22, color: BrikolikColors.textPrimary),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    gradient: BrikolikColors.brandGradient,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: BrikolikColors.surface, width: 1.5),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 10),
           GestureDetector(
-            onTap: () => Navigator.pushNamed(context, '/customer-profile'),
-            child: const BrikolikAvatar(name: 'Karim B.', size: 38),
+            onTap: () =>
+                Navigator.pushNamed(context, '/customer-profile'),
+            child: const BrikolikAvatar(name: 'Karim B.', size: 42),
           ),
         ],
       ),
@@ -162,8 +203,9 @@ class _JobListScreenState extends State<JobListScreen> {
   }
 
   Widget _buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    return Container(
+      color: BrikolikColors.surface,
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       child: TextFormField(
         controller: _searchCtrl,
         style: const TextStyle(
@@ -175,18 +217,18 @@ class _JobListScreenState extends State<JobListScreen> {
         decoration: InputDecoration(
           hintText: 'Chercher un service…',
           filled: true,
-          fillColor: BrikolikColors.surface,
+          fillColor: BrikolikColors.surfaceVariant,
           prefixIcon: const Icon(Icons.search_rounded,
-              size: 22, color: BrikolikColors.textHint),
+              size: 22, color: BrikolikColors.muted),
           suffixIcon: Container(
             margin: const EdgeInsets.all(8),
             padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
-              color: BrikolikColors.primary,
+              gradient: BrikolikColors.brandGradient,
               borderRadius: BorderRadius.circular(BrikolikRadius.sm),
             ),
             child: const Icon(Icons.tune_rounded,
-                size: 18, color: Colors.white),
+                size: 16, color: Colors.white),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
@@ -199,41 +241,51 @@ class _JobListScreenState extends State<JobListScreen> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
             borderSide:
-            const BorderSide(color: BrikolikColors.primary, width: 2),
+                const BorderSide(color: BrikolikColors.primary, width: 2),
           ),
           contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
   }
 
   Widget _buildCategoryBar() {
-    return SizedBox(
-      height: 48,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-        itemCount: _categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final cat = _categories[i];
-          return CategoryChip(
-            label: cat['label'],
-            icon: cat['icon'],
-            selected: _selectedCategory == i,
-            onTap: () => setState(() => _selectedCategory = i),
-          );
-        },
+    return Container(
+      color: BrikolikColors.surface,
+      child: Column(
+        children: [
+          const Divider(height: 1),
+          SizedBox(
+            height: 52,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+              itemCount: _categories.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, i) {
+                final cat = _categories[i];
+                return CategoryChip(
+                  label: cat['label'],
+                  icon: cat['icon'],
+                  selected: _selectedCategory == i,
+                  onTap: () =>
+                      setState(() => _selectedCategory = i),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 4),
+        ],
       ),
     );
   }
 
   Widget _buildJobList() {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       itemCount: _jobs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (_, __) => const SizedBox(height: 14),
       itemBuilder: (context, i) {
         return JobCard(
           job: _jobs[i],
@@ -244,31 +296,45 @@ class _JobListScreenState extends State<JobListScreen> {
   }
 
   Widget _buildBottomNav() {
-    return BottomNavigationBar(
-      currentIndex: _bottomNavIndex,
-      onTap: (i) => setState(() => _bottomNavIndex = i),
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home_rounded),
-          label: 'Accueil',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.work_outline_rounded),
-          activeIcon: Icon(Icons.work_rounded),
-          label: 'Missions',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.chat_bubble_outline_rounded),
-          activeIcon: Icon(Icons.chat_bubble_rounded),
-          label: 'Messages',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline_rounded),
-          activeIcon: Icon(Icons.person_rounded),
-          label: 'Profil',
-        ),
-      ],
+    return Container(
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: BrikolikColors.primary.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _bottomNavIndex,
+        onTap: (i) => setState(() => _bottomNavIndex = i),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home_rounded),
+            label: 'Accueil',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work_outline_rounded),
+            activeIcon: Icon(Icons.work_rounded),
+            label: 'Missions',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline_rounded),
+            activeIcon: Icon(Icons.chat_bubble_rounded),
+            label: 'Messages',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline_rounded),
+            activeIcon: Icon(Icons.person_rounded),
+            label: 'Profil',
+          ),
+        ],
+      ),
     );
   }
 }
@@ -282,7 +348,7 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOpen = job['status'] == 'open';
+    final isOpen   = job['status'] == 'open';
     final hasOffers = (job['offers'] as int) > 0;
 
     return GestureDetector(
@@ -294,9 +360,9 @@ class JobCard extends StatelessWidget {
           border: Border.all(color: BrikolikColors.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: BrikolikColors.primary.withValues(alpha: 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -311,12 +377,12 @@ class JobCard extends StatelessWidget {
                   Row(
                     children: [
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 42,
+                        height: 42,
                         decoration: BoxDecoration(
                           color: BrikolikColors.primaryLight,
                           borderRadius:
-                          BorderRadius.circular(BrikolikRadius.sm),
+                              BorderRadius.circular(BrikolikRadius.sm),
                         ),
                         child: Icon(job['icon'] as IconData,
                             size: 20, color: BrikolikColors.primary),
@@ -331,8 +397,8 @@ class JobCard extends StatelessWidget {
                               style: const TextStyle(
                                 fontFamily: 'Nunito',
                                 fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: BrikolikColors.primary,
+                                fontWeight: FontWeight.w800,
+                                color: BrikolikColors.secondary,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -343,7 +409,9 @@ class JobCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      isOpen ? StatusBadge.open() : StatusBadge.inProgress(),
+                      isOpen
+                          ? StatusBadge.open()
+                          : StatusBadge.inProgress(),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -361,7 +429,7 @@ class JobCard extends StatelessWidget {
                   Row(
                     children: [
                       const Icon(Icons.location_on_outlined,
-                          size: 14, color: BrikolikColors.textHint),
+                          size: 14, color: BrikolikColors.muted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -374,9 +442,9 @@ class JobCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: BrikolikColors.surfaceVariant,
+                          gradient: BrikolikColors.brandGradient,
                           borderRadius:
-                          BorderRadius.circular(BrikolikRadius.full),
+                              BorderRadius.circular(BrikolikRadius.full),
                         ),
                         child: Text(
                           job['budget'],
@@ -384,7 +452,7 @@ class JobCard extends StatelessWidget {
                             fontFamily: 'Nunito',
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: BrikolikColors.textPrimary,
+                            color: Colors.white,
                           ),
                         ),
                       ),
@@ -394,14 +462,17 @@ class JobCard extends StatelessWidget {
               ),
             ),
 
-            // Footer divider + offers
+            // Footer
             Container(
               decoration: const BoxDecoration(
-                border: Border(
-                    top: BorderSide(color: BrikolikColors.divider, width: 1)),
+                color: BrikolikColors.surfaceVariant,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(BrikolikRadius.lg),
+                  bottomRight: Radius.circular(BrikolikRadius.lg),
+                ),
               ),
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 10),
               child: Row(
                 children: [
                   BrikolikAvatar(name: job['name'], size: 28),
@@ -418,9 +489,11 @@ class JobCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: BrikolikColors.primaryLight,
+                        color: BrikolikColors.accentLight,
                         borderRadius:
-                        BorderRadius.circular(BrikolikRadius.full),
+                            BorderRadius.circular(BrikolikRadius.full),
+                        border: Border.all(
+                            color: BrikolikColors.accent.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         '${job['offers']} offre${job['offers'] > 1 ? 's' : ''}',
@@ -428,19 +501,17 @@ class JobCard extends StatelessWidget {
                           fontFamily: 'Nunito',
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: BrikolikColors.primary,
+                          color: BrikolikColors.accent,
                         ),
                       ),
                     )
                   else
-                    const Text(
+                    Text(
                       'Aucune offre',
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: BrikolikColors.textHint,
-                      ),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: BrikolikColors.textHint),
                     ),
                 ],
               ),

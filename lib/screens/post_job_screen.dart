@@ -13,28 +13,44 @@ class _PostJobScreenState extends State<PostJobScreen> {
   int _currentStep = 0;
   String? _selectedCategory;
   String? _selectedUrgency;
-  final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
-  final _budgetMinCtrl = TextEditingController();
-  final _budgetMaxCtrl = TextEditingController();
+  final _titleCtrl      = TextEditingController();
+  final _descCtrl       = TextEditingController();
+  final _locationCtrl   = TextEditingController();
+  final _budgetMinCtrl  = TextEditingController();
+  final _budgetMaxCtrl  = TextEditingController();
 
   final List<Map<String, dynamic>> _categories = [
-    {'label': 'Plomberie', 'icon': Icons.water_drop_outlined},
+    {'label': 'Plomberie',   'icon': Icons.water_drop_outlined},
     {'label': 'Électricité', 'icon': Icons.bolt_outlined},
-    {'label': 'Nettoyage', 'icon': Icons.cleaning_services_outlined},
-    {'label': 'Peinture', 'icon': Icons.format_paint_outlined},
-    {'label': 'Jardinage', 'icon': Icons.grass_outlined},
-    {'label': 'Menuiserie', 'icon': Icons.carpenter_outlined},
-    {'label': 'Maçonnerie', 'icon': Icons.construction_outlined},
-    {'label': 'Autre', 'icon': Icons.more_horiz_rounded},
+    {'label': 'Nettoyage',   'icon': Icons.cleaning_services_outlined},
+    {'label': 'Peinture',    'icon': Icons.format_paint_outlined},
+    {'label': 'Jardinage',   'icon': Icons.grass_outlined},
+    {'label': 'Menuiserie',  'icon': Icons.carpenter_outlined},
+    {'label': 'Maçonnerie',  'icon': Icons.construction_outlined},
+    {'label': 'Autre',       'icon': Icons.more_horiz_rounded},
   ];
 
   final List<Map<String, dynamic>> _urgencies = [
-    {'label': 'Urgent (24h)', 'icon': Icons.flash_on_rounded, 'color': BrikolikColors.error},
-    {'label': 'Cette semaine', 'icon': Icons.today_rounded, 'color': BrikolikColors.warning},
-    {'label': 'Ce mois', 'icon': Icons.calendar_month_outlined, 'color': BrikolikColors.primary},
-    {'label': 'Flexible', 'icon': Icons.schedule_rounded, 'color': BrikolikColors.success},
+    {
+      'label': 'Urgent (24h)',
+      'icon': Icons.flash_on_rounded,
+      'color': BrikolikColors.error
+    },
+    {
+      'label': 'Cette semaine',
+      'icon': Icons.today_rounded,
+      'color': BrikolikColors.warning
+    },
+    {
+      'label': 'Ce mois',
+      'icon': Icons.calendar_month_outlined,
+      'color': BrikolikColors.primary
+    },
+    {
+      'label': 'Flexible',
+      'icon': Icons.schedule_rounded,
+      'color': BrikolikColors.success
+    },
   ];
 
   final List<String> _steps = ['Catégorie', 'Détails', 'Budget'];
@@ -45,6 +61,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
       backgroundColor: BrikolikColors.background,
       appBar: AppBar(
         title: const Text('Poster un service'),
+        backgroundColor: BrikolikColors.surface,
+        foregroundColor: BrikolikColors.textPrimary,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: BrikolikColors.border, height: 1),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () {
@@ -81,7 +104,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: List.generate(_steps.length, (i) {
-          final isDone = i < _currentStep;
+          final isDone   = i < _currentStep;
           final isActive = i == _currentStep;
           return Expanded(
             child: Row(
@@ -90,35 +113,42 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   children: [
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      width: 28,
-                      height: 28,
+                      width: 30,
+                      height: 30,
                       decoration: BoxDecoration(
-                        color: isDone
-                            ? BrikolikColors.primary
-                            : isActive
-                            ? BrikolikColors.primary
+                        gradient: (isDone || isActive)
+                            ? BrikolikColors.brandGradient
+                            : null,
+                        color: (isDone || isActive)
+                            ? null
                             : BrikolikColors.surfaceVariant,
                         shape: BoxShape.circle,
-                        border: isActive && !isDone
-                            ? Border.all(
-                            color: BrikolikColors.primary, width: 2)
-                            : null,
+                        boxShadow: (isDone || isActive)
+                            ? [
+                                BoxShadow(
+                                  color: BrikolikColors.primary
+                                      .withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : [],
                       ),
                       child: Center(
                         child: isDone
                             ? const Icon(Icons.check_rounded,
-                            size: 14, color: Colors.white)
+                                size: 15, color: Colors.white)
                             : Text(
-                          '${i + 1}',
-                          style: TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: isActive
-                                ? Colors.white
-                                : BrikolikColors.textHint,
-                          ),
-                        ),
+                                '${i + 1}',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: isActive
+                                      ? Colors.white
+                                      : BrikolikColors.textHint,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -127,7 +157,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 11,
-                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: isActive
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                         color: isActive
                             ? BrikolikColors.primary
                             : BrikolikColors.textHint,
@@ -139,13 +171,17 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   Expanded(
                     child: Container(
                       height: 2,
-                      margin: const EdgeInsets.only(bottom: 20, left: 4, right: 4),
+                      margin: const EdgeInsets.only(
+                          bottom: 20, left: 4, right: 4),
                       decoration: BoxDecoration(
+                        gradient: i < _currentStep
+                            ? BrikolikColors.brandGradient
+                            : null,
                         color: i < _currentStep
-                            ? BrikolikColors.primary
+                            ? null
                             : BrikolikColors.border,
                         borderRadius:
-                        BorderRadius.circular(BrikolikRadius.full),
+                            BorderRadius.circular(BrikolikRadius.full),
                       ),
                     ),
                   ),
@@ -166,7 +202,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const SizedBox(height: 8),
-        Text('Sélectionnez la catégorie qui correspond à votre besoin',
+        Text(
+            'Sélectionnez la catégorie qui correspond à votre besoin',
             style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 24),
         GridView.count(
@@ -183,28 +220,56 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   setState(() => _selectedCategory = cat['label']),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: selected
-                      ? BrikolikColors.primaryLight
-                      : BrikolikColors.surface,
-                  borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+                  gradient: selected
+                      ? BrikolikColors.brandGradient
+                      : null,
+                  color: selected ? null : BrikolikColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(BrikolikRadius.lg),
                   border: Border.all(
                     color: selected
-                        ? BrikolikColors.primary
+                        ? Colors.transparent
                         : BrikolikColors.border,
-                    width: selected ? 2 : 1,
+                    width: 1,
                   ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: BrikolikColors.primary
+                                .withValues(alpha: 0.2),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          )
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      cat['icon'],
-                      size: 28,
-                      color: selected
-                          ? BrikolikColors.primary
-                          : BrikolikColors.textSecondary,
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.2)
+                            : BrikolikColors.primaryLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        cat['icon'],
+                        size: 22,
+                        color: selected
+                            ? Colors.white
+                            : BrikolikColors.primary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -214,7 +279,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: selected
-                            ? BrikolikColors.primary
+                            ? Colors.white
                             : BrikolikColors.textPrimary,
                       ),
                       textAlign: TextAlign.center,
@@ -238,7 +303,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const SizedBox(height: 8),
-        Text('Plus votre description est précise, meilleures seront les offres',
+        Text(
+            'Plus votre description est précise, meilleures seront les offres',
             style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 24),
         BrikolikInput(
@@ -262,32 +328,61 @@ class _PostJobScreenState extends State<PostJobScreen> {
           prefixIcon: Icons.location_on_outlined,
         ),
         const SizedBox(height: 24),
-        Text('Urgence', style: Theme.of(context).textTheme.headlineSmall),
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: BrikolikColors.primaryLight,
+                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+              ),
+              child: const Icon(Icons.schedule_rounded,
+                  size: 16, color: BrikolikColors.primary),
+            ),
+            const SizedBox(width: 10),
+            Text('Urgence',
+                style: Theme.of(context).textTheme.headlineSmall),
+          ],
+        ),
         const SizedBox(height: 12),
         ...(_urgencies.map(
-              (u) {
+          (u) {
             final selected = _selectedUrgency == u['label'];
             return GestureDetector(
               onTap: () =>
                   setState(() => _selectedUrgency = u['label']),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 8),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: selected
-                      ? (u['color'] as Color).withOpacity(0.08)
+                      ? (u['color'] as Color).withValues(alpha: 0.07)
                       : BrikolikColors.surface,
-                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                  borderRadius:
+                      BorderRadius.circular(BrikolikRadius.md),
                   border: Border.all(
-                    color: selected ? u['color'] : BrikolikColors.border,
+                    color: selected
+                        ? u['color'] as Color
+                        : BrikolikColors.border,
                     width: selected ? 1.5 : 1,
                   ),
                 ),
                 child: Row(
                   children: [
-                    Icon(u['icon'], size: 20, color: u['color']),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color:
+                            (u['color'] as Color).withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(u['icon'] as IconData,
+                          size: 18, color: u['color'] as Color),
+                    ),
                     const SizedBox(width: 12),
                     Text(
                       u['label'],
@@ -302,8 +397,16 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     ),
                     const Spacer(),
                     if (selected)
-                      Icon(Icons.check_circle_rounded,
-                          size: 18, color: u['color']),
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: u['color'] as Color,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.check_rounded,
+                            size: 13, color: Colors.white),
+                      ),
                   ],
                 ),
               ),
@@ -323,9 +426,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
           style: Theme.of(context).textTheme.headlineLarge,
         ),
         const SizedBox(height: 8),
-        Text('Définissez une fourchette de budget pour attirer les bons prestataires',
+        Text(
+            'Définissez une fourchette de budget pour attirer les bons prestataires',
             style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -336,8 +440,24 @@ class _PostJobScreenState extends State<PostJobScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Fourchette de prix',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: BrikolikColors.primaryLight,
+                      borderRadius:
+                          BorderRadius.circular(BrikolikRadius.sm),
+                    ),
+                    child: const Icon(Icons.payments_outlined,
+                        size: 16, color: BrikolikColors.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('Fourchette de prix',
+                      style: Theme.of(context).textTheme.titleLarge),
+                ],
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -350,9 +470,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12),
                     child: Text('–',
-                        style: Theme.of(context).textTheme.headlineMedium),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium),
                   ),
                   Expanded(
                     child: BrikolikInput(
@@ -367,17 +490,27 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        // Tip banner
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: BrikolikColors.primaryLight,
+            gradient: BrikolikColors.heroGradient,
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
+            border: Border.all(color: BrikolikColors.border),
           ),
           child: Row(
             children: [
-              const Icon(Icons.lightbulb_outline_rounded,
-                  size: 18, color: BrikolikColors.primary),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: BrikolikColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lightbulb_outline_rounded,
+                    size: 16, color: BrikolikColors.primary),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -386,16 +519,31 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     fontFamily: 'Nunito',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: BrikolikColors.primaryDark,
+                    color: BrikolikColors.textSecondary,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 28),
-        Text('Récapitulatif',
-            style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: BrikolikColors.primaryLight,
+                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+              ),
+              child: const Icon(Icons.receipt_long_outlined,
+                  size: 16, color: BrikolikColors.primary),
+            ),
+            const SizedBox(width: 10),
+            Text('Récapitulatif',
+                style: Theme.of(context).textTheme.headlineSmall),
+          ],
+        ),
         const SizedBox(height: 12),
         _buildSummaryCard(),
       ],
@@ -412,18 +560,25 @@ class _PostJobScreenState extends State<PostJobScreen> {
       ),
       child: Column(
         children: [
-          _SummaryRow(label: 'Catégorie', value: _selectedCategory ?? '—'),
-          const Divider(height: 16),
+          _SummaryRow(
+              label: 'Catégorie',
+              value: _selectedCategory ?? '—'),
+          const Divider(height: 20),
           _SummaryRow(
               label: 'Titre',
-              value: _titleCtrl.text.isEmpty ? '—' : _titleCtrl.text),
-          const Divider(height: 16),
+              value: _titleCtrl.text.isEmpty
+                  ? '—'
+                  : _titleCtrl.text),
+          const Divider(height: 20),
           _SummaryRow(
               label: 'Lieu',
-              value:
-              _locationCtrl.text.isEmpty ? '—' : _locationCtrl.text),
-          const Divider(height: 16),
-          _SummaryRow(label: 'Urgence', value: _selectedUrgency ?? '—'),
+              value: _locationCtrl.text.isEmpty
+                  ? '—'
+                  : _locationCtrl.text),
+          const Divider(height: 20),
+          _SummaryRow(
+              label: 'Urgence',
+              value: _selectedUrgency ?? '—'),
         ],
       ),
     );
@@ -435,26 +590,71 @@ class _PostJobScreenState extends State<PostJobScreen> {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
-        border:
-        const Border(top: BorderSide(color: BrikolikColors.border, width: 1)),
+        border: const Border(
+            top: BorderSide(color: BrikolikColors.border, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: BrikolikColors.primary.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
+          ),
+        ],
       ),
-      child: BrikolikButton(
-        label: isLast ? 'Publier ma demande' : 'Continuer',
-        onPressed: () {
+      child: GestureDetector(
+        onTap: () {
           if (isLast) {
             Navigator.pushReplacementNamed(context, '/jobs');
           } else {
             setState(() => _currentStep++);
           }
         },
-        icon: isLast
-            ? Icons.check_rounded
-            : Icons.arrow_forward_rounded,
+        child: Container(
+          height: 52,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: BrikolikColors.brandGradient,
+            borderRadius: BorderRadius.circular(BrikolikRadius.md),
+            boxShadow: [
+              BoxShadow(
+                color: BrikolikColors.accent.withValues(alpha: 0.28),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isLast) ...[
+                  const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 18),
+                  const SizedBox(width: 8),
+                ],
+                Text(
+                  isLast ? 'Publier ma demande' : 'Continuer',
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                if (!isLast) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded,
+                      color: Colors.white, size: 18),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 }
 
+// ── Summary Row ───────────────────────────────
 class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
@@ -467,7 +667,12 @@ class _SummaryRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        Text(value, style: Theme.of(context).textTheme.titleSmall),
+        Text(value,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: value == '—'
+                      ? BrikolikColors.textHint
+                      : BrikolikColors.textPrimary,
+                )),
       ],
     );
   }

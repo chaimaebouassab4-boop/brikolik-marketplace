@@ -10,13 +10,13 @@ class WorkerProfileScreen extends StatefulWidget {
 }
 
 class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
-  final _nameCtrl = TextEditingController(text: 'Hamid Tazi');
+  final _nameCtrl  = TextEditingController(text: 'Hamid Tazi');
   final _phoneCtrl = TextEditingController(text: '+212 661 23 45 67');
-  final _bioCtrl = TextEditingController(
+  final _bioCtrl   = TextEditingController(
       text: 'Plombier professionnel avec 8 ans d\'expérience.');
-  final _cityCtrl = TextEditingController(text: 'Casablanca');
+  final _cityCtrl  = TextEditingController(text: 'Casablanca');
 
-  final List<String> _services = ['Plomberie', 'Robinetterie', 'Sanitaires'];
+  final List<String> _services    = ['Plomberie', 'Robinetterie', 'Sanitaires'];
   final List<String> _allServices = [
     'Plomberie',
     'Électricité',
@@ -35,11 +35,25 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       backgroundColor: BrikolikColors.background,
       appBar: AppBar(
         title: const Text('Mon profil'),
+        backgroundColor: BrikolikColors.surface,
+        foregroundColor: BrikolikColors.textPrimary,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: BrikolikColors.border, height: 1),
+        ),
         actions: [
           TextButton(
             onPressed: () =>
                 Navigator.pushReplacementNamed(context, '/job'),
-            child: const Text('Terminer'),
+            child: const Text(
+              'Terminer',
+              style: TextStyle(
+                color: BrikolikColors.accent,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Nunito',
+              ),
+            ),
           ),
         ],
       ),
@@ -49,7 +63,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildAvatarSection(context),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
             _buildSectionCard(
               context,
               icon: Icons.person_outline_rounded,
@@ -80,7 +94,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildSectionCard(
               context,
               icon: Icons.work_outline_rounded,
@@ -91,7 +105,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                 maxLines: 4,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildSectionCard(
               context,
               icon: Icons.build_circle_outlined,
@@ -118,7 +132,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                 }).toList(),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildSectionCard(
               context,
               icon: Icons.verified_outlined,
@@ -147,12 +161,10 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 28),
-            BrikolikButton(
-              label: 'Enregistrer et continuer',
-              onPressed: () =>
-                  Navigator.pushReplacementNamed(context, '/jobs'),
-              icon: Icons.arrow_forward_rounded,
+            const SizedBox(height: 24),
+            _buildGradientButton(
+              'Enregistrer et continuer',
+              () => Navigator.pushReplacementNamed(context, '/jobs'),
             ),
             const SizedBox(height: 32),
           ],
@@ -177,28 +189,36 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: BrikolikColors.primary,
+                      gradient: BrikolikColors.brandGradient,
                       shape: BoxShape.circle,
                       border:
-                      Border.all(color: BrikolikColors.surface, width: 2),
+                          Border.all(color: BrikolikColors.surface, width: 2.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: BrikolikColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
                     child: const Icon(Icons.camera_alt_outlined,
-                        size: 16, color: Colors.white),
+                        size: 14, color: Colors.white),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Text('Hamid Tazi',
               style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: const [
               StarRating(rating: 4.9, reviewCount: 47),
               SizedBox(width: 12),
-              Icon(Icons.shield_rounded, size: 14, color: BrikolikColors.success),
+              Icon(Icons.shield_rounded,
+                  size: 14, color: BrikolikColors.success),
               SizedBox(width: 4),
               Text(
                 'Profil vérifié',
@@ -217,26 +237,42 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   }
 
   Widget _buildSectionCard(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        String? subtitle,
-        required Widget child,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required Widget child,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(BrikolikRadius.lg),
         border: Border.all(color: BrikolikColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: BrikolikColors.primary),
-              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: BrikolikColors.primaryLight,
+                  borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+                ),
+                child:
+                    Icon(icon, size: 16, color: BrikolikColors.primary),
+              ),
+              const SizedBox(width: 10),
               Text(title, style: Theme.of(context).textTheme.titleLarge),
             ],
           ),
@@ -250,8 +286,49 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       ),
     );
   }
+
+  Widget _buildGradientButton(String label, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 52,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: BrikolikColors.brandGradient,
+          borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          boxShadow: [
+            BoxShadow(
+              color: BrikolikColors.accent.withValues(alpha: 0.28),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.arrow_forward_rounded,
+                  color: Colors.white, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
+// ── Verification Row ──────────────────────────
 class _VerificationRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -269,17 +346,20 @@ class _VerificationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: BrikolikColors.textSecondary),
+        Icon(icon, size: 20, color: BrikolikColors.muted),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(label, style: Theme.of(context).textTheme.titleSmall),
+          child: Text(label,
+              style: Theme.of(context).textTheme.titleSmall),
         ),
         if (verified)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: BrikolikColors.successLight,
-              borderRadius: BorderRadius.circular(BrikolikRadius.full),
+              borderRadius:
+                  BorderRadius.circular(BrikolikRadius.full),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
@@ -300,14 +380,29 @@ class _VerificationRow extends StatelessWidget {
             ),
           )
         else if (action != null)
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          Container(
+            decoration: BoxDecoration(
+              color: BrikolikColors.accentLight,
+              borderRadius: BorderRadius.circular(BrikolikRadius.sm),
             ),
-            child: Text(action!),
+            child: TextButton(
+              onPressed: () {},
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                foregroundColor: BrikolikColors.accent,
+              ),
+              child: Text(
+                action!,
+                style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
       ],
     );

@@ -15,10 +15,10 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _phoneCtrl = TextEditingController();
-  final _nameCtrl = TextEditingController();
+  final _phoneCtrl    = TextEditingController();
+  final _nameCtrl     = TextEditingController();
   final _passwordCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  final _formKey      = GlobalKey<FormState>();
 
   late final TabController _tabCtrl;
 
@@ -43,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen>
   void _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.delayed(const Duration(milliseconds: 900));
     setState(() => _isLoading = false);
     if (mounted) Navigator.pushReplacementNamed(context, '/role');
   }
@@ -52,97 +52,57 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildHero(),
-              const SizedBox(height: 36),
-              _buildTabs(),
-              const SizedBox(height: 28),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    if (!_isLogin) ...[
-                      BrikolikInput(
-                        hint: 'Votre nom complet',
-                        label: 'Nom complet',
-                        controller: _nameCtrl,
-                        prefixIcon: Icons.person_outline_rounded,
-                        validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Champ requis' : null,
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    BrikolikInput(
-                      hint: '+212 6XX XXX XXX',
-                      label: 'Numéro de téléphone',
-                      controller: _phoneCtrl,
-                      prefixIcon: Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Champ requis' : null,
-                    ),
-                    const SizedBox(height: 14),
-                    BrikolikInput(
-                      hint: '••••••••',
-                      label: 'Mot de passe',
-                      controller: _passwordCtrl,
-                      obscureText: _obscurePassword,
-                      prefixIcon: Icons.lock_outline_rounded,
-                      suffixWidget: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          size: 20,
-                          color: BrikolikColors.textHint,
-                        ),
-                        onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
-                      ),
-                      validator: (v) =>
-                      (v == null || v.length < 6) ? 'Minimum 6 caractères' : null,
-                    ),
-                    if (_isLogin) ...[
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {},
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 0, vertical: 4),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          child: const Text('Mot de passe oublié ?'),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    BrikolikButton(
-                      label: _isLogin ? 'Se connecter' : 'Créer mon compte',
-                      onPressed: _submit,
-                      isLoading: _isLoading,
-                    ),
-                    const SizedBox(height: 20),
-                    const DividerWithLabel(label: 'ou continuer avec'),
-                    const SizedBox(height: 20),
-                    _buildSocialButtons(),
-                    const SizedBox(height: 32),
-                    _buildSwitchModeRow(),
-                    const SizedBox(height: 24),
-                  ],
+      body: Stack(
+        children: [
+          // Decorative top gradient banner
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 280,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF465892), Color(0xFF6D5593)],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          // White curved panel
+          Positioned(
+            top: 220,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: BrikolikColors.background,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+              ),
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  _buildHero(),
+                  const SizedBox(height: 32),
+                  _buildCard(),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -151,28 +111,165 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: BrikolikColors.primary,
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
-          ),
-          child: const Icon(Icons.build_rounded, color: Colors.white, size: 28),
+        Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3), width: 1),
+              ),
+              child: const Icon(Icons.build_rounded,
+                  color: Colors.white, size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              'BRIKOLIK',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
         Text(
           _isLogin ? 'Bon retour 👋' : 'Créer un compte',
-          style: Theme.of(context).textTheme.displayMedium,
+          style: const TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
           _isLogin
               ? 'Connectez-vous pour accéder aux services'
               : 'Rejoignez la plateforme Brikolik',
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.white.withValues(alpha: 0.8),
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(BrikolikRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: BrikolikColors.primary.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildTabs(),
+            const SizedBox(height: 24),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  if (!_isLogin) ...[
+                    BrikolikInput(
+                      hint: 'Votre nom complet',
+                      label: 'Nom complet',
+                      controller: _nameCtrl,
+                      prefixIcon: Icons.person_outline_rounded,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Champ requis' : null,
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+                  BrikolikInput(
+                    hint: '+212 6XX XXX XXX',
+                    label: 'Numéro de téléphone',
+                    controller: _phoneCtrl,
+                    prefixIcon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    validator: (v) =>
+                        (v == null || v.isEmpty) ? 'Champ requis' : null,
+                  ),
+                  const SizedBox(height: 14),
+                  BrikolikInput(
+                    hint: '••••••••',
+                    label: 'Mot de passe',
+                    controller: _passwordCtrl,
+                    obscureText: _obscurePassword,
+                    prefixIcon: Icons.lock_outline_rounded,
+                    suffixWidget: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        size: 20,
+                        color: BrikolikColors.muted,
+                      ),
+                      onPressed: () => setState(
+                          () => _obscurePassword = !_obscurePassword),
+                    ),
+                    validator: (v) => (v == null || v.length < 6)
+                        ? 'Minimum 6 caractères'
+                        : null,
+                  ),
+                  if (_isLogin) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {},
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 0, vertical: 4),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Mot de passe oublié ?',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: BrikolikColors.accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  // Gradient CTA button
+                  _GradientButton(
+                    label: _isLogin ? 'Se connecter' : 'Créer mon compte',
+                    isLoading: _isLoading,
+                    onPressed: _submit,
+                  ),
+                  const SizedBox(height: 20),
+                  const DividerWithLabel(label: 'ou continuer avec'),
+                  const SizedBox(height: 20),
+                  _buildSocialButtons(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -186,18 +283,18 @@ class _LoginScreenState extends State<LoginScreen>
       child: TabBar(
         controller: _tabCtrl,
         indicator: BoxDecoration(
-          color: BrikolikColors.surface,
+          gradient: BrikolikColors.brandGradient,
           borderRadius: BorderRadius.circular(BrikolikRadius.sm + 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: BrikolikColors.primary.withValues(alpha: 0.25),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         indicatorSize: TabBarIndicatorSize.tab,
-        labelColor: BrikolikColors.primary,
+        labelColor: Colors.white,
         unselectedLabelColor: BrikolikColors.textSecondary,
         labelStyle: const TextStyle(
           fontFamily: 'Nunito',
@@ -240,34 +337,66 @@ class _LoginScreenState extends State<LoginScreen>
       ],
     );
   }
+}
 
-  Widget _buildSwitchModeRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          _isLogin ? "Pas encore de compte ? " : "Déjà un compte ? ",
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        GestureDetector(
-          onTap: () {
-            _tabCtrl.animateTo(_isLogin ? 1 : 0);
-          },
-          child: Text(
-            _isLogin ? 'S\'inscrire' : 'Se connecter',
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: BrikolikColors.primary,
+// ── Gradient CTA Button ──────────────────────
+class _GradientButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const _GradientButton({
+    required this.label,
+    this.onPressed,
+    this.isLoading = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onPressed,
+      child: Container(
+        height: 52,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: BrikolikColors.brandGradient,
+          borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          boxShadow: [
+            BoxShadow(
+              color: BrikolikColors.accent.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
+          ],
         ),
-      ],
+        child: Center(
+          child: isLoading
+              ? const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
 
+// ── Social Button ─────────────────────────────
 class _SocialButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -287,14 +416,14 @@ class _SocialButton extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: BrikolikColors.surface,
+          color: BrikolikColors.surfaceVariant,
           borderRadius: BorderRadius.circular(BrikolikRadius.md),
           border: Border.all(color: BrikolikColors.border, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: BrikolikColors.textSecondary),
+            Icon(icon, size: 22, color: BrikolikColors.primary),
             const SizedBox(width: 8),
             Text(
               label,

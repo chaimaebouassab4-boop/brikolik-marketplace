@@ -25,58 +25,146 @@ class _RoleScreenState extends State<RoleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildHeader(),
-              const SizedBox(height: 40),
-              _RoleCard(
-                title: 'Je cherche un service',
-                subtitle:
-                'Postez vos besoins et recevez des offres de pros qualifiés',
-                emoji: '🏠',
-                features: const [
-                  'Trouvez des artisans près de chez vous',
-                  'Comparez les offres et tarifs',
-                  'Suivez vos demandes en temps réel',
-                ],
-                value: 'customer',
-                selected: _selectedRole == 'customer',
-                onTap: () => setState(() => _selectedRole = 'customer'),
-              ),
-              const SizedBox(height: 16),
-              _RoleCard(
-                title: 'Je propose mes services',
-                subtitle:
-                'Développez votre activité et trouvez des clients facilement',
-                emoji: '🔧',
-                features: const [
-                  'Gérez vos missions facilement',
-                  'Obtenez des avis clients',
-                  'Développez votre réputation',
-                ],
-                value: 'worker',
-                selected: _selectedRole == 'worker',
-                onTap: () => setState(() => _selectedRole = 'worker'),
-              ),
-              const Spacer(),
-              AnimatedOpacity(
-                opacity: _selectedRole != null ? 1 : 0.4,
-                duration: const Duration(milliseconds: 200),
-                child: BrikolikButton(
-                  label: 'Continuer',
-                  onPressed: _selectedRole != null ? _continue : null,
-                  icon: Icons.arrow_forward_rounded,
+      body: Stack(
+        children: [
+          // Top gradient accent
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 180,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF465892), Color(0xFF6D5593)],
                 ),
               ),
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            top: 140,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: BrikolikColors.background,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(28),
+                  topRight: Radius.circular(28),
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  _RoleCard(
+                    title: 'Je cherche un service',
+                    subtitle:
+                        'Postez vos besoins et recevez des offres de pros qualifiés',
+                    emoji: '🏠',
+                    features: const [
+                      'Trouvez des artisans près de chez vous',
+                      'Comparez les offres et tarifs',
+                      'Suivez vos demandes en temps réel',
+                    ],
+                    value: 'customer',
+                    selected: _selectedRole == 'customer',
+                    onTap: () => setState(() => _selectedRole = 'customer'),
+                  ),
+                  const SizedBox(height: 14),
+                  _RoleCard(
+                    title: 'Je propose mes services',
+                    subtitle:
+                        'Développez votre activité et trouvez des clients facilement',
+                    emoji: '🔧',
+                    features: const [
+                      'Gérez vos missions facilement',
+                      'Obtenez des avis clients',
+                      'Développez votre réputation',
+                    ],
+                    value: 'worker',
+                    selected: _selectedRole == 'worker',
+                    onTap: () => setState(() => _selectedRole = 'worker'),
+                  ),
+                  const Spacer(),
+                  AnimatedOpacity(
+                    opacity: _selectedRole != null ? 1 : 0.45,
+                    duration: const Duration(milliseconds: 250),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: _selectedRole != null
+                            ? BrikolikColors.brandGradient
+                            : null,
+                        color: _selectedRole == null
+                            ? BrikolikColors.surfaceVariant
+                            : null,
+                        borderRadius:
+                            BorderRadius.circular(BrikolikRadius.md),
+                        boxShadow: _selectedRole != null
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      BrikolikColors.accent.withValues(alpha: 0.3),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius:
+                              BorderRadius.circular(BrikolikRadius.md),
+                          onTap: _selectedRole != null ? _continue : null,
+                          child: Container(
+                            height: 52,
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Continuer',
+                                  style: TextStyle(
+                                    fontFamily: 'Nunito',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: _selectedRole != null
+                                        ? Colors.white
+                                        : BrikolikColors.textHint,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: _selectedRole != null
+                                      ? Colors.white
+                                      : BrikolikColors.textHint,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -85,21 +173,34 @@ class _RoleScreenState extends State<RoleScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: BrikolikColors.primary,
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
-          ),
-          child: const Icon(Icons.build_rounded, color: Colors.white, size: 24),
+        Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.35), width: 1),
+              ),
+              child: const Icon(Icons.build_rounded,
+                  color: Colors.white, size: 20),
+            ),
+          ],
         ),
-        const SizedBox(height: 20),
-        Text(
+        const SizedBox(height: 18),
+        const Text(
           'Comment\nvoulez-vous utiliser\nBrikolik ?',
-          style: Theme.of(context).textTheme.displayMedium,
+          style: TextStyle(
+            fontFamily: 'Nunito',
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            height: 1.2,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 60),
         Text(
           'Choisissez votre profil pour personnaliser votre expérience',
           style: Theme.of(context).textTheme.bodyMedium,
@@ -109,6 +210,7 @@ class _RoleScreenState extends State<RoleScreen> {
   }
 }
 
+// ── Role Card ─────────────────────────────────
 class _RoleCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -133,11 +235,11 @@ class _RoleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOut,
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: selected ? BrikolikColors.primaryLight : BrikolikColors.surface,
+          color: selected ? BrikolikColors.surface : BrikolikColors.surface,
           borderRadius: BorderRadius.circular(BrikolikRadius.lg),
           border: Border.all(
             color: selected ? BrikolikColors.primary : BrikolikColors.border,
@@ -145,32 +247,39 @@ class _RoleCard extends StatelessWidget {
           ),
           boxShadow: selected
               ? [
-            BoxShadow(
-              color: BrikolikColors.primary.withOpacity(0.12),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            )
-          ]
-              : [],
+                  BoxShadow(
+                    color: BrikolikColors.primary.withValues(alpha: 0.14),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  )
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Emoji icon
+            // Emoji icon box
             Container(
-              width: 56,
-              height: 56,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
-                color: selected
-                    ? BrikolikColors.primary
-                    : BrikolikColors.surfaceVariant,
+                gradient: selected
+                    ? BrikolikColors.brandGradient
+                    : null,
+                color: selected ? null : BrikolikColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(BrikolikRadius.md),
               ),
               child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 26)),
+                child: Text(emoji, style: const TextStyle(fontSize: 24)),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,32 +292,26 @@ class _RoleCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
-                      if (selected)
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(
-                            color: BrikolikColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                        )
-                      else
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: BrikolikColors.border,
-                              width: 2,
-                            ),
-                          ),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          gradient: selected
+                              ? BrikolikColors.brandGradient
+                              : null,
+                          color: selected ? null : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: selected
+                              ? null
+                              : Border.all(
+                                  color: BrikolikColors.border, width: 2),
                         ),
+                        child: selected
+                            ? const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 14)
+                            : null,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),
@@ -216,29 +319,31 @@ class _RoleCard extends StatelessWidget {
                     subtitle,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   ...features.map(
-                        (f) => Padding(
-                      padding: const EdgeInsets.only(bottom: 5),
+                    (f) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Row(
                         children: [
                           Icon(
                             Icons.check_circle_rounded,
-                            size: 14,
+                            size: 13,
                             color: selected
                                 ? BrikolikColors.primary
-                                : BrikolikColors.textHint,
+                                : BrikolikColors.frostSilver,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            f,
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: selected
-                                  ? BrikolikColors.textPrimary
-                                  : BrikolikColors.textSecondary,
+                          const SizedBox(width: 7),
+                          Expanded(
+                            child: Text(
+                              f,
+                              style: TextStyle(
+                                fontFamily: 'Nunito',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? BrikolikColors.textSecondary
+                                    : BrikolikColors.textHint,
+                              ),
                             ),
                           ),
                         ],

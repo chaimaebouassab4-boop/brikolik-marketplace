@@ -49,9 +49,10 @@ class JobDetailsScreen extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.all(8),
         child: CircleAvatar(
-          backgroundColor: BrikolikColors.surface,
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded, size: 20),
+            icon: const Icon(Icons.arrow_back_rounded,
+                size: 20, color: BrikolikColors.textPrimary),
             onPressed: () => Navigator.pop(context),
           ),
         ),
@@ -60,9 +61,10 @@ class JobDetailsScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(right: 8),
           child: CircleAvatar(
-            backgroundColor: BrikolikColors.surface,
+            backgroundColor: Colors.white.withValues(alpha: 0.9),
             child: IconButton(
-              icon: const Icon(Icons.share_outlined, size: 20),
+              icon: const Icon(Icons.share_outlined,
+                  size: 20, color: BrikolikColors.textPrimary),
               onPressed: () {},
             ),
           ),
@@ -74,7 +76,7 @@ class JobDetailsScreen extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFFFF0E6), Color(0xFFFFD9B8)],
+              colors: [Color(0xFFECEEF7), Color(0xFFF0ECF8)],
             ),
           ),
           child: Center(
@@ -85,11 +87,11 @@ class JobDetailsScreen extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: BrikolikColors.primary,
+                    gradient: BrikolikColors.brandGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: BrikolikColors.primary.withOpacity(0.3),
+                        color: BrikolikColors.primary.withValues(alpha: 0.28),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       )
@@ -99,14 +101,25 @@ class JobDetailsScreen extends StatelessWidget {
                       size: 36, color: Colors.white),
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Plomberie',
-                  style: TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: BrikolikColors.primary,
-                    letterSpacing: 0.5,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: BrikolikColors.primaryLight,
+                    borderRadius:
+                        BorderRadius.circular(BrikolikRadius.full),
+                    border: Border.all(
+                        color: BrikolikColors.border, width: 1),
+                  ),
+                  child: const Text(
+                    'Plomberie',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: BrikolikColors.primary,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
               ],
@@ -123,13 +136,13 @@ class JobDetailsScreen extends StatelessWidget {
         StatusBadge.open(),
         const SizedBox(width: 8),
         const Icon(Icons.access_time_rounded,
-            size: 14, color: BrikolikColors.textHint),
+            size: 14, color: BrikolikColors.muted),
         const SizedBox(width: 4),
         Text('Posté il y a 15 min',
             style: Theme.of(context).textTheme.bodySmall),
         const Spacer(),
         const Icon(Icons.visibility_outlined,
-            size: 14, color: BrikolikColors.textHint),
+            size: 14, color: BrikolikColors.muted),
         const SizedBox(width: 4),
         Text('24 vues', style: Theme.of(context).textTheme.bodySmall),
       ],
@@ -147,7 +160,7 @@ class JobDetailsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BrikolikColors.surface,
+        gradient: BrikolikColors.heroGradient,
         borderRadius: BorderRadius.circular(BrikolikRadius.lg),
         border: Border.all(color: BrikolikColors.border),
       ),
@@ -184,13 +197,21 @@ class JobDetailsScreen extends StatelessWidget {
       children: [
         Text('Description', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 10),
-        Text(
-          'La robinetterie du lavabo de ma salle de bain fuit depuis quelques jours. '
-              'L\'eau goutte constamment même lorsque le robinet est fermé. '
-              'J\'ai besoin d\'un plombier qualifié pour diagnostiquer et réparer le problème rapidement.',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            height: 1.6,
-            color: BrikolikColors.textSecondary,
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: BrikolikColors.surface,
+            borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+            border: Border.all(color: BrikolikColors.border),
+          ),
+          child: Text(
+            'La robinetterie du lavabo de ma salle de bain fuit depuis quelques jours. '
+            'L\'eau goutte constamment même lorsque le robinet est fermé. '
+            'J\'ai besoin d\'un plombier qualifié pour diagnostiquer et réparer le problème rapidement.',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  height: 1.6,
+                  color: BrikolikColors.textSecondary,
+                ),
           ),
         ),
       ],
@@ -209,6 +230,13 @@ class JobDetailsScreen extends StatelessWidget {
             color: BrikolikColors.surface,
             borderRadius: BorderRadius.circular(BrikolikRadius.lg),
             border: Border.all(color: BrikolikColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: BrikolikColors.primary.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -225,16 +253,32 @@ class JobDetailsScreen extends StatelessWidget {
                       children: [
                         const StarRating(rating: 4.8, reviewCount: 12),
                         const SizedBox(width: 8),
-                        const Icon(Icons.shield_outlined,
-                            size: 13, color: BrikolikColors.success),
-                        const SizedBox(width: 3),
-                        Text('Vérifié',
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: BrikolikColors.success,
-                            )),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: BrikolikColors.successLight,
+                            borderRadius:
+                                BorderRadius.circular(BrikolikRadius.full),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.shield_outlined,
+                                  size: 11, color: BrikolikColors.success),
+                              SizedBox(width: 3),
+                              Text(
+                                'Vérifié',
+                                style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: BrikolikColors.success,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -243,17 +287,24 @@ class JobDetailsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () =>
-                    Navigator.pushNamed(context, '/chat'),
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
+              GestureDetector(
+                onTap: () => Navigator.pushNamed(context, '/chat'),
+                child: Container(
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: BrikolikColors.primaryLight,
+                    gradient: BrikolikColors.brandGradient,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: BrikolikColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                   child: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 18, color: BrikolikColors.primary),
+                      size: 18, color: Colors.white),
                 ),
               ),
             ],
@@ -279,7 +330,7 @@ class JobDetailsScreen extends StatelessWidget {
           reviews: 47,
           price: '350 MAD',
           message:
-          'Je peux intervenir aujourd\'hui même. Plombier avec 8 ans d\'expérience.',
+              'Je peux intervenir aujourd\'hui même. Plombier avec 8 ans d\'expérience.',
           isPro: true,
         ),
         const SizedBox(height: 10),
@@ -304,7 +355,7 @@ class JobDetailsScreen extends StatelessWidget {
             top: BorderSide(color: BrikolikColors.border, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: BrikolikColors.primary.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -313,10 +364,41 @@ class JobDetailsScreen extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: BrikolikButton(
-              label: 'Faire une offre',
-              onPressed: () {},
-              icon: Icons.send_rounded,
+            child: GestureDetector(
+              onTap: () {},
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: BrikolikColors.brandGradient,
+                  borderRadius:
+                      BorderRadius.circular(BrikolikRadius.md),
+                  boxShadow: [
+                    BoxShadow(
+                      color:
+                          BrikolikColors.accent.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.send_rounded,
+                        color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Faire une offre',
+                      style: TextStyle(
+                        fontFamily: 'Nunito',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -325,7 +407,8 @@ class JobDetailsScreen extends StatelessWidget {
             width: 52,
             decoration: BoxDecoration(
               color: BrikolikColors.surfaceVariant,
-              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+              borderRadius:
+                  BorderRadius.circular(BrikolikRadius.md),
               border: Border.all(color: BrikolikColors.border),
             ),
             child: IconButton(
@@ -340,6 +423,7 @@ class JobDetailsScreen extends StatelessWidget {
   }
 }
 
+// ── Info Tile ─────────────────────────────────
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -358,7 +442,15 @@ class _InfoTile extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
           const SizedBox(height: 6),
           Text(
             label,
@@ -386,17 +478,19 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
+// ── Vertical Divider ──────────────────────────
 class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 48,
+      height: 52,
       color: BrikolikColors.divider,
     );
   }
 }
 
+// ── Offer Card ────────────────────────────────
 class _OfferCard extends StatelessWidget {
   final String name;
   final double rating;
@@ -425,6 +519,15 @@ class _OfferCard extends StatelessWidget {
           color: isPro ? BrikolikColors.primary : BrikolikColors.border,
           width: isPro ? 1.5 : 1,
         ),
+        boxShadow: isPro
+            ? [
+                BoxShadow(
+                  color: BrikolikColors.primary.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -439,16 +542,18 @@ class _OfferCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(name, style: Theme.of(context).textTheme.titleSmall),
+                        Text(name,
+                            style:
+                                Theme.of(context).textTheme.titleSmall),
                         if (isPro) ...[
                           const SizedBox(width: 6),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: BrikolikColors.primaryLight,
-                              borderRadius:
-                              BorderRadius.circular(BrikolikRadius.full),
+                              gradient: BrikolikColors.brandGradient,
+                              borderRadius: BorderRadius.circular(
+                                  BrikolikRadius.full),
                             ),
                             child: const Text(
                               'PRO',
@@ -456,7 +561,7 @@ class _OfferCard extends StatelessWidget {
                                 fontFamily: 'Nunito',
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: BrikolikColors.primary,
+                                color: Colors.white,
                               ),
                             ),
                           ),
@@ -467,13 +572,22 @@ class _OfferCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Text(
-                price,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: BrikolikColors.textPrimary,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: BrikolikColors.primaryLight,
+                  borderRadius:
+                      BorderRadius.circular(BrikolikRadius.sm),
+                ),
+                child: Text(
+                  price,
+                  style: const TextStyle(
+                    fontFamily: 'Nunito',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: BrikolikColors.primary,
+                  ),
                 ),
               ),
             ],
@@ -485,21 +599,39 @@ class _OfferCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
-                child: BrikolikButton(
-                  label: 'Accepter',
-                  onPressed: () {},
-                  height: 40,
+                child: GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: BrikolikColors.brandGradient,
+                      borderRadius:
+                          BorderRadius.circular(BrikolikRadius.md),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Accepter',
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: BrikolikButton(
                   label: 'Contacter',
-                  onPressed: () => Navigator.pushNamed(context, '/chat'),
+                  onPressed: () =>
+                      Navigator.pushNamed(context, '/chat'),
                   outlined: true,
                   height: 40,
                 ),
