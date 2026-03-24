@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,14 +13,17 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
+  final AuthService _authService = AuthService();
+
   bool _isLogin = true;
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _phoneCtrl    = TextEditingController();
+  final _phoneCtrl    = TextEditingController(text: 'chaimaechaimae@gmail.com');
   final _nameCtrl     = TextEditingController();
-  final _passwordCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController(text: 'CHAIMAE2026@');
   final _formKey      = GlobalKey<FormState>();
+  
 
   late final TabController _tabCtrl;
 
@@ -38,14 +43,6 @@ class _LoginScreenState extends State<LoginScreen>
     _nameCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
-  }
-
-  void _submit() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    setState(() => _isLoading = false);
-    if (mounted) Navigator.pushReplacementNamed(context, '/role');
   }
 
   @override
@@ -199,11 +196,11 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 14),
                   ],
                   BrikolikInput(
-                    hint: '+212 6XX XXX XXX',
+                    hint: 'email@exemple.com',
                     label: 'Numéro de téléphone',
                     controller: _phoneCtrl,
-                    prefixIcon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
                     validator: (v) =>
                         (v == null || v.isEmpty) ? 'Champ requis' : null,
                   ),
@@ -258,7 +255,50 @@ class _LoginScreenState extends State<LoginScreen>
                   _GradientButton(
                     label: _isLogin ? 'Se connecter' : 'Créer mon compte',
                     isLoading: _isLoading,
-                    onPressed: _submit,
+                    onPressed: () async {
+                      if (!(_formKey.currentState?.validate() ?? false)) return;
+                      setState(() => _isLoading = true);
+
+                      try {
+                        if (_isLogin) {
+                          await _authService.signIn(
+                            email: _phoneCtrl.text, // temporairement email
+                            password: _passwordCtrl.text,
+                          );
+
+                          print("LOGIN SUCCESS");
+                        } else {
+                          await _authService.signUp(
+                            email: _phoneCtrl.text, // change après
+                            password: _passwordCtrl.text,
+                            fullName: _nameCtrl.text,
+                          );
+
+                          print("SIGNUP SUCCESS");
+                        }
+                      } on FirebaseAuthException catch (e) {
+                        final action = _isLogin ? 'LOGIN' : 'SIGNUP';
+                        final details = '${e.code} | ${e.message}';
+                        print("ERROR $action: $details");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur $action: $details')),
+                          );
+                        }
+                      } catch (e) {
+                        final action = _isLogin ? 'LOGIN' : 'SIGNUP';
+                        print("ERROR $action: $e");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur $action: $e')),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                        }
+                      }
+                    },
                   ),
                   const SizedBox(height: 20),
                   const DividerWithLabel(label: 'ou continuer avec'),

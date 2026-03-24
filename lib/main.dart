@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'theme/app_theme.dart';
+import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/role_screen.dart';
 import 'screens/customer_profile_screen.dart';
@@ -10,7 +12,11 @@ import 'screens/job_details_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/rating_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const BrikolikApp());
 }
 
