@@ -23,6 +23,9 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - lib/assets/
+
   # Add Nunito from Google Fonts
   # Option A: Use google_fonts package (recommended)
   # Option B: Bundle locally — download from fonts.google.com and place in assets/fonts/

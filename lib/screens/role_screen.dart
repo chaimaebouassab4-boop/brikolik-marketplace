@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 
 class RoleScreen extends StatefulWidget {
@@ -12,12 +13,31 @@ class RoleScreen extends StatefulWidget {
 class _RoleScreenState extends State<RoleScreen> {
   String? _selectedRole; // 'customer' | 'worker'
 
-  void _continue() {
-    if (_selectedRole == null) return;
+  bool _isSaving = false;
+
+  void _continue() async {
+    if (_selectedRole == null || _isSaving) return;
+    setState(() => _isSaving = true);
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .update({'role': _selectedRole});
+      }
+    } catch (_) {
+      // On continue même si la sauvegarde échoue
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+
+    if (!mounted) return;
     if (_selectedRole == 'customer') {
-      Navigator.pushReplacementNamed(context, '/customer-profile');
+      Navigator.pushNamed(context, '/customer-profile');
     } else {
-      Navigator.pushReplacementNamed(context, '/worker-profile');
+      Navigator.pushNamed(context, '/worker-profile');
     }
   }
 
@@ -25,6 +45,15 @@ class _RoleScreenState extends State<RoleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white, size: 20),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+      ),
       body: Stack(
         children: [
           Positioned(
@@ -134,30 +163,40 @@ class _RoleScreenState extends State<RoleScreen> {
                                 child: Container(
                                   height: 52,
                                   alignment: Alignment.center,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Continuer',
-                                        style: TextStyle(
-                                          fontFamily: 'Nunito',
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: _selectedRole != null
-                                              ? Colors.white
-                                              : BrikolikColors.textHint,
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(Colors.white),
+                                          ),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Continuer',
+                                              style: TextStyle(
+                                                fontFamily: 'Nunito',
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                                color: _selectedRole != null
+                                                    ? Colors.white
+                                                    : BrikolikColors.textHint,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Icon(
+                                              Icons.arrow_forward_rounded,
+                                              color: _selectedRole != null
+                                                  ? Colors.white
+                                                  : BrikolikColors.textHint,
+                                              size: 18,
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.arrow_forward_rounded,
-                                        color: _selectedRole != null
-                                            ? Colors.white
-                                            : BrikolikColors.textHint,
-                                        size: 18,
-                                      ),
-                                    ],
-                                  ),
                                 ),
                               ),
                             ),

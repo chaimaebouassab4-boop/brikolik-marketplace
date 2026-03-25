@@ -31,16 +31,9 @@ class _RatingScreenState extends State<RatingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      appBar: AppBar(
-        title: const Text('Évaluation'),
-        backgroundColor: BrikolikColors.surface,
-        foregroundColor: BrikolikColors.textPrimary,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: BrikolikColors.border, height: 1),
-        ),
+      appBar: BrikolikAppBar(
+        title: 'Évaluation',
+        showBackButton: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

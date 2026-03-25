@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
-import '../models/app_models.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class JobListScreen extends StatefulWidget {
   const JobListScreen({super.key});
@@ -24,56 +25,7 @@ class _JobListScreenState extends State<JobListScreen> {
     {'label': 'Jardinage',   'icon': Icons.grass_outlined},
   ];
 
-  final List<Map<String, dynamic>> _jobs = [
-    {
-      'title':    'Réparation fuite eau salle de bain',
-      'category': 'Plomberie',
-      'icon':     Icons.water_drop_outlined,
-      'location': 'Casablanca, Maarif',
-      'budget':   '200–400 MAD',
-      'time':     'Il y a 15 min',
-      'status':   'open',
-      'offers':   3,
-      'name':     'Karim B.',
-      'rating':   4.8,
-    },
-    {
-      'title':    'Installation tableau électrique',
-      'category': 'Électricité',
-      'icon':     Icons.bolt_outlined,
-      'location': 'Rabat, Agdal',
-      'budget':   '600–900 MAD',
-      'time':     'Il y a 1h',
-      'status':   'open',
-      'offers':   1,
-      'name':     'Samira K.',
-      'rating':   4.5,
-    },
-    {
-      'title':    'Nettoyage appartement 3 pièces',
-      'category': 'Nettoyage',
-      'icon':     Icons.cleaning_services_outlined,
-      'location': 'Marrakech, Guéliz',
-      'budget':   '150–250 MAD',
-      'time':     'Il y a 3h',
-      'status':   'inprogress',
-      'offers':   5,
-      'name':     'Fatima A.',
-      'rating':   4.9,
-    },
-    {
-      'title':    'Peinture salon et couloir',
-      'category': 'Peinture',
-      'icon':     Icons.format_paint_outlined,
-      'location': 'Fès, Saïss',
-      'budget':   '800–1200 MAD',
-      'time':     'Il y a 5h',
-      'status':   'open',
-      'offers':   0,
-      'name':     'Youssef M.',
-      'rating':   4.6,
-    },
-  ];
+  // Removed hardcoded _jobs list
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +91,31 @@ class _JobListScreenState extends State<JobListScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
       child: Row(
         children: [
+          GestureDetector(
+            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false),
+            child: Container(
+              width: 42,
+              height: 42,
+              margin: const EdgeInsets.only(right: 14),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: BrikolikColors.primaryLight,
+                border: Border.all(color: BrikolikColors.border),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  'lib/assets/lasgbrik-removebg-preview.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.home_rounded,
+                    color: BrikolikColors.primary,
+                    size: 22,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,6 +185,7 @@ class _JobListScreenState extends State<JobListScreen> {
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       child: TextFormField(
         controller: _searchCtrl,
+        onChanged: (_) => setState(() {}),
         style: const TextStyle(
           fontFamily: 'Nunito',
           fontSize: 15,
@@ -282,14 +260,91 @@ class _JobListScreenState extends State<JobListScreen> {
   }
 
   Widget _buildJobList() {
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
-      itemCount: _jobs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 14),
-      itemBuilder: (context, i) {
-        return JobCard(
-          job: _jobs[i],
-          onTap: () => Navigator.pushNamed(context, '/job-details'),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('jobs')
+          .orderBy('createdAt', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: BrikolikColors.primary));
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Erreur: ${snapshot.error}'));
+        }
+
+        final catFilter = _categories[_selectedCategory]['label'];
+        
+        // Filter locally by category
+        final docs = snapshot.data?.docs.where((doc) {
+          if (catFilter == 'Tous') return true;
+          final d = doc.data() as Map<String, dynamic>;
+          return d['category'] == catFilter;
+        }).toList() ?? [];
+
+        // Appliquer aussi le filtre de recherche simple (sur le titre)
+        final query = _searchCtrl.text.trim().toLowerCase();
+        final filteredDocs = docs.where((doc) {
+          if (query.isEmpty) return true;
+          final d = doc.data() as Map<String, dynamic>;
+          final title = (d['title'] as String?)?.toLowerCase() ?? '';
+          return title.contains(query);
+        }).toList();
+
+        if (filteredDocs.isEmpty) {
+          return const EmptyState(
+            icon: Icons.work_off_outlined,
+            title: 'Aucune mission trouvée',
+            subtitle: 'Soyez le premier à poster une demande dans cette catégorie !',
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+          itemCount: filteredDocs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
+          itemBuilder: (context, i) {
+            final data = filteredDocs[i].data() as Map<String, dynamic>;
+            final category = data['category'] as String? ?? 'Autre';
+            
+            IconData icon = Icons.work_outline_rounded;
+            switch(category) {
+              case 'Plomberie': icon = Icons.water_drop_outlined; break;
+              case 'Électricité': icon = Icons.bolt_outlined; break;
+              case 'Nettoyage': icon = Icons.cleaning_services_outlined; break;
+              case 'Peinture': icon = Icons.format_paint_outlined; break;
+              case 'Jardinage': icon = Icons.grass_outlined; break;
+              case 'Menuiserie': icon = Icons.carpenter_outlined; break;
+              case 'Maçonnerie': icon = Icons.construction_outlined; break;
+            }
+
+            String timeStr = "À l'instant";
+            final createdAt = data['createdAt'] as Timestamp?;
+            if (createdAt != null) {
+               final diff = DateTime.now().difference(createdAt.toDate());
+               if (diff.inMinutes < 60) timeStr = 'Il y a ${diff.inMinutes} min';
+               else if (diff.inHours < 24) timeStr = 'Il y a ${diff.inHours} h';
+               else timeStr = 'Il y a ${diff.inDays} j';
+            }
+
+            final jobMap = {
+              'status': data['status'] ?? 'open',
+              'offers': data['offersCount'] ?? 0,
+              'icon': icon,
+              'category': category,
+              'time': timeStr,
+              'title': data['title'] ?? 'Sans titre',
+              'location': data['location'] ?? '📍 Non spécifié',
+              'budget': data['budget'] ?? '???',
+              'name': data['customerName'] ?? 'Client',
+              'rating': (data['rating'] ?? 0.0).toDouble(),
+            };
+
+            return JobCard(
+              job: jobMap,
+              onTap: () => Navigator.pushNamed(context, '/job-details'),
+            );
+          },
         );
       },
     );

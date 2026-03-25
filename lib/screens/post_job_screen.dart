@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 
@@ -59,25 +61,15 @@ class _PostJobScreenState extends State<PostJobScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      appBar: AppBar(
-        title: const Text('Poster un service'),
-        backgroundColor: BrikolikColors.surface,
-        foregroundColor: BrikolikColors.textPrimary,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: BrikolikColors.border, height: 1),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            if (_currentStep > 0) {
-              setState(() => _currentStep--);
-            } else {
-              Navigator.pop(context);
-            }
-          },
-        ),
+      appBar: BrikolikAppBar(
+        title: 'Poster un service',
+        onBackPressed: () {
+          if (_currentStep > 0) {
+            setState(() => _currentStep--);
+          } else {
+            Navigator.pop(context);
+          }
+        },
       ),
       body: Column(
         children: [
@@ -584,6 +576,58 @@ class _PostJobScreenState extends State<PostJobScreen> {
     );
   }
 
+  bool _isSubmitting = false;
+
+  Future<void> _submitJob() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez vous authentifier.')),
+      );
+      return;
+    }
+
+    if (_titleCtrl.text.trim().isEmpty || _selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez remplir le titre et la catégorie.')),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userName = userDoc.data()?['fullName'] ?? 'Client';
+
+      await FirebaseFirestore.instance.collection('jobs').add({
+        'title': _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'category': _selectedCategory,
+        'location': _locationCtrl.text.trim(),
+        'urgency': _selectedUrgency,
+        'budget': '${_budgetMinCtrl.text}–${_budgetMaxCtrl.text} MAD',
+        'customerId': uid,
+        'customerName': userName,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+        'offersCount': 0,
+        'rating': 0.0,
+      });
+
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/jobs');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   Widget _buildBottomBar() {
     final isLast = _currentStep == _steps.length - 1;
     return Container(
@@ -602,8 +646,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
       ),
       child: GestureDetector(
         onTap: () {
+          if (_isSubmitting) return;
           if (isLast) {
-            Navigator.pushReplacementNamed(context, '/jobs');
+            _submitJob();
           } else {
             setState(() => _currentStep++);
           }
@@ -612,9 +657,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
           height: 52,
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: BrikolikColors.brandGradient,
+            gradient: _isSubmitting ? null : BrikolikColors.brandGradient,
+            color: _isSubmitting ? BrikolikColors.surfaceVariant : null,
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
-            boxShadow: [
+            boxShadow: _isSubmitting ? [] : [
               BoxShadow(
                 color: BrikolikColors.accent.withValues(alpha: 0.28),
                 blurRadius: 12,
@@ -623,30 +669,35 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ],
           ),
           child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isLast) ...[
-                  const Icon(Icons.check_rounded,
-                      color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  isLast ? 'Publier ma demande' : 'Continuer',
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: Colors.white,
+            child: _isSubmitting
+                ? const SizedBox(
+                    width: 22, height: 22,
+                    child: CircularProgressIndicator(color: BrikolikColors.primary, strokeWidth: 2.5),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isLast) ...[
+                        const Icon(Icons.check_rounded,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        isLast ? 'Publier ma demande' : 'Continuer',
+                        style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                      if (!isLast) ...[
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward_rounded,
+                            color: Colors.white, size: 18),
+                      ],
+                    ],
                   ),
-                ),
-                if (!isLast) ...[
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded,
-                      color: Colors.white, size: 18),
-                ],
-              ],
-            ),
           ),
         ),
       ),

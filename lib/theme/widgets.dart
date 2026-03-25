@@ -555,3 +555,82 @@ class BrikolikLogoBox extends StatelessWidget {
     );
   }
 }
+
+// ── Global AppBar ─────────────────────────────
+class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String title;
+  final List<Widget>? actions;
+  final VoidCallback? onBackPressed;
+  final bool showBackButton;
+
+  const BrikolikAppBar({
+    super.key,
+    required this.title,
+    this.actions,
+    this.onBackPressed,
+    this.showBackButton = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      backgroundColor: BrikolikColors.surface,
+      foregroundColor: BrikolikColors.textPrimary,
+      elevation: 0,
+      centerTitle: false,
+      leading: showBackButton 
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              onPressed: onBackPressed ?? () {
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                } else {
+                  Navigator.pushReplacementNamed(context, '/welcome');
+                }
+              },
+            )
+          : null,
+      automaticallyImplyLeading: false,
+      titleSpacing: showBackButton ? 0 : 20,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false),
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: BrikolikColors.primaryLight,
+                border: Border.all(color: BrikolikColors.border),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'lib/assets/lasgbrik-removebg-preview.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.home_rounded,
+                    color: BrikolikColors.primary,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(title),
+        ],
+      ),
+      actions: actions,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(color: BrikolikColors.border, height: 1),
+      ),
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+}

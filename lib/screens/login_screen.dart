@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _phoneCtrl    = TextEditingController(text: 'chaimaechaimae@gmail.com');
+  final _emailCtrl    = TextEditingController();
   final _nameCtrl     = TextEditingController();
   final _passwordCtrl = TextEditingController(text: 'CHAIMAE2026@');
   final _formKey      = GlobalKey<FormState>();
@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _tabCtrl.dispose();
-    _phoneCtrl.dispose();
+    _emailCtrl.dispose();
     _nameCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
@@ -197,12 +197,15 @@ class _LoginScreenState extends State<LoginScreen>
                   ],
                   BrikolikInput(
                     hint: 'email@exemple.com',
-                    label: 'Numéro de téléphone',
-                    controller: _phoneCtrl,
+                    label: 'Email',
+                    controller: _emailCtrl,
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (v) =>
-                        (v == null || v.isEmpty) ? 'Champ requis' : null,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Champ requis';
+                      if (!v.contains('@')) return 'Email invalide';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 14),
                   BrikolikInput(
@@ -262,27 +265,49 @@ class _LoginScreenState extends State<LoginScreen>
                       try {
                         if (_isLogin) {
                           await _authService.signIn(
-                            email: _phoneCtrl.text, // temporairement email
+                            email: _emailCtrl.text,
                             password: _passwordCtrl.text,
                           );
-
                           print("LOGIN SUCCESS");
+                          if (mounted) {
+                            final role = await _authService.getUserRole();
+                            if (!mounted) return;
+                            if (role == 'customer') {
+                              Navigator.pushReplacementNamed(context, '/customer-profile');
+                            } else if (role == 'worker') {
+                              Navigator.pushReplacementNamed(context, '/worker-profile');
+                            } else {
+                              // Pas encore de rôle choisi
+                              Navigator.pushReplacementNamed(context, '/role');
+                            }
+                          }
                         } else {
                           await _authService.signUp(
-                            email: _phoneCtrl.text, // change après
+                            email: _emailCtrl.text,
                             password: _passwordCtrl.text,
                             fullName: _nameCtrl.text,
                           );
-
                           print("SIGNUP SUCCESS");
+                          if (mounted) {
+                            Navigator.pushReplacementNamed(context, '/role');
+                          }
                         }
                       } on FirebaseAuthException catch (e) {
                         final action = _isLogin ? 'LOGIN' : 'SIGNUP';
                         final details = '${e.code} | ${e.message}';
+                        final friendlyMessage = _friendlyAuthMessage(e);
                         print("ERROR $action: $details");
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Erreur $action: $details')),
+                            SnackBar(content: Text(friendlyMessage)),
+                          );
+                        }
+                      } on AuthServiceException catch (e) {
+                        final action = _isLogin ? 'LOGIN' : 'SIGNUP';
+                        print("ERROR $action: ${e.code} | ${e.message}");
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.message)),
                           );
                         }
                       } catch (e) {
@@ -311,6 +336,25 @@ class _LoginScreenState extends State<LoginScreen>
         ),
       ),
     );
+  }
+
+  String _friendlyAuthMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Cet email est deja utilise.';
+      case 'invalid-email':
+        return 'Adresse email invalide.';
+      case 'weak-password':
+        return 'Mot de passe trop faible (minimum 6 caracteres).';
+      case 'user-not-found':
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Identifiants invalides.';
+      case 'too-many-requests':
+        return 'Trop de tentatives. Reessayez plus tard.';
+      default:
+        return 'Operation impossible pour le moment. Reessayez.';
+    }
   }
 
   Widget _buildTabs() {

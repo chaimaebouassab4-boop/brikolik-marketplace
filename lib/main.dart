@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/role_screen.dart';
 import 'screens/customer_profile_screen.dart';
@@ -29,8 +30,9 @@ class BrikolikApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Brikolik',
       theme: AppTheme.light,
-      initialRoute: '/login',
+      initialRoute: '/welcome',
       routes: {
+        '/welcome':          (context) => const WelcomeScreen(),
         '/login':            (context) => const LoginScreen(),
         '/role':             (context) => const RoleScreen(),
         '/customer-profile': (context) => const CustomerProfileScreen(),
