@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 
@@ -7,40 +9,74 @@ class JobDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: BrikolikColors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildStatusRow(context),
-                  const SizedBox(height: 16),
-                  _buildTitle(context),
-                  const SizedBox(height: 20),
-                  _buildInfoGrid(context),
-                  const SizedBox(height: 24),
-                  _buildDescription(context),
-                  const SizedBox(height: 24),
-                  _buildClientCard(context),
-                  const SizedBox(height: 24),
-                  _buildOffersSection(context),
-                  const SizedBox(height: 100),
-                ],
+    final jobId = ModalRoute.of(context)?.settings.arguments as String?;
+    if (jobId == null) {
+      return Scaffold(
+        appBar: const BrikolikAppBar(title: 'Erreur', showBackButton: true),
+        body: const Center(child: Text('Mission introuvable')),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('jobs').doc(jobId).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator(color: BrikolikColors.primary)));
+        }
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          return const Scaffold(body: Center(child: Text('Mission introuvable')));
+        }
+
+        final jobData = snapshot.data!.data() as Map<String, dynamic>;
+        final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+        final isOwner = currentUserId == jobData['customerId'];
+
+        return Scaffold(
+          backgroundColor: BrikolikColors.background,
+          body: CustomScrollView(
+            slivers: [
+              _buildSliverAppBar(context, jobData),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatusRow(context, jobData),
+                      const SizedBox(height: 16),
+                      _buildTitle(context, jobData),
+                      const SizedBox(height: 20),
+                      _buildInfoGrid(context, jobData),
+                      const SizedBox(height: 24),
+                      _buildDescription(context, jobData),
+                      const SizedBox(height: 24),
+                      _buildClientCard(context, jobData),
+                      const SizedBox(height: 24),
+                      if (isOwner) _buildOffersSection(context, jobId),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomBar(context),
+          bottomNavigationBar: isOwner ? null : _buildBottomBar(context, jobId),
+        );
+      },
     );
   }
 
-  Widget _buildSliverAppBar(BuildContext context) {
+  Widget _buildSliverAppBar(BuildContext context, Map<String, dynamic> jobData) {
+    final cat = jobData['category'] as String? ?? 'Autre';
+    IconData icon = Icons.work_outline;
+    if (cat == 'Plomberie') icon = Icons.water_drop_outlined;
+    else if (cat == 'Électricité') icon = Icons.bolt_outlined;
+    else if (cat == 'Nettoyage') icon = Icons.cleaning_services_outlined;
+    else if (cat == 'Peinture') icon = Icons.format_paint_outlined;
+    else if (cat == 'Jardinage') icon = Icons.grass_outlined;
+    else if (cat == 'Menuiserie') icon = Icons.carpenter_outlined;
+    else if (cat == 'Maçonnerie') icon = Icons.construction_outlined;
+
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
@@ -97,8 +133,7 @@ class JobDetailsScreen extends StatelessWidget {
                       )
                     ],
                   ),
-                  child: const Icon(Icons.water_drop_outlined,
-                      size: 36, color: Colors.white),
+                  child: Icon(icon, size: 36, color: Colors.white),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -111,9 +146,9 @@ class JobDetailsScreen extends StatelessWidget {
                     border: Border.all(
                         color: BrikolikColors.border, width: 1),
                   ),
-                  child: const Text(
-                    'Plomberie',
-                    style: TextStyle(
+                  child: Text(
+                    cat,
+                    style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -130,33 +165,41 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusRow(BuildContext context) {
+  Widget _buildStatusRow(BuildContext context, Map<String, dynamic> jobData) {
+    String timeStr = "À l'instant";
+    final createdAt = jobData['createdAt'] as Timestamp?;
+    if (createdAt != null) {
+      final diff = DateTime.now().difference(createdAt.toDate());
+      if (diff.inMinutes < 60) timeStr = 'Il y a ${diff.inMinutes} min';
+      else if (diff.inHours < 24) timeStr = 'Il y a ${diff.inHours} h';
+      else timeStr = 'Il y a ${diff.inDays} j';
+    }
+
     return Row(
       children: [
-        StatusBadge.open(),
+        jobData['status'] == 'open' ? StatusBadge.open() : StatusBadge.inProgress(),
         const SizedBox(width: 8),
         const Icon(Icons.access_time_rounded,
             size: 14, color: BrikolikColors.muted),
         const SizedBox(width: 4),
-        Text('Posté il y a 15 min',
-            style: Theme.of(context).textTheme.bodySmall),
+        Text(timeStr, style: Theme.of(context).textTheme.bodySmall),
         const Spacer(),
         const Icon(Icons.visibility_outlined,
             size: 14, color: BrikolikColors.muted),
         const SizedBox(width: 4),
-        Text('24 vues', style: Theme.of(context).textTheme.bodySmall),
+        Text('${jobData['offersCount'] ?? 0} offres', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 
-  Widget _buildTitle(BuildContext context) {
+  Widget _buildTitle(BuildContext context, Map<String, dynamic> jobData) {
     return Text(
-      'Réparation fuite eau\nsalle de bain',
+      jobData['title'] ?? 'Sans titre',
       style: Theme.of(context).textTheme.headlineLarge,
     );
   }
 
-  Widget _buildInfoGrid(BuildContext context) {
+  Widget _buildInfoGrid(BuildContext context, Map<String, dynamic> jobData) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -169,21 +212,21 @@ class JobDetailsScreen extends StatelessWidget {
           _InfoTile(
             icon: Icons.payments_outlined,
             label: 'Budget',
-            value: '200–400 MAD',
+            value: jobData['budget'] ?? 'Non spécifié',
             color: BrikolikColors.success,
           ),
           _VerticalDivider(),
           _InfoTile(
             icon: Icons.location_on_outlined,
             label: 'Lieu',
-            value: 'Casablanca',
+            value: jobData['location'] ?? 'Inconnu',
             color: BrikolikColors.primary,
           ),
           _VerticalDivider(),
           _InfoTile(
             icon: Icons.schedule_rounded,
             label: 'Délai',
-            value: 'Urgent',
+            value: jobData['urgency'] ?? 'Flexible',
             color: BrikolikColors.warning,
           ),
         ],
@@ -191,13 +234,14 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDescription(BuildContext context) {
+  Widget _buildDescription(BuildContext context, Map<String, dynamic> jobData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Description', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 10),
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: BrikolikColors.surface,
@@ -205,9 +249,7 @@ class JobDetailsScreen extends StatelessWidget {
             border: Border.all(color: BrikolikColors.border),
           ),
           child: Text(
-            'La robinetterie du lavabo de ma salle de bain fuit depuis quelques jours. '
-            'L\'eau goutte constamment même lorsque le robinet est fermé. '
-            'J\'ai besoin d\'un plombier qualifié pour diagnostiquer et réparer le problème rapidement.',
+            jobData['description'] ?? 'Aucune description.',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   height: 1.6,
                   color: BrikolikColors.textSecondary,
@@ -218,7 +260,8 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildClientCard(BuildContext context) {
+  Widget _buildClientCard(BuildContext context, Map<String, dynamic> jobData) {
+    final name = jobData['customerName'] ?? 'Client';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -240,18 +283,18 @@ class JobDetailsScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const BrikolikAvatar(name: 'Karim Benali', size: 48),
+              BrikolikAvatar(name: name, size: 48),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Karim Benali',
+                    Text(name,
                         style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const StarRating(rating: 4.8, reviewCount: 12),
+                        StarRating(rating: (jobData['rating'] ?? 5.0).toDouble(), reviewCount: 0),
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -281,9 +324,6 @@ class JobDetailsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    Text('12 missions publiées',
-                        style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -314,39 +354,46 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOffersSection(BuildContext context) {
+  Widget _buildOffersSection(BuildContext context, String jobId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: '3 offres reçues',
-          actionLabel: 'Voir tout',
+          title: 'Offres reçues',
+          actionLabel: '',
           onAction: () {},
         ),
         const SizedBox(height: 12),
-        _OfferCard(
-          name: 'Hamid T.',
-          rating: 4.9,
-          reviews: 47,
-          price: '350 MAD',
-          message:
-              'Je peux intervenir aujourd\'hui même. Plombier avec 8 ans d\'expérience.',
-          isPro: true,
-        ),
-        const SizedBox(height: 10),
-        _OfferCard(
-          name: 'Rachid A.',
-          rating: 4.5,
-          reviews: 23,
-          price: '280 MAD',
-          message: 'Disponible demain matin, tarif compétitif.',
-          isPro: false,
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('jobs').doc(jobId).collection('offers').orderBy('createdAt', descending: true).snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) return const CircularProgressIndicator(color: BrikolikColors.primary);
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+               return const Text("Vous n'avez pas encore reçu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito'));
+            }
+            return Column(
+              children: snapshot.data!.docs.map((doc) {
+                 final offer = doc.data() as Map<String, dynamic>;
+                 return Padding(
+                   padding: const EdgeInsets.only(bottom: 10),
+                   child: _OfferCard(
+                     name: offer['workerName'] ?? 'Artisan',
+                     rating: 4.8,
+                     reviews: 12,
+                     price: offer['price'] ?? '...',
+                     message: offer['message'] ?? '',
+                     isPro: true,
+                   ),
+                 );
+              }).toList(),
+            );
+          }
         ),
       ],
     );
   }
 
-  Widget _buildBottomBar(BuildContext context) {
+  Widget _buildBottomBar(BuildContext context, String jobId) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
@@ -365,7 +412,9 @@ class JobDetailsScreen extends StatelessWidget {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                _showOfferDialog(context, jobId);
+              },
               child: Container(
                 height: 52,
                 decoration: BoxDecoration(
@@ -418,6 +467,99 @@ class JobDetailsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showOfferDialog(BuildContext context, String jobId) {
+    final offerCtrl = TextEditingController();
+    final messageCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 20, right: 20, top: 20,
+          ),
+          decoration: const BoxDecoration(
+            color: BrikolikColors.background,
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Faire une offre", style: Theme.of(ctx).textTheme.headlineMedium),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                BrikolikInput(hint: "Ex: 250 MAD", label: "Votre tarif", controller: offerCtrl),
+                const SizedBox(height: 10),
+                BrikolikInput(hint: "Pourquoi vous choisir ?", label: "Message", controller: messageCtrl, maxLines: 3),
+                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: isSubmitting ? null : () async {
+                    if (offerCtrl.text.isEmpty) return;
+                    setState(() => isSubmitting = true);
+                    try {
+                      final workerId = FirebaseAuth.instance.currentUser?.uid;
+                      if (workerId == null) {
+                        Navigator.pop(ctx);
+                        return;
+                      }
+                      
+                      final workerDoc = await FirebaseFirestore.instance.collection('users').doc(workerId).get();
+                      final wName = workerDoc.data()?['fullName'] ?? 'Artisan';
+                      
+                      await FirebaseFirestore.instance.collection('jobs').doc(jobId).collection('offers').add({
+                         'workerId': workerId,
+                         'workerName': wName,
+                         'price': offerCtrl.text,
+                         'message': messageCtrl.text,
+                         'createdAt': FieldValue.serverTimestamp(),
+                      });
+                      
+                      await FirebaseFirestore.instance.collection('jobs').doc(jobId).update({
+                         'offersCount': FieldValue.increment(1)
+                      });
+                      
+                      if (ctx.mounted) Navigator.pop(ctx);
+                    } catch(e) {
+                      setState(() => isSubmitting = false);
+                    }
+                  },
+                  child: Container(
+                    height: 52,
+                    decoration: BoxDecoration(
+                      gradient: isSubmitting ? null : BrikolikColors.brandGradient,
+                      color: isSubmitting ? BrikolikColors.surfaceVariant : null,
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                    ),
+                    child: Center(
+                      child: isSubmitting 
+                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: BrikolikColors.primary, strokeWidth: 2))
+                         : const Text(
+                              "Envoyer l'offre",
+                              style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                           ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
