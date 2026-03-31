@@ -263,20 +263,36 @@ class _HomeScreenState extends State<HomeScreen>
           width: double.infinity,
           constraints: BoxConstraints(minHeight: size.height * 0.88),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF0F1D3A),
-                Color(0xFF1B2F5E),
-                Color(0xFF2B3F7A),
-                Color(0xFF1F3A6B),
-              ],
-              stops: [0.0, 0.35, 0.72, 1.0],
-            ),
+            color: Color(0xFF0F1D3A), // Fallback base color
           ),
           child: Stack(
             children: [
+              // Background Image
+              Positioned.fill(
+                child: Image.asset(
+                  'lib/assets/deuxherobriko.png',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
+                ),
+              ),
+              // Dark gradient overlay for text readability (opaque on left, transparent on right)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        const Color(0xFF0F1D3A).withOpacity(0.95),
+                        const Color(0xFF1B2F5E).withOpacity(0.85),
+                        const Color(0xFF2B3F7A).withOpacity(0.4),
+                        const Color(0xFF1F3A6B).withOpacity(0.1),
+                      ],
+                      stops: const [0.0, 0.35, 0.72, 1.0],
+                    ),
+                  ),
+                ),
+              ),
               // Particles
               AnimatedBuilder(
                 animation: _particleCtrl,
@@ -1421,23 +1437,24 @@ class _TaskCardState extends State<_TaskCard> {
     cursor: SystemMouseCursors.click,
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: BrikolikColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: widget.data.c, width: 3),
-          top: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
-          right: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
-          bottom: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
-        ),
-        boxShadow: [BoxShadow(
-          color: _h ? widget.data.c.withOpacity(0.12) : Colors.black.withOpacity(0.04),
-          blurRadius: _h ? 20 : 10, offset: const Offset(0, 4),
-        )],
-      ),
       transform: _h ? (Matrix4.identity()..translate(0.0, -3.0)) : Matrix4.identity(),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Stack(children: [
+        // Card body with uniform border
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.fromLTRB(19, 16, 16, 16),
+          decoration: BoxDecoration(
+            color: BrikolikColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border,
+            ),
+            boxShadow: [BoxShadow(
+              color: _h ? widget.data.c.withOpacity(0.12) : Colors.black.withOpacity(0.04),
+              blurRadius: _h ? 20 : 10, offset: const Offset(0, 4),
+            )],
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Container(
             width: 38, height: 38,
@@ -1500,8 +1517,25 @@ class _TaskCardState extends State<_TaskCard> {
           ),
         ]),
       ]),
-    ),
-  );
+        ), // close inner AnimatedContainer
+        // Left accent bar
+        Positioned(
+          left: 0, top: 0, bottom: 0,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: 3,
+            decoration: BoxDecoration(
+              color: widget.data.c,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                bottomLeft: Radius.circular(16),
+              ),
+            ),
+          ),
+        ),
+      ]), // close Stack
+    ), // close outer AnimatedContainer
+  ); // close MouseRegion
 }
 
 class _SafetyCard extends StatefulWidget {
