@@ -32,7 +32,7 @@ class BrikolikApp extends StatelessWidget {
       theme: AppTheme.light,
       initialRoute: '/welcome',
       routes: {
-        '/welcome':          (context) => const WelcomeScreen(),
+        '/welcome':          (context) => const HomeScreen(),
         '/login':            (context) => const LoginScreen(),
         '/role':             (context) => const RoleScreen(),
         '/customer-profile': (context) => const CustomerProfileScreen(),

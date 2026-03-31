@@ -3,45 +3,52 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../theme/app_theme.dart';
 
-class WelcomeScreen extends StatefulWidget {
-  const WelcomeScreen({super.key});
+// ════════════════════════════════════════════════════════════════
+//  BRIKOLIK HOMEPAGE  —  Inspirée d'Airtasker, marché marocain
+// ════════════════════════════════════════════════════════════════
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen>
+class _HomeScreenState extends State<HomeScreen>
     with TickerProviderStateMixin {
-  late final AnimationController _masterCtrl;
+  // ── Controllers ──────────────────────────────────────────
+  late final AnimationController _heroCtrl;
   late final AnimationController _pulseCtrl;
   late final AnimationController _floatCtrl;
   late final AnimationController _particleCtrl;
   late final ScrollController _scrollCtrl;
 
-  // Section animations
-  late final Animation<double> _navFade;
+  // ── Hero animations ──────────────────────────────────────
   late final Animation<double> _heroFade;
   late final Animation<Offset> _heroSlide;
   late final Animation<double> _pulse;
   late final Animation<double> _float;
 
-  // Scroll-triggered sections visibility
-  final Map<String, bool> _sectionVisible = {
-    'services': false,
-    'howItWorks': false,
-    'stats': false,
+  // ── Scroll-triggered visibility ──────────────────────────
+  final Map<String, bool> _visible = {
     'trust': false,
-    'cta': false,
+    'categories': false,
+    'recentTasks': false,
+    'safety': false,
+    'worker': false,
+    'blog': false,
     'footer': false,
   };
 
-  // GlobalKeys for sections
-  final _servicesKey = GlobalKey();
-  final _howItWorksKey = GlobalKey();
-  final _statsKey = GlobalKey();
-  final _trustKey = GlobalKey();
-  final _ctaKey = GlobalKey();
-  final _footerKey = GlobalKey();
+  bool _scrolled = false;
+
+  final _trustKey       = GlobalKey();
+  final _categoriesKey  = GlobalKey();
+  final _recentKey      = GlobalKey();
+  final _safetyKey      = GlobalKey();
+  final _workerKey      = GlobalKey();
+  final _blogKey        = GlobalKey();
+  final _footerKey      = GlobalKey();
 
   @override
   void initState() {
@@ -53,88 +60,67 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
     _scrollCtrl = ScrollController()..addListener(_onScroll);
 
-    _masterCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
+    _heroCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 1100))
+      ..forward();
 
-    _pulseCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2500),
-    )..repeat(reverse: true);
+    _pulseCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 2500))
+      ..repeat(reverse: true);
 
-    _floatCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3500),
-    )..repeat(reverse: true);
+    _floatCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 3500))
+      ..repeat(reverse: true);
 
-    _particleCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 6000),
-    )..repeat();
+    _particleCtrl = AnimationController(vsync: this,
+        duration: const Duration(milliseconds: 8000))
+      ..repeat();
 
-    // Nav: instant
-    _navFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _masterCtrl,
-        curve: const Interval(0.0, 0.2, curve: Curves.easeOut),
-      ),
-    );
-
-    // Hero
     _heroFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _masterCtrl,
-        curve: const Interval(0.1, 0.5, curve: Curves.easeOut),
-      ),
-    );
+      CurvedAnimation(parent: _heroCtrl,
+          curve: const Interval(0.0, 0.55, curve: Curves.easeOut)));
+
     _heroSlide = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _masterCtrl,
-        curve: const Interval(0.1, 0.55, curve: Curves.easeOutCubic),
-      ),
-    );
+        begin: const Offset(0, 0.07), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _heroCtrl,
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOutCubic)));
 
-    _pulse = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulse = Tween<double>(begin: 0.82, end: 1.0).animate(
+        CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
-    _float = Tween<double>(begin: -5, end: 5).animate(
-      CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut),
-    );
-
-    _masterCtrl.forward();
+    _float = Tween<double>(begin: -5.0, end: 5.0).animate(
+        CurvedAnimation(parent: _floatCtrl, curve: Curves.easeInOut));
   }
 
   void _onScroll() {
-    _checkVisibility('services', _servicesKey);
-    _checkVisibility('howItWorks', _howItWorksKey);
-    _checkVisibility('stats', _statsKey);
-    _checkVisibility('trust', _trustKey);
-    _checkVisibility('cta', _ctaKey);
-    _checkVisibility('footer', _footerKey);
+    final scrolled = _scrollCtrl.offset > 50;
+    if (scrolled != _scrolled) setState(() => _scrolled = scrolled);
+    final pairs = [
+      ['trust', _trustKey], ['categories', _categoriesKey],
+      ['recentTasks', _recentKey], ['safety', _safetyKey],
+      ['worker', _workerKey], ['blog', _blogKey], ['footer', _footerKey],
+    ];
+    for (final p in pairs) {
+      _checkVis(p[0] as String, p[1] as GlobalKey);
+    }
   }
 
-  void _checkVisibility(String key, GlobalKey gk) {
-    if (_sectionVisible[key] == true) return;
+  void _checkVis(String key, GlobalKey gk) {
+    if (_visible[key] == true) return;
     final ctx = gk.currentContext;
     if (ctx == null) return;
     final box = ctx.findRenderObject() as RenderBox?;
     if (box == null || !box.hasSize) return;
     final pos = box.localToGlobal(Offset.zero);
-    final screenH = MediaQuery.of(context).size.height;
-    if (pos.dy < screenH * 0.85) {
-      setState(() => _sectionVisible[key] = true);
+    if (pos.dy < MediaQuery.of(context).size.height * 0.88) {
+      setState(() => _visible[key] = true);
     }
   }
 
   @override
   void dispose() {
     _scrollCtrl.dispose();
-    _masterCtrl.dispose();
+    _heroCtrl.dispose();
     _pulseCtrl.dispose();
     _floatCtrl.dispose();
     _particleCtrl.dispose();
@@ -145,767 +131,874 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isWide = size.width > 600;
+    final hPad = isWide ? size.width * 0.08 : 20.0;
 
     return Scaffold(
       backgroundColor: BrikolikColors.background,
       body: Stack(
         children: [
-          // Main scrollable content
           SingleChildScrollView(
             controller: _scrollCtrl,
             child: Column(
               children: [
-                // ── 1. Hero Section ──────────────────────────
-                _buildHeroSection(size, isWide),
+                // 1. HERO
+                _buildHero(size, isWide, hPad),
 
-                // ── 2. Services Grid ─────────────────────────
-                _AnimatedSection(
-                  key: _servicesKey,
-                  visible: _sectionVisible['services'] ?? false,
-                  child: _buildServicesSection(isWide),
-                ),
+                // 2. TRUST STATS
+                _Reveal(key: _trustKey, visible: _visible['trust']!,
+                    child: _buildTrustStats(hPad)),
 
-                // ── 3. How It Works ──────────────────────────
-                _AnimatedSection(
-                  key: _howItWorksKey,
-                  visible: _sectionVisible['howItWorks'] ?? false,
-                  child: _buildHowItWorksSection(isWide),
-                ),
+                // 3. CATEGORIES (Poster une tâche)
+                _Reveal(key: _categoriesKey, visible: _visible['categories']!,
+                    child: _buildCategories(isWide, hPad)),
 
-                // ── 4. Stats Banner ──────────────────────────
-                _AnimatedSection(
-                  key: _statsKey,
-                  visible: _sectionVisible['stats'] ?? false,
-                  child: _buildStatsBanner(),
-                ),
+                // 4. RECENT TASKS
+                _Reveal(key: _recentKey, visible: _visible['recentTasks']!,
+                    child: _buildRecentTasks(isWide, hPad)),
 
-                // ── 5. Trust Section ─────────────────────────
-                _AnimatedSection(
-                  key: _trustKey,
-                  visible: _sectionVisible['trust'] ?? false,
-                  child: _buildTrustSection(isWide),
-                ),
+                // 5. SAFETY & TRUST
+                _Reveal(key: _safetyKey, visible: _visible['safety']!,
+                    child: _buildSafetySection(isWide, hPad)),
 
-                // ── 6. Final CTA ─────────────────────────────
-                _AnimatedSection(
-                  key: _ctaKey,
-                  visible: _sectionVisible['cta'] ?? false,
-                  child: _buildFinalCTA(),
-                ),
+                // 6. WORKER SECTION
+                _Reveal(key: _workerKey, visible: _visible['worker']!,
+                    child: _buildWorkerSection(isWide, hPad)),
 
-                // ── 7. Footer ────────────────────────────────
-                _AnimatedSection(
-                  key: _footerKey,
-                  visible: _sectionVisible['footer'] ?? false,
-                  child: _buildFooter(),
-                ),
+                // 7. BLOG
+                _Reveal(key: _blogKey, visible: _visible['blog']!,
+                    child: _buildBlog(isWide, hPad)),
+
+                // 8. FOOTER
+                _Reveal(key: _footerKey, visible: _visible['footer']!,
+                    child: _buildFooter(hPad)),
               ],
             ),
           ),
 
-          // ── Sticky Nav Bar ──────────────────────────────
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: FadeTransition(
-              opacity: _navFade,
-              child: _buildNavBar(isWide),
-            ),
-          ),
+          // Sticky Nav
+          Positioned(top: 0, left: 0, right: 0,
+              child: _buildNav(isWide, hPad)),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  //  1. NAV BAR
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildNavBar(bool isWide) {
-    return Container(
+  // ══════════════════════════════════════════════════════════
+  //  NAV BAR
+  // ══════════════════════════════════════════════════════════
+  Widget _buildNav(bool isWide, double hPad) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOut,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
-        bottom: 12,
-        left: isWide ? 48 : 20,
-        right: isWide ? 48 : 20,
+        top: MediaQuery.of(context).padding.top + 10,
+        bottom: 14, left: hPad, right: hPad,
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            const Color(0xFF2D3561).withOpacity(0.95),
-            const Color(0xFF2D3561).withOpacity(0.0),
-          ],
-        ),
+        color: _scrolled
+            ? const Color(0xFF111E3A).withOpacity(0.96)
+            : Colors.transparent,
+        border: _scrolled
+            ? Border(bottom: BorderSide(color: Colors.white.withOpacity(0.07)))
+            : null,
+        boxShadow: _scrolled
+            ? [BoxShadow(color: Colors.black.withOpacity(0.22), blurRadius: 24, offset: const Offset(0, 4))]
+            : [],
       ),
       child: Row(
         children: [
-          // Logo + Name
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white.withOpacity(0.15),
-                  border: Border.all(
-                      color: Colors.white.withOpacity(0.2), width: 1),
+          Row(children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(
+                  colors: [BrikolikColors.primary, BrikolikColors.accent],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    'lib/assets/lasgbrik-removebg-preview.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                      Icons.build_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
+                boxShadow: [BoxShadow(color: BrikolikColors.primary.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 3))],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset('lib/assets/lasgbrik-removebg-preview.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.build_rounded, color: Colors.white, size: 18),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Text(
-                'BRIKOLIK',
-                style: TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 2,
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 10),
+            const Text('BRIKOLIK',
+              style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 15,
+                fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 2.0,
+              )),
+          ]),
           const Spacer(),
-
-          // Nav buttons
-          _NavButton(
-            label: 'Se connecter',
-            outlined: true,
-            onTap: () => Navigator.pushNamed(context, '/login'),
-          ),
-          const SizedBox(width: 10),
-          _NavButton(
-            label: "S'inscrire",
-            outlined: false,
-            onTap: () => Navigator.pushReplacementNamed(context, '/role'),
-          ),
+          if (isWide) ...[
+            _NavLink('Services'),
+            _NavLink('Comment ça marche'),
+            _NavLink('Artisans'),
+            const SizedBox(width: 12),
+          ],
+          _NavBtn(label: 'Connexion', filled: false,
+              onTap: () => Navigator.pushNamed(context, '/login')),
+          const SizedBox(width: 8),
+          _NavBtn(label: "S'inscrire", filled: true,
+              onTap: () => Navigator.pushReplacementNamed(context, '/role')),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════
-  //  2. HERO SECTION
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildHeroSection(Size size, bool isWide) {
+  // ══════════════════════════════════════════════════════════
+  //  1. HERO  ──  "FAITES TOUT CE QUI COMPTE"
+  // ══════════════════════════════════════════════════════════
+  Widget _buildHero(Size size, bool isWide, double hPad) {
     return FadeTransition(
       opacity: _heroFade,
       child: SlideTransition(
         position: _heroSlide,
         child: Container(
           width: double.infinity,
-          padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 80,
-            bottom: 60,
-          ),
+          constraints: BoxConstraints(minHeight: size.height * 0.88),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(0xFF2D3561),
-                Color(0xFF3B4A8A),
-                Color(0xFF5A4A8A),
-                Color(0xFF6D5593),
+                Color(0xFF0F1D3A),
+                Color(0xFF1B2F5E),
+                Color(0xFF2B3F7A),
+                Color(0xFF1F3A6B),
               ],
-              stops: [0.0, 0.35, 0.7, 1.0],
+              stops: [0.0, 0.35, 0.72, 1.0],
             ),
           ),
           child: Stack(
             children: [
-              // Animated particles/circles
-              _buildParticles(size),
+              // Particles
+              AnimatedBuilder(
+                animation: _particleCtrl,
+                builder: (_, __) => CustomPaint(
+                  size: Size(size.width, size.height * 0.88),
+                  painter: _ParticlePainter(_particleCtrl.value),
+                ),
+              ),
 
-              // Content
-              Padding(
-                padding: EdgeInsets.symmetric(
-                    horizontal: isWide ? 64 : 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 20),
+              // Decorative circle top-right
+              Positioned(
+                top: -60, right: -60,
+                child: AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (_, __) => Container(
+                    width: 260, height: 260,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: BrikolikColors.primary.withOpacity(0.06 * _pulse.value),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 40, left: -80,
+                child: Container(
+                  width: 200, height: 200,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.025),
+                  ),
+                ),
+              ),
 
-                    // Floating logo
-                    AnimatedBuilder(
-                      animation: Listenable.merge([_pulse, _float]),
-                      builder: (context, _) {
-                        return Transform.translate(
-                          offset: Offset(0, _float.value),
+              // Main content
+              SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(hPad, 70, hPad, 48),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Floating logo
+                      AnimatedBuilder(
+                        animation: Listenable.merge([_float, _pulse]),
+                        builder: (_, __) => Transform.translate(
+                          offset: Offset(0, _float.value * 0.5),
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              // Glow
                               Container(
-                                width: 120,
-                                height: 120,
+                                width: 100, height: 100,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white
-                                      .withOpacity(0.08 * _pulse.value),
+                                  color: BrikolikColors.primary
+                                      .withOpacity(0.12 * _pulse.value),
                                 ),
                               ),
                               Container(
-                                width: 90,
-                                height: 90,
+                                width: 78, height: 78,
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white
-                                      .withOpacity(0.05 * _pulse.value),
-                                ),
-                              ),
-                              // Logo
-                              Container(
-                                width: 88,
-                                height: 88,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(22),
+                                  color: Colors.white.withOpacity(0.12),
                                   border: Border.all(
-                                    color: Colors.white.withOpacity(0.25),
+                                    color: Colors.white.withOpacity(0.2),
                                     width: 1.5,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black
-                                          .withOpacity(0.2 * _pulse.value),
-                                      blurRadius: 30,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(22),
                                   child: Image.asset(
                                     'lib/assets/lasgbrik-removebg-preview.png',
                                     fit: BoxFit.contain,
                                     errorBuilder: (_, __, ___) => const Icon(
                                       Icons.build_rounded,
-                                      color: Colors.white,
-                                      size: 40,
+                                      color: Colors.white, size: 34,
                                     ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Tagline pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(50),
-                        border: Border.all(
-                            color: Colors.white.withOpacity(0.2)),
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.verified_rounded,
-                              size: 14,
-                              color: Colors.white.withOpacity(0.9)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Artisans vérifiés · Disponibles maintenant',
-                            style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white.withOpacity(0.9),
+
+                      const SizedBox(height: 32),
+
+                      // Tagline badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: BrikolikColors.primary.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(
+                              color: BrikolikColors.primary.withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 7, height: 7,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFF4DFFB4),
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Plus de 2 000 artisans disponibles au Maroc',
+                              style: TextStyle(
+                                fontFamily: 'Nunito', fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 28),
 
-                    // Main headline
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
+                      // Main headline
+                      Text(
+                        'Faites tout\nce qui compte.',
                         style: TextStyle(
                           fontFamily: 'Nunito',
-                          fontSize: isWide ? 42 : 32,
+                          fontSize: isWide ? 52 : 38,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
-                          height: 1.15,
+                          height: 1.08,
+                          letterSpacing: -0.5,
                         ),
+                      ),
+
+                      const SizedBox(height: 6),
+
+                      // Accent line
+                      Container(
+                        width: 64, height: 4,
+                        decoration: BoxDecoration(
+                          color: BrikolikColors.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      Text(
+                        'Bricolik met en relation les particuliers\navec des artisans de confiance partout\nau Maroc — rapidement, simplement.',
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: isWide ? 17 : 15,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withOpacity(0.72),
+                          height: 1.6,
+                        ),
+                      ),
+
+                      const SizedBox(height: 36),
+
+                      // CTA Buttons
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
                         children: [
-                          const TextSpan(text: 'Trouvez un pro\nde '),
-                          TextSpan(
-                            text: 'confiance',
-                            style: TextStyle(
-                              color: const Color(0xFFB8A9D4),
-                              shadows: [
-                                Shadow(
-                                  color: Colors.white.withOpacity(0.3),
-                                  blurRadius: 20,
-                                ),
-                              ],
-                            ),
+                          _HeroBtn(
+                            label: '📋  Poster une tâche',
+                            filled: true,
+                            onTap: () => Navigator.pushReplacementNamed(
+                                context, '/post-job'),
                           ),
-                          const TextSpan(text: '\nen secondes ⚡'),
+                          _HeroBtn(
+                            label: '🔧  Devenir bricoleur',
+                            filled: false,
+                            onTap: () => Navigator.pushReplacementNamed(
+                                context, '/role'),
+                          ),
                         ],
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 48),
 
-                    // Subtitle
-                    Text(
-                      'Des milliers d\'artisans qualifiés près\nde chez vous, disponibles maintenant.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.75),
-                        height: 1.6,
+                      // Quick search bar
+                      _buildSearchBar(),
+
+                      const SizedBox(height: 28),
+
+                      // Popular searches
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          'Plombier', 'Nettoyage', 'Peinture',
+                          'Électricien', 'Déménagement',
+                        ].map((s) => _QuickTag(label: s)).toList(),
                       ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // CTA Buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _HeroCTAButton(
-                          label: 'Commencer',
-                          icon: Icons.arrow_forward_rounded,
-                          filled: true,
-                          onTap: () => Navigator.pushReplacementNamed(
-                              context, '/role'),
-                        ),
-                        const SizedBox(width: 12),
-                        _HeroCTAButton(
-                          label: 'Se connecter',
-                          icon: Icons.login_rounded,
-                          filled: false,
-                          onTap: () =>
-                              Navigator.pushNamed(context, '/login'),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildParticles(Size size) {
-    return AnimatedBuilder(
-      animation: _particleCtrl,
-      builder: (context, _) {
-        return CustomPaint(
-          size: Size(size.width, 500),
-          painter: _ParticlePainter(_particleCtrl.value),
-        );
-      },
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  3. SERVICES SECTION
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildServicesSection(bool isWide) {
-    final services = [
-      _ServiceData(Icons.water_drop_outlined, 'Plomberie', 'Réparation & installation', const Color(0xFF3B8BD4)),
-      _ServiceData(Icons.bolt_outlined, 'Électricité', 'Installation & dépannage', const Color(0xFFF5A623)),
-      _ServiceData(Icons.cleaning_services_outlined, 'Nettoyage', 'Maison & bureaux', const Color(0xFF2D9B5A)),
-      _ServiceData(Icons.format_paint_outlined, 'Peinture', 'Intérieur & extérieur', const Color(0xFFD85A30)),
-      _ServiceData(Icons.grass_outlined, 'Jardinage', 'Entretien & aménagement', const Color(0xFF639922)),
-      _ServiceData(Icons.carpenter_outlined, 'Menuiserie', 'Meubles & réparation', const Color(0xFF854F0B)),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 64 : 24,
-        vertical: 56,
-      ),
-      color: BrikolikColors.background,
-      child: Column(
-        children: [
-          // Section header
-          _SectionHeader(
-            badge: 'NOS SERVICES',
-            title: 'Que cherchez-vous ?',
-            subtitle: 'Plus de 20 catégories de services à domicile',
-          ),
-          const SizedBox(height: 32),
-
-          // Grid
-          LayoutBuilder(builder: (ctx, constraints) {
-            final cols = constraints.maxWidth > 500 ? 3 : 2;
-            final spacing = 14.0;
-            final itemW =
-                (constraints.maxWidth - spacing * (cols - 1)) / cols;
-
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: services.map((s) {
-                return SizedBox(
-                  width: itemW,
-                  child: _ServiceCard(data: s),
-                );
-              }).toList(),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  4. HOW IT WORKS
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildHowItWorksSection(bool isWide) {
-    final steps = [
-      _StepData('1', Icons.edit_note_rounded, 'Décrivez',
-          'Publiez votre besoin en quelques clics'),
-      _StepData('2', Icons.compare_arrows_rounded, 'Comparez',
-          'Recevez des offres d\'artisans qualifiés'),
-      _StepData('3', Icons.handshake_rounded, 'Réservez',
-          'Choisissez le pro idéal et réservez'),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 64 : 24,
-        vertical: 56,
-      ),
-      color: BrikolikColors.surfaceVariant,
-      child: Column(
-        children: [
-          _SectionHeader(
-            badge: 'COMMENT ÇA MARCHE',
-            title: 'Simple comme 1, 2, 3',
-            subtitle: 'Trouvez votre artisan en 3 étapes simples',
-          ),
-          const SizedBox(height: 36),
-
-          LayoutBuilder(builder: (ctx, constraints) {
-            if (constraints.maxWidth > 500) {
-              // Horizontal layout
-              return Row(
-                children: [
-                  for (int i = 0; i < steps.length; i++) ...[
-                    Expanded(child: _StepCard(data: steps[i])),
-                    if (i < steps.length - 1)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          color: BrikolikColors.primary.withOpacity(0.3),
-                          size: 24,
-                        ),
-                      ),
-                  ],
-                ],
-              );
-            } else {
-              // Vertical layout
-              return Column(
-                children: [
-                  for (int i = 0; i < steps.length; i++) ...[
-                    _StepCard(data: steps[i]),
-                    if (i < steps.length - 1) ...[
-                      const SizedBox(height: 8),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        color: BrikolikColors.primary.withOpacity(0.3),
-                        size: 28,
-                      ),
-                      const SizedBox(height: 8),
                     ],
-                  ],
-                ],
-              );
-            }
-          }),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  5. STATS BANNER
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildStatsBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [Color(0xFF465892), Color(0xFF6D5593)],
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: const [
-          _StatItem(value: '2 000+', label: 'Artisans vérifiés',
-              icon: Icons.engineering_rounded),
-          _StatDivider(),
-          _StatItem(value: '15 000+', label: 'Missions réussies',
-              icon: Icons.check_circle_outline_rounded),
-          _StatDivider(),
-          _StatItem(value: '4.8 ★', label: 'Note moyenne',
-              icon: Icons.star_outline_rounded),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  6. TRUST SECTION
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildTrustSection(bool isWide) {
-    final items = [
-      _TrustData(Icons.verified_user_outlined, 'Artisans vérifiés',
-          'Chaque artisan est vérifié : identité, compétences et avis clients.',
-          BrikolikColors.primary),
-      _TrustData(Icons.shield_outlined, 'Paiement sécurisé',
-          'Vos paiements sont protégés. Payez uniquement quand le travail est fait.',
-          BrikolikColors.success),
-      _TrustData(Icons.sentiment_satisfied_alt_outlined,
-          'Satisfaction garantie',
-          'Pas satisfait ? Nous intervenons pour trouver une solution.',
-          BrikolikColors.accent),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        horizontal: isWide ? 64 : 24,
-        vertical: 56,
-      ),
-      color: BrikolikColors.background,
-      child: Column(
-        children: [
-          _SectionHeader(
-            badge: 'CONFIANCE',
-            title: 'Pourquoi Brikolik ?',
-            subtitle: 'La plateforme de confiance pour vos services à domicile',
-          ),
-          const SizedBox(height: 32),
-
-          LayoutBuilder(builder: (ctx, constraints) {
-            if (constraints.maxWidth > 500) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: items
-                    .map((t) => Expanded(
-                          child: Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8),
-                            child: _TrustCard(data: t),
-                          ),
-                        ))
-                    .toList(),
-              );
-            }
-            return Column(
-              children: items
-                  .map((t) => Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
-                        child: _TrustCard(data: t),
-                      ))
-                  .toList(),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  7. FINAL CTA
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildFinalCTA() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 32),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2D3561), Color(0xFF5A4A8A)],
-        ),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            '🚀',
-            style: TextStyle(fontSize: 40),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Prêt à commencer ?',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Rejoignez la communauté Brikolik et\ntrouvez votre artisan idéal.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.7),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _HeroCTAButton(
-                label: 'Créer un compte',
-                icon: Icons.person_add_alt_1_rounded,
-                filled: true,
-                onTap: () =>
-                    Navigator.pushReplacementNamed(context, '/role'),
-              ),
-              const SizedBox(width: 12),
-              _HeroCTAButton(
-                label: 'Se connecter',
-                icon: Icons.login_rounded,
-                filled: false,
-                onTap: () => Navigator.pushNamed(context, '/login'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  //  8. FOOTER
-  // ═══════════════════════════════════════════════════════════
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      color: const Color(0xFF1E2340),
-      child: Column(
-        children: [
-          // Logo
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.white.withOpacity(0.1),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'lib/assets/lasgbrik-removebg-preview.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(
-                        Icons.build_rounded,
-                        color: Colors.white54,
-                        size: 14),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                'BRIKOLIK',
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.18),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 16),
+          const Icon(Icons.search_rounded,
+              color: BrikolikColors.textSecondary, size: 20),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Ex : Plombier à Casablanca…',
+              style: TextStyle(
+                fontFamily: 'Nunito',
+                fontSize: 14,
+                color: BrikolikColors.textHint,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.all(6),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: BrikolikColors.primary,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            height: 40,
+            child: const Center(
+              child: Text('Chercher',
                 style: TextStyle(
                   fontFamily: 'Nunito',
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white.withOpacity(0.6),
-                  letterSpacing: 2,
-                ),
-              ),
+                  color: Colors.white,
+                )),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  2. TRUST STATS
+  // ══════════════════════════════════════════════════════════
+  Widget _buildTrustStats(double hPad) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 40),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFE8650A), Color(0xFFBF4D00)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+      ),
+      child: LayoutBuilder(builder: (ctx, constraints) {
+        final isRow = constraints.maxWidth > 480;
+        final items = [
+          _StatData('2 000+', 'Artisans vérifiés', Icons.engineering_rounded),
+          _StatData('15 000+', 'Tâches réussies', Icons.check_circle_outline_rounded),
+          _StatData('4.8 ★', 'Note moyenne', Icons.star_outline_rounded),
+          _StatData('48h', 'Délai moyen', Icons.timer_outlined),
+        ];
+        if (isRow) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (int i = 0; i < items.length; i++) ...[
+                _StatTile(data: items[i]),
+                if (i < items.length - 1)
+                  Container(width: 1, height: 40,
+                      color: Colors.white.withOpacity(0.2)),
+              ],
             ],
+          );
+        }
+        return Column(
+          children: items.map((d) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: _StatTile(data: d, horizontal: true),
+          )).toList(),
+        );
+      }),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  3. CATEGORIES / POSTER UNE TÂCHE
+  // ══════════════════════════════════════════════════════════
+  Widget _buildCategories(bool isWide, double hPad) {
+    final cats = [
+      _CatData(Icons.water_drop_outlined,    'Plomberie',      const Color(0xFF3B8BD4)),
+      _CatData(Icons.bolt_outlined,           'Électricité',    const Color(0xFFF5A623)),
+      _CatData(Icons.cleaning_services_outlined,'Nettoyage',   const Color(0xFF2D9B5A)),
+      _CatData(Icons.format_paint_outlined,   'Peinture',       const Color(0xFFD85A30)),
+      _CatData(Icons.local_shipping_outlined, 'Déménagement',   const Color(0xFF9B4DB5)),
+      _CatData(Icons.grass_outlined,          'Jardinage',      const Color(0xFF639922)),
+      _CatData(Icons.carpenter_outlined,      'Menuiserie',     const Color(0xFF854F0B)),
+      _CatData(Icons.ac_unit_outlined,        'Climatisation',  const Color(0xFF0097A7)),
+      _CatData(Icons.construction_outlined,   'Maçonnerie',     const Color(0xFF6B6560)),
+      _CatData(Icons.camera_indoor_outlined,  'Sécurité',       const Color(0xFF2D3561)),
+      _CatData(Icons.roofing_outlined,        'Toiture',        const Color(0xFFB5651D)),
+      _CatData(Icons.more_horiz_rounded,      'Plus encore…',   BrikolikColors.textSecondary),
+    ];
+
+    return Container(
+      color: BrikolikColors.background,
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 56),
+      child: Column(
+        children: [
+          _SectionHead(
+            badge: '🚀  Poster une tâche',
+            title: 'Que voulez-vous faire\nafaire faire ?',
+            subtitle: 'Sélectionnez une catégorie et recevez des offres en minutes',
+          ),
+          const SizedBox(height: 36),
+
+          // Steps
+          _buildHowSteps(isWide),
+
+          const SizedBox(height: 36),
+
+          // Grid
+          LayoutBuilder(builder: (ctx, c) {
+            final cols = c.maxWidth > 500 ? 4 : 3;
+            final gap  = 12.0;
+            final w    = (c.maxWidth - gap * (cols - 1)) / cols;
+            return Wrap(
+              spacing: gap, runSpacing: gap,
+              children: cats.map((cat) => SizedBox(
+                width: w,
+                child: _CatCard(data: cat),
+              )).toList(),
+            );
+          }),
+
+          const SizedBox(height: 28),
+          _PostTaskBtn(
+            onTap: () => Navigator.pushReplacementNamed(context, '/post-job'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHowSteps(bool isWide) {
+    final steps = [
+      _StepD('1', '📝', 'Décrivez', 'Publiez votre besoin en 60 secondes'),
+      _StepD('2', '📬', 'Recevez', 'Des artisans vous envoient leurs offres'),
+      _StepD('3', '✅', 'Choisissez', 'Sélectionnez le meilleur et réservez'),
+    ];
+
+    return LayoutBuilder(builder: (ctx, c) {
+      final isRow = c.maxWidth > 480;
+      if (isRow) {
+        return Row(
+          children: [
+            for (int i = 0; i < steps.length; i++) ...[
+              Expanded(child: _StepCard(d: steps[i])),
+              if (i < 2) const _Arrow(),
+            ],
+          ],
+        );
+      }
+      return Column(
+        children: [
+          for (int i = 0; i < steps.length; i++) ...[
+            _StepCard(d: steps[i]),
+            if (i < 2) const _DownArrow(),
+          ],
+        ],
+      );
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  4. RECENT TASKS
+  // ══════════════════════════════════════════════════════════
+  Widget _buildRecentTasks(bool isWide, double hPad) {
+    final tasks = [
+      _TaskD('Réparation fuite robinet', 'Plomberie', 'Casablanca, Maarif',
+          '200–350 MAD', '4.9', Icons.water_drop_outlined, const Color(0xFF3B8BD4), '15 min'),
+      _TaskD('Peinture salon 30m²', 'Peinture', 'Rabat, Agdal',
+          '700–1 100 MAD', '4.8', Icons.format_paint_outlined, const Color(0xFFD85A30), '1h'),
+      _TaskD('Nettoyage appartement F3', 'Nettoyage', 'Marrakech, Guéliz',
+          '150–250 MAD', '5.0', Icons.cleaning_services_outlined, const Color(0xFF2D9B5A), '2h'),
+      _TaskD('Installation prise électrique', 'Électricité', 'Tanger, Centre',
+          '120–200 MAD', '4.7', Icons.bolt_outlined, const Color(0xFFF5A623), '3h'),
+      _TaskD('Déménagement studio', 'Déménagement', 'Fès, Saïss',
+          '400–700 MAD', '4.8', Icons.local_shipping_outlined, const Color(0xFF9B4DB5), '5h'),
+      _TaskD('Pose carrelage terrasse', 'Maçonnerie', 'Agadir, Centre',
+          '500–900 MAD', '4.9', Icons.construction_outlined, const Color(0xFF6B6560), '1j'),
+    ];
+
+    return Container(
+      color: BrikolikColors.surfaceVariant,
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 56),
+      child: Column(
+        children: [
+          _SectionHead(
+            badge: '🔥  En ce moment au Maroc',
+            title: 'Ce que cherchent\nles gens autour de vous',
+            subtitle: 'Tâches récentes postées par la communauté Brikolik',
+          ),
+          const SizedBox(height: 32),
+          LayoutBuilder(builder: (ctx, c) {
+            final cols = c.maxWidth > 500 ? 2 : 1;
+            final gap  = 14.0;
+            final w    = (c.maxWidth - gap * (cols - 1)) / cols;
+            return Wrap(
+              spacing: gap, runSpacing: gap,
+              children: tasks.map((t) =>
+                  SizedBox(width: w, child: _TaskCard(data: t))).toList(),
+            );
+          }),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pushNamed(context, '/jobs'),
+            icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+            label: const Text('Voir toutes les tâches'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: BrikolikColors.primary,
+              side: const BorderSide(color: BrikolikColors.primary, width: 1.5),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 28, vertical: 14),
+              textStyle: const TextStyle(
+                fontFamily: 'Nunito', fontWeight: FontWeight.w700,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  5. SAFETY & TRUST
+  // ══════════════════════════════════════════════════════════
+  Widget _buildSafetySection(bool isWide, double hPad) {
+    final items = [
+      _SafetyD(Icons.verified_user_outlined, 'Artisans vérifiés',
+          'Chaque artisan passe une vérification d\'identité et de compétences avant d\'être accepté sur Brikolik.',
+          BrikolikColors.primary),
+      _SafetyD(Icons.lock_outline_rounded, 'Paiement 100% sécurisé',
+          'Votre argent est retenu jusqu\'à la fin de la mission. Payez seulement quand vous êtes satisfait.',
+          BrikolikColors.success),
+      _SafetyD(Icons.star_border_rounded, 'Avis clients réels',
+          'Chaque évaluation est vérifiée. Lisez des avis authentiques de vrais clients au Maroc.',
+          const Color(0xFFF5A623)),
+      _SafetyD(Icons.shield_outlined, 'Assistance 24h/7j',
+          'Notre équipe est disponible par téléphone, WhatsApp et chat pour vous aider à tout moment.',
+          const Color(0xFF9B4DB5)),
+    ];
+
+    return Container(
+      color: BrikolikColors.surface,
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 56),
+      child: Column(
+        children: [
+          _SectionHead(
+            badge: '🔒  Confiance & Sécurité',
+            title: 'Votre sécurité est\nnotre priorité',
+            subtitle: 'Nous vérifions chaque artisan et chaque paiement',
+          ),
+          const SizedBox(height: 36),
+          LayoutBuilder(builder: (ctx, c) {
+            final cols = c.maxWidth > 500 ? 2 : 1;
+            final gap = 16.0;
+            final w = (c.maxWidth - gap * (cols - 1)) / cols;
+            return Wrap(
+              spacing: gap, runSpacing: gap,
+              children: items.map((it) =>
+                  SizedBox(width: w, child: _SafetyCard(data: it))).toList(),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  6. WORKER SECTION — "Soyez votre propre patron"
+  // ══════════════════════════════════════════════════════════
+  Widget _buildWorkerSection(bool isWide, double hPad) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0F1D3A), Color(0xFF1B2F5E), Color(0xFF2B3F7A)],
+        ),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 60),
+      child: Column(
+        children: [
+          // Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+            decoration: BoxDecoration(
+              color: BrikolikColors.primary.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(
+                  color: BrikolikColors.primary.withOpacity(0.5)),
+            ),
+            child: const Text('🔧  Pour les artisans',
+              style: TextStyle(fontFamily: 'Nunito', fontSize: 12,
+                  fontWeight: FontWeight.w700, color: Colors.white)),
           ),
           const SizedBox(height: 20),
+
+          const Text('Soyez votre\npropre patron.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 34,
+              fontWeight: FontWeight.w800, color: Colors.white, height: 1.15,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Rejoignez des milliers d\'artisans marocains\nqui gagnent leur vie à leur rythme avec Brikolik.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.65), height: 1.6,
+            ),
+          ),
+
+          const SizedBox(height: 40),
+
+          // Benefits
+          LayoutBuilder(builder: (ctx, c) {
+            final isRow = c.maxWidth > 480;
+            final benefits = [
+              _BenefitD('💰', 'Gagnez plus', 'Fixez vos tarifs et choisissez vos missions'),
+              _BenefitD('📅', 'Votre agenda', 'Travaillez quand vous le souhaitez'),
+              _BenefitD('⭐', 'Votre réputation', 'Construisez un profil 5 étoiles'),
+            ];
+            if (isRow) {
+              return Row(
+                children: benefits.map((b) =>
+                    Expanded(child: _BenefitCard(d: b))).toList(),
+              );
+            }
+            return Column(
+              children: benefits.map((b) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _BenefitCard(d: b),
+              )).toList(),
+            );
+          }),
+
+          const SizedBox(height: 36),
+
+          // Profile example card
+          _WorkerProfileCard(),
+
+          const SizedBox(height: 32),
+
+          ElevatedButton.icon(
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, '/role'),
+            icon: const Icon(Icons.arrow_forward_rounded, size: 18),
+            label: const Text('Commencer à gagner',
+              style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 15,
+                fontWeight: FontWeight.w700,
+              )),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: BrikolikColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  7. BLOG
+  // ══════════════════════════════════════════════════════════
+  Widget _buildBlog(bool isWide, double hPad) {
+    final posts = [
+      _BlogD('10 conseils pour bien choisir son plombier au Maroc',
+          'Astuces', '5 min'),
+      _BlogD('Comment fixer un tarif juste pour vos services à domicile ?',
+          'Guide artisans', '7 min'),
+      _BlogD('Brikolik à Marrakech : 500 artisans disponibles dès maintenant',
+          'Actualité', '3 min'),
+    ];
+
+    return Container(
+      color: BrikolikColors.background,
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 56),
+      child: Column(
+        children: [
+          _SectionHead(
+            badge: '📰  Blog & Conseils',
+            title: 'Articles, conseils\net actualités',
+            subtitle: 'Tout ce que vous devez savoir sur les services à domicile au Maroc',
+          ),
+          const SizedBox(height: 32),
+          LayoutBuilder(builder: (ctx, c) {
+            final cols = c.maxWidth > 500 ? 3 : 1;
+            final gap = 16.0;
+            final w = (c.maxWidth - gap * (cols - 1)) / cols;
+            return Wrap(
+              spacing: gap, runSpacing: gap,
+              children: posts.map((p) =>
+                  SizedBox(width: w, child: _BlogCard(data: p))).toList(),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════
+  //  8. FOOTER
+  // ══════════════════════════════════════════════════════════
+  Widget _buildFooter(double hPad) {
+    return Container(
+      color: const Color(0xFF0F1D3A),
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 40),
+      child: Column(
+        children: [
+          // Logo + tagline
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(
+              width: 30, height: 30,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: BrikolikColors.primary),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                    'lib/assets/lasgbrik-removebg-preview.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.build_rounded, color: Colors.white, size: 16),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('BRIKOLIK',
+              style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 14,
+                fontWeight: FontWeight.w800, color: Colors.white,
+                letterSpacing: 1.8,
+              )),
+          ]),
+          const SizedBox(height: 8),
+          Text('Services à domicile · المغرب 🇲🇦',
+            style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 12,
+              color: Colors.white.withOpacity(0.4),
+            )),
+          const SizedBox(height: 28),
 
           // Links
           Wrap(
-            spacing: 24,
-            runSpacing: 8,
+            spacing: 20, runSpacing: 10,
             alignment: WrapAlignment.center,
             children: [
-              _FooterLink(label: 'À propos'),
-              _FooterLink(label: 'Services'),
-              _FooterLink(label: 'Contact'),
-              _FooterLink(label: 'CGU'),
-              _FooterLink(label: 'Confidentialité'),
-            ],
+              'À propos', 'Comment ça marche', 'Services',
+              'Artisans', 'Blog', 'Contact', 'CGU', 'Confidentialité',
+            ].map((l) => Text(l,
+              style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.45),
+              ))).toList(),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Social icons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _SocialIcon(icon: Icons.facebook_rounded),
-              const SizedBox(width: 16),
-              _SocialIcon(icon: Icons.camera_alt_outlined), // Instagram
-              const SizedBox(width: 16),
-              _SocialIcon(icon: Icons.public_rounded), // Website
-            ],
-          ),
-          const SizedBox(height: 20),
+          // Socials
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _Social(Icons.facebook_rounded),
+            const SizedBox(width: 14),
+            _Social(Icons.camera_alt_outlined),
+            const SizedBox(width: 14),
+            _Social(Icons.chat_bubble_outline_rounded),
+          ]),
 
-          Divider(
-            color: Colors.white.withOpacity(0.08),
-            height: 1,
-          ),
+          const SizedBox(height: 24),
+          Divider(color: Colors.white.withOpacity(0.07)),
           const SizedBox(height: 16),
 
           Text(
-            '© 2026 Brikolik · Services à domicile au Maroc 🇲🇦',
+            '© 2026 Brikolik — Tous droits réservés · Casablanca, Maroc',
+            textAlign: TextAlign.center,
             style: TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.35),
+              fontFamily: 'Nunito', fontSize: 11,
+              color: Colors.white.withOpacity(0.3),
             ),
           ),
         ],
@@ -914,20 +1007,34 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  HELPER WIDGETS
-// ═══════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════
+//  DATA MODELS
+// ════════════════════════════════════════════════════════════════
+class _StatData  { final String v, l; final IconData i;
+  const _StatData(this.v, this.l, this.i); }
+class _CatData   { final IconData icon; final String l; final Color c;
+  const _CatData(this.icon, this.l, this.c); }
+class _TaskD     { final String t, cat, city, budget, rating;
+  final IconData icon; final Color c; final String ago;
+  const _TaskD(this.t, this.cat, this.city, this.budget,
+      this.rating, this.icon, this.c, this.ago); }
+class _SafetyD   { final IconData icon; final String t, d; final Color c;
+  const _SafetyD(this.icon, this.t, this.d, this.c); }
+class _BenefitD  { final String emoji, t, d;
+  const _BenefitD(this.emoji, this.t, this.d); }
+class _BlogD     { final String t, tag, read;
+  const _BlogD(this.t, this.tag, this.read); }
+class _StepD     { final String n, emoji, t, d;
+  const _StepD(this.n, this.emoji, this.t, this.d); }
 
-// ── Animated Section (scroll-triggered fade-in) ──────────────
-class _AnimatedSection extends StatelessWidget {
+// ════════════════════════════════════════════════════════════════
+//  SMALL WIDGETS
+// ════════════════════════════════════════════════════════════════
+
+class _Reveal extends StatelessWidget {
   final bool visible;
   final Widget child;
-
-  const _AnimatedSection({
-    super.key,
-    required this.visible,
-    required this.child,
-  });
+  const _Reveal({super.key, required this.visible, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -936,7 +1043,7 @@ class _AnimatedSection extends StatelessWidget {
       duration: const Duration(milliseconds: 600),
       curve: Curves.easeOut,
       child: AnimatedSlide(
-        offset: visible ? Offset.zero : const Offset(0, 0.05),
+        offset: visible ? Offset.zero : const Offset(0, 0.04),
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeOutCubic,
         child: child,
@@ -945,533 +1052,753 @@ class _AnimatedSection extends StatelessWidget {
   }
 }
 
-// ── Section Header ───────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  final String badge;
-  final String title;
-  final String subtitle;
+class _NavLink extends StatefulWidget {
+  final String label;
+  const _NavLink(this.label);
+  @override
+  State<_NavLink> createState() => _NavLinkState();
+}
+class _NavLinkState extends State<_NavLink> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: _h ? Colors.white.withOpacity(0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(widget.label,
+        style: TextStyle(fontFamily: 'Nunito', fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _h ? Colors.white : Colors.white.withOpacity(0.72))),
+    ),
+  );
+}
 
-  const _SectionHeader({
-    required this.badge,
-    required this.title,
-    required this.subtitle,
-  });
+class _NavBtn extends StatefulWidget {
+  final String label; final bool filled; final VoidCallback onTap;
+  const _NavBtn({required this.label, required this.filled, required this.onTap});
+  @override
+  State<_NavBtn> createState() => _NavBtnState();
+}
+class _NavBtnState extends State<_NavBtn> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        decoration: BoxDecoration(
+          color: widget.filled
+              ? (_h ? Colors.white.withOpacity(0.92) : Colors.white)
+              : Colors.white.withOpacity(_h ? 0.12 : 0.0),
+          borderRadius: BorderRadius.circular(10),
+          border: widget.filled ? null : Border.all(
+              color: Colors.white.withOpacity(_h ? 0.55 : 0.35), width: 1.2),
+          boxShadow: widget.filled ? [BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 10, offset: const Offset(0, 3),
+          )] : [],
+        ),
+        child: Text(widget.label, style: TextStyle(
+          fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w700,
+          color: widget.filled ? BrikolikColors.primary : Colors.white,
+        )),
+      ),
+    ),
+  );
+}
 
+class _HeroBtn extends StatefulWidget {
+  final String label; final bool filled; final VoidCallback onTap;
+  const _HeroBtn({required this.label, required this.filled, required this.onTap});
+  @override
+  State<_HeroBtn> createState() => _HeroBtnState();
+}
+class _HeroBtnState extends State<_HeroBtn> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+        decoration: BoxDecoration(
+          color: widget.filled ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: widget.filled ? null : Border.all(
+              color: Colors.white.withOpacity(_h ? 0.75 : 0.45), width: 1.5),
+          boxShadow: widget.filled ? [BoxShadow(
+            color: Colors.black.withOpacity(_h ? 0.28 : 0.16),
+            blurRadius: _h ? 30 : 20, offset: const Offset(0, 8),
+          )] : [],
+        ),
+        transform: _h ? (Matrix4.identity()..translate(0.0, -2.0)) : Matrix4.identity(),
+        child: Text(widget.label, style: TextStyle(
+          fontFamily: 'Nunito', fontSize: 15, fontWeight: FontWeight.w700,
+          color: widget.filled ? BrikolikColors.primary : Colors.white.withOpacity(_h ? 1.0 : 0.92),
+        )),
+      ),
+    ),
+  );
+}
+
+class _QuickTag extends StatelessWidget {
+  final String label;
+  const _QuickTag({required this.label});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(0.1),
+      borderRadius: BorderRadius.circular(50),
+      border: Border.all(color: Colors.white.withOpacity(0.2)),
+    ),
+    child: Text(label, style: const TextStyle(
+      fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600,
+      color: Colors.white,
+    )),
+  );
+}
+
+class _StatTile extends StatelessWidget {
+  final _StatData data; final bool horizontal;
+  const _StatTile({required this.data, this.horizontal = false});
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
+    if (horizontal) {
+      return Row(children: [
+        Icon(data.i, size: 20, color: Colors.white.withOpacity(0.8)),
+        const SizedBox(width: 12),
+        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(data.v, style: const TextStyle(fontFamily: 'Nunito',
+              fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(data.l, style: TextStyle(fontFamily: 'Nunito', fontSize: 11,
+              color: Colors.white.withOpacity(0.7))),
+        ]),
+      ]);
+    }
+    return Column(children: [
+      Icon(data.i, size: 22, color: Colors.white.withOpacity(0.75)),
+      const SizedBox(height: 8),
+      Text(data.v, style: const TextStyle(fontFamily: 'Nunito',
+          fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+      const SizedBox(height: 3),
+      Text(data.l, style: TextStyle(fontFamily: 'Nunito', fontSize: 11,
+          fontWeight: FontWeight.w600, color: Colors.white.withOpacity(0.65))),
+    ]);
+  }
+}
+
+class _SectionHead extends StatelessWidget {
+  final String badge, title, subtitle;
+  const _SectionHead({required this.badge, required this.title, required this.subtitle});
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+      decoration: BoxDecoration(
+        color: BrikolikColors.primaryLight,
+        borderRadius: BorderRadius.circular(50),
+        border: Border.all(color: BrikolikColors.border),
+      ),
+      child: Text(badge, style: const TextStyle(fontFamily: 'Nunito',
+          fontSize: 12, fontWeight: FontWeight.w700,
+          color: BrikolikColors.primaryDark, letterSpacing: 0.2)),
+    ),
+    const SizedBox(height: 18),
+    Text(title, textAlign: TextAlign.center,
+      style: const TextStyle(fontFamily: 'Nunito', fontSize: 30,
+          fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary,
+          height: 1.18, letterSpacing: -0.5)),
+    const SizedBox(height: 10),
+    Text(subtitle, textAlign: TextAlign.center,
+      style: const TextStyle(fontFamily: 'Nunito', fontSize: 14,
+          fontWeight: FontWeight.w500, color: BrikolikColors.textSecondary, height: 1.5)),
+  ]);
+}
+
+class _StepCard extends StatelessWidget {
+  final _StepD d;
+  const _StepCard({required this.d});
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.symmetric(horizontal: 4),
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: BrikolikColors.surface,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: BrikolikColors.border),
+      boxShadow: [BoxShadow(
+        color: Colors.black.withOpacity(0.05),
+        blurRadius: 14, offset: const Offset(0, 5),
+      )],
+    ),
+    child: Column(children: [
+      Stack(alignment: Alignment.topRight, children: [
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          width: 56, height: 56,
           decoration: BoxDecoration(
-            color: BrikolikColors.primaryLight,
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [BrikolikColors.primaryLight, Color(0xFFF0ECF8)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: BrikolikColors.border),
+          ),
+          child: Center(child: Text(d.emoji, style: const TextStyle(fontSize: 24))),
+        ),
+        Container(
+          width: 20, height: 20,
+          decoration: BoxDecoration(
+            color: BrikolikColors.primary, shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2),
+          ),
+          child: Center(child: Text(d.n, style: const TextStyle(
+            fontFamily: 'Nunito', fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white))),
+        ),
+      ]),
+      const SizedBox(height: 14),
+      Text(d.t, style: const TextStyle(fontFamily: 'Nunito',
+          fontSize: 15, fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary)),
+      const SizedBox(height: 6),
+      Text(d.d, textAlign: TextAlign.center,
+        style: const TextStyle(fontFamily: 'Nunito', fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: BrikolikColors.textSecondary, height: 1.45)),
+    ]),
+  );
+}
+
+class _Arrow extends StatelessWidget {
+  const _Arrow();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.only(bottom: 24),
+    child: Icon(Icons.arrow_forward_rounded,
+        size: 20, color: BrikolikColors.textHint),
+  );
+}
+
+class _DownArrow extends StatelessWidget {
+  const _DownArrow();
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 4),
+    child: Icon(Icons.keyboard_arrow_down_rounded,
+        size: 28, color: BrikolikColors.textHint),
+  );
+}
+
+class _CatCard extends StatefulWidget {
+  final _CatData data;
+  const _CatCard({required this.data});
+  @override
+  State<_CatCard> createState() => _CatCardState();
+}
+
+class _CatCardState extends State<_CatCard> {
+  bool _hover = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _hover = true),
+    onExit:  (_) => setState(() => _hover = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+      decoration: BoxDecoration(
+        color: _hover ? widget.data.c.withOpacity(0.08) : BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: _hover ? widget.data.c.withOpacity(0.45) : BrikolikColors.border,
+          width: _hover ? 1.5 : 1,
+        ),
+        boxShadow: _hover ? [BoxShadow(
+          color: widget.data.c.withOpacity(0.16),
+          blurRadius: 18, offset: const Offset(0, 6),
+        )] : [BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 8, offset: const Offset(0, 3),
+        )],
+      ),
+      transform: _hover
+          ? (Matrix4.identity()..translate(0.0, -5.0))
+          : Matrix4.identity(),
+      child: Column(children: [
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [widget.data.c.withOpacity(0.12), widget.data.c.withOpacity(0.24)],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: widget.data.c.withOpacity(0.2)),
+          ),
+          child: Icon(widget.data.icon, size: 22, color: widget.data.c),
+        ),
+        const SizedBox(height: 10),
+        Text(widget.data.l,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontFamily: 'Nunito', fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: BrikolikColors.textPrimary)),
+      ]),
+    ),
+  );
+}
+
+class _PostTaskBtn extends StatefulWidget {
+  final VoidCallback onTap;
+  const _PostTaskBtn({required this.onTap});
+  @override
+  State<_PostTaskBtn> createState() => _PostTaskBtnState();
+}
+class _PostTaskBtnState extends State<_PostTaskBtn> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        height: 56, width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [BrikolikColors.primary,
+              _h ? const Color(0xFF7A63AB) : BrikolikColors.accent],
+            begin: Alignment.centerLeft, end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(
+            color: BrikolikColors.primary.withOpacity(_h ? 0.45 : 0.28),
+            blurRadius: _h ? 24 : 16, offset: const Offset(0, 6),
+          )],
+        ),
+        transform: _h ? (Matrix4.identity()..translate(0.0, -2.0)) : Matrix4.identity(),
+        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.add_rounded, size: 20, color: Colors.white),
+          SizedBox(width: 10),
+          Text('Poster ma tâche gratuitement',
+            style: TextStyle(fontFamily: 'Nunito',
+                fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+        ]),
+      ),
+    ),
+  );
+}
+
+class _TaskCard extends StatefulWidget {
+  final _TaskD data;
+  const _TaskCard({required this.data});
+  @override
+  State<_TaskCard> createState() => _TaskCardState();
+}
+class _TaskCardState extends State<_TaskCard> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border(
+          left: BorderSide(color: widget.data.c, width: 3),
+          top: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
+          right: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
+          bottom: BorderSide(color: _h ? widget.data.c.withOpacity(0.25) : BrikolikColors.border),
+        ),
+        boxShadow: [BoxShadow(
+          color: _h ? widget.data.c.withOpacity(0.12) : Colors.black.withOpacity(0.04),
+          blurRadius: _h ? 20 : 10, offset: const Offset(0, 4),
+        )],
+      ),
+      transform: _h ? (Matrix4.identity()..translate(0.0, -3.0)) : Matrix4.identity(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(
+            width: 38, height: 38,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [widget.data.c.withOpacity(0.1), widget.data.c.withOpacity(0.22)],
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(widget.data.icon, size: 19, color: widget.data.c),
+          ),
+          const SizedBox(width: 10),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(widget.data.cat, style: TextStyle(fontFamily: 'Nunito',
+                fontSize: 10, fontWeight: FontWeight.w700,
+                color: widget.data.c, letterSpacing: 0.3)),
+            Text('Il y a ' + widget.data.ago, style: const TextStyle(
+                fontFamily: 'Nunito', fontSize: 10, color: BrikolikColors.textHint)),
+          ]),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: BrikolikColors.successLight,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Container(width: 6, height: 6,
+                decoration: const BoxDecoration(color: BrikolikColors.success, shape: BoxShape.circle)),
+              const SizedBox(width: 4),
+              const Text('Ouvert', style: TextStyle(
+                  fontFamily: 'Nunito', fontSize: 10,
+                  fontWeight: FontWeight.w700, color: BrikolikColors.success)),
+            ]),
+          ),
+        ]),
+        const SizedBox(height: 12),
+        Text(widget.data.t, style: const TextStyle(fontFamily: 'Nunito',
+            fontSize: 14, fontWeight: FontWeight.w700,
+            color: BrikolikColors.textPrimary, height: 1.35),
+            maxLines: 2, overflow: TextOverflow.ellipsis),
+        const SizedBox(height: 10),
+        Row(children: [
+          const Icon(Icons.location_on_outlined, size: 13, color: BrikolikColors.textHint),
+          const SizedBox(width: 3),
+          Expanded(child: Text(widget.data.city, style: const TextStyle(
+              fontFamily: 'Nunito', fontSize: 11, color: BrikolikColors.textSecondary),
+              overflow: TextOverflow.ellipsis)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: BrikolikColors.surfaceVariant,
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(color: BrikolikColors.border),
+            ),
+            child: Text(widget.data.budget, style: const TextStyle(
+                fontFamily: 'Nunito', fontSize: 11,
+                fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary)),
+          ),
+        ]),
+      ]),
+    ),
+  );
+}
+
+class _SafetyCard extends StatefulWidget {
+  final _SafetyD data;
+  const _SafetyCard({required this.data});
+  @override
+  State<_SafetyCard> createState() => _SafetyCardState();
+}
+class _SafetyCardState extends State<_SafetyCard> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _h ? widget.data.c.withOpacity(0.35) : BrikolikColors.border),
+        boxShadow: [BoxShadow(
+          color: _h ? widget.data.c.withOpacity(0.12) : Colors.black.withOpacity(0.04),
+          blurRadius: _h ? 24 : 10, offset: const Offset(0, 4),
+        )],
+      ),
+      transform: _h ? (Matrix4.identity()..translate(0.0, -3.0)) : Matrix4.identity(),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 52, height: 52,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [widget.data.c.withOpacity(0.1), widget.data.c.withOpacity(0.22)],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: widget.data.c.withOpacity(0.2)),
+          ),
+          child: Icon(widget.data.icon, size: 24, color: widget.data.c),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.data.t, style: const TextStyle(fontFamily: 'Nunito',
+              fontSize: 15, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary)),
+          const SizedBox(height: 6),
+          Text(widget.data.d, style: const TextStyle(fontFamily: 'Nunito',
+              fontSize: 12, fontWeight: FontWeight.w500,
+              color: BrikolikColors.textSecondary, height: 1.55)),
+        ])),
+      ]),
+    ),
+  );
+}
+
+class _BenefitCard extends StatefulWidget {
+  final _BenefitD d;
+  const _BenefitCard({required this.d});
+  @override
+  State<_BenefitCard> createState() => _BenefitCardState();
+}
+class _BenefitCardState extends State<_BenefitCard> {
+  bool _h = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(_h ? 0.13 : 0.07),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(_h ? 0.22 : 0.1)),
+        boxShadow: _h ? [BoxShadow(
+          color: BrikolikColors.primary.withOpacity(0.25),
+          blurRadius: 22, offset: const Offset(0, 6),
+        )] : [],
+      ),
+      transform: _h ? (Matrix4.identity()..translate(0.0, -4.0)) : Matrix4.identity(),
+      child: Column(children: [
+        Text(widget.d.emoji, style: const TextStyle(fontSize: 32)),
+        const SizedBox(height: 12),
+        Text(widget.d.t, style: const TextStyle(fontFamily: 'Nunito',
+            fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 6),
+        Text(widget.d.d, textAlign: TextAlign.center,
+          style: TextStyle(fontFamily: 'Nunito', fontSize: 12,
+              color: Colors.white.withOpacity(0.65), height: 1.45)),
+      ]),
+    ),
+  );
+}
+
+class _WorkerProfileCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.white.withOpacity(0.11), Colors.white.withOpacity(0.05)],
+        begin: Alignment.topLeft, end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Colors.white.withOpacity(0.18)),
+      boxShadow: [BoxShadow(
+        color: Colors.black.withOpacity(0.12), blurRadius: 18, offset: const Offset(0, 6),
+      )],
+    ),
+    child: Row(children: [
+      Container(
+        width: 56, height: 56,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [BrikolikColors.primary, BrikolikColors.accent],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+          ),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+        ),
+        child: const Center(child: Text('HT', style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white))),
+      ),
+      const SizedBox(width: 14),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Hamid Tazi', style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+        const Text('Plombier · Casablanca', style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 12, color: Colors.white54)),
+        const SizedBox(height: 5),
+        Row(children: [
+          const Icon(Icons.star_rounded, size: 13, color: Color(0xFFFFC107)),
+          const SizedBox(width: 3),
+          const Text('4.9 · 47 avis', style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70)),
+        ]),
+      ])),
+      Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: const Color(0xFF4DFFB4).withOpacity(0.15),
             borderRadius: BorderRadius.circular(50),
           ),
-          child: Text(
-            badge,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: BrikolikColors.primary,
-              letterSpacing: 1.5,
-            ),
-          ),
+          child: const Text('Ce mois', style: TextStyle(
+              fontFamily: 'Nunito', fontSize: 9, color: Color(0xFF4DFFB4), fontWeight: FontWeight.w600)),
         ),
-        const SizedBox(height: 12),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: BrikolikColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: BrikolikColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 4),
+        const Text('4 800 MAD', style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF4DFFB4))),
+        const Text('12 missions', style: TextStyle(
+            fontFamily: 'Nunito', fontSize: 10, color: Colors.white38)),
+      ]),
+    ]),
+  );
 }
 
-// ── Nav Button ───────────────────────────────────────────────
-class _NavButton extends StatelessWidget {
-  final String label;
-  final bool outlined;
-  final VoidCallback onTap;
-
-  const _NavButton({
-    required this.label,
-    required this.outlined,
-    required this.onTap,
-  });
-
+class _BlogCard extends StatefulWidget {
+  final _BlogD data;
+  const _BlogCard({required this.data});
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: outlined ? Colors.transparent : Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: outlined
-              ? Border.all(color: Colors.white.withOpacity(0.4), width: 1)
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: outlined ? Colors.white : BrikolikColors.primary,
-          ),
-        ),
-      ),
-    );
-  }
+  State<_BlogCard> createState() => _BlogCardState();
 }
-
-// ── Hero CTA Button ──────────────────────────────────────────
-class _HeroCTAButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool filled;
-  final VoidCallback onTap;
-
-  const _HeroCTAButton({
-    required this.label,
-    required this.icon,
-    required this.filled,
-    required this.onTap,
-  });
-
+class _BlogCardState extends State<_BlogCard> {
+  bool _h = false;
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-        decoration: BoxDecoration(
-          color: filled ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: filled
-              ? null
-              : Border.all(color: Colors.white.withOpacity(0.4), width: 1.5),
-          boxShadow: filled
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6),
-                  )
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: filled
-                    ? BrikolikColors.primary
-                    : Colors.white,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(icon,
-                size: 18,
-                color: filled
-                    ? BrikolikColors.primary
-                    : Colors.white),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Service Data ─────────────────────────────────────────────
-class _ServiceData {
-  final IconData icon;
-  final String label;
-  final String desc;
-  final Color color;
-  const _ServiceData(this.icon, this.label, this.desc, this.color);
-}
-
-// ── Service Card ─────────────────────────────────────────────
-class _ServiceCard extends StatefulWidget {
-  final _ServiceData data;
-  const _ServiceCard({required this.data});
-
-  @override
-  State<_ServiceCard> createState() => _ServiceCardState();
-}
-
-class _ServiceCardState extends State<_ServiceCard> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: BrikolikColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: _hovered ? widget.data.color.withOpacity(0.4) : BrikolikColors.border,
-            width: _hovered ? 1.5 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _hovered
-                  ? widget.data.color.withOpacity(0.12)
-                  : Colors.black.withOpacity(0.03),
-              blurRadius: _hovered ? 16 : 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        transform: _hovered
-            ? (Matrix4.identity()..translate(0, -3, 0))
-            : Matrix4.identity(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: widget.data.color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(widget.data.icon,
-                  size: 22, color: widget.data.color),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              widget.data.label,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: BrikolikColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.data.desc,
-              style: const TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: BrikolikColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── Step Data ────────────────────────────────────────────────
-class _StepData {
-  final String number;
-  final IconData icon;
-  final String title;
-  final String desc;
-  const _StepData(this.number, this.icon, this.title, this.desc);
-}
-
-// ── Step Card ────────────────────────────────────────────────
-class _StepCard extends StatelessWidget {
-  final _StepData data;
-  const _StepCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: BrikolikColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: _h ? BrikolikColors.primary.withOpacity(0.3) : BrikolikColors.border),
+        boxShadow: [BoxShadow(
+          color: _h ? BrikolikColors.primary.withOpacity(0.1) : Colors.black.withOpacity(0.04),
+          blurRadius: _h ? 24 : 10, offset: const Offset(0, 4),
+        )],
       ),
-      child: Column(
-        children: [
-          // Number circle
-          Container(
-            width: 48,
-            height: 48,
+      transform: _h ? (Matrix4.identity()..translate(0.0, -4.0)) : Matrix4.identity(),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+          child: Container(
+            height: 110,
             decoration: const BoxDecoration(
-              gradient: BrikolikColors.brandGradient,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                data.number,
-                style: const TextStyle(
-                  fontFamily: 'Nunito',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                colors: [BrikolikColors.primary, BrikolikColors.accent],
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Icon(data.icon, size: 28, color: BrikolikColors.primary),
-          const SizedBox(height: 10),
-          Text(
-            data.title,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: BrikolikColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            data.desc,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: BrikolikColors.textSecondary,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Stat Item ────────────────────────────────────────────────
-class _StatItem extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  const _StatItem(
-      {required this.value, required this.label, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 22, color: Colors.white.withOpacity(0.7)),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
+            child: Stack(children: [
+              Positioned(top: -20, right: -20, child: Container(
+                width: 90, height: 90,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.07),
+                ),
+              )),
+              Center(child: Icon(Icons.article_rounded, size: 38,
+                  color: Colors.white.withOpacity(0.85))),
+            ]),
           ),
         ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'Nunito',
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.white.withOpacity(0.6),
-          ),
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: BoxDecoration(
+                  color: BrikolikColors.primaryLight,
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Text(widget.data.tag, style: const TextStyle(
+                    fontFamily: 'Nunito', fontSize: 10, fontWeight: FontWeight.w700,
+                    color: BrikolikColors.primaryDark)),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.access_time_rounded, size: 11, color: BrikolikColors.textHint),
+              const SizedBox(width: 3),
+              Text(widget.data.read + ' de lecture', style: const TextStyle(
+                  fontFamily: 'Nunito', fontSize: 10, color: BrikolikColors.textHint)),
+            ]),
+            const SizedBox(height: 10),
+            Text(widget.data.t, style: const TextStyle(fontFamily: 'Nunito',
+                fontSize: 13, fontWeight: FontWeight.w700,
+                color: BrikolikColors.textPrimary, height: 1.45),
+                maxLines: 3, overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 12),
+            const Row(children: [
+              Text("Lire l'article", style: TextStyle(
+                fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w700,
+                color: BrikolikColors.primary)),
+              SizedBox(width: 4),
+              Icon(Icons.arrow_forward_rounded, size: 13, color: BrikolikColors.primary),
+            ]),
+          ]),
         ),
-      ],
-    );
-  }
+      ]),
+    ),
+  );
 }
 
-class _StatDivider extends StatelessWidget {
-  const _StatDivider();
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 1,
-      height: 40,
-      color: Colors.white.withOpacity(0.15),
-    );
-  }
-}
-
-// ── Trust Data ───────────────────────────────────────────────
-class _TrustData {
+class _Social extends StatefulWidget {
   final IconData icon;
-  final String title;
-  final String desc;
-  final Color color;
-  const _TrustData(this.icon, this.title, this.desc, this.color);
-}
-
-// ── Trust Card ───────────────────────────────────────────────
-class _TrustCard extends StatelessWidget {
-  final _TrustData data;
-  const _TrustCard({required this.data});
-
+  const _Social(this.icon);
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: BrikolikColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: BrikolikColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: data.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(data.icon, size: 24, color: data.color),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            data.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: BrikolikColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            data.desc,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Nunito',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: BrikolikColors.textSecondary,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  State<_Social> createState() => _SocialState();
 }
-
-// ── Footer Link ──────────────────────────────────────────────
-class _FooterLink extends StatelessWidget {
-  final String label;
-  const _FooterLink({required this.label});
-
+class _SocialState extends State<_Social> {
+  bool _h = false;
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: TextStyle(
-        fontFamily: 'Nunito',
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: Colors.white.withOpacity(0.45),
-      ),
-    );
-  }
-}
-
-// ── Social Icon ──────────────────────────────────────────────
-class _SocialIcon extends StatelessWidget {
-  final IconData icon;
-  const _SocialIcon({required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
+  Widget build(BuildContext context) => MouseRegion(
+    onEnter: (_) => setState(() => _h = true),
+    onExit:  (_) => setState(() => _h = false),
+    cursor: SystemMouseCursors.click,
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: 40, height: 40,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.08),
-        border:
-            Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+        color: Colors.white.withOpacity(_h ? 0.16 : 0.07),
+        border: Border.all(color: Colors.white.withOpacity(_h ? 0.28 : 0.1)),
       ),
-      child: Icon(icon, size: 16, color: Colors.white.withOpacity(0.5)),
-    );
-  }
+      child: Icon(widget.icon, size: 17, color: Colors.white.withOpacity(_h ? 0.95 : 0.5)),
+    ),
+  );
 }
 
 // ── Particle Painter ─────────────────────────────────────────
 class _ParticlePainter extends CustomPainter {
-  final double progress;
-  _ParticlePainter(this.progress);
+  final double p;
+  _ParticlePainter(this.p);
 
   @override
   void paint(Canvas canvas, Size size) {
     final rng = math.Random(42);
     final paint = Paint()..style = PaintingStyle.fill;
-
-    for (int i = 0; i < 25; i++) {
-      final baseX = rng.nextDouble() * size.width;
-      final baseY = rng.nextDouble() * size.height;
-      final speed = 0.3 + rng.nextDouble() * 0.7;
-      final phase = rng.nextDouble() * 2 * math.pi;
-
-      final x = baseX +
-          math.sin((progress * 2 * math.pi * speed) + phase) * 20;
-      final y = baseY +
-          math.cos((progress * 2 * math.pi * speed) + phase) * 15;
-
-      final alpha = (0.03 + rng.nextDouble() * 0.06) *
-          (0.5 + 0.5 * math.sin(progress * 2 * math.pi + phase));
-      final radius = 2 + rng.nextDouble() * 4;
-
-      paint.color = Colors.white.withOpacity(alpha.clamp(0.0, 1.0));
-      canvas.drawCircle(Offset(x, y), radius, paint);
+    for (int i = 0; i < 30; i++) {
+      final bx = rng.nextDouble() * size.width;
+      final by = rng.nextDouble() * size.height;
+      final sp = 0.3 + rng.nextDouble() * 0.7;
+      final ph = rng.nextDouble() * 2 * math.pi;
+      final x  = bx + math.sin((p * 2 * math.pi * sp) + ph) * 22;
+      final y  = by + math.cos((p * 2 * math.pi * sp) + ph) * 16;
+      final a  = (0.02 + rng.nextDouble() * 0.05) *
+          (0.5 + 0.5 * math.sin(p * 2 * math.pi + ph));
+      paint.color = Colors.white.withOpacity(a.clamp(0, 1));
+      canvas.drawCircle(Offset(x, y), 2 + rng.nextDouble() * 3.5, paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ParticlePainter oldDelegate) =>
-      oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ParticlePainter old) => old.p != p;
 }

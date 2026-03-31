@@ -30,6 +30,8 @@ class JobDetailsScreen extends StatelessWidget {
         final jobData = snapshot.data!.data() as Map<String, dynamic>;
         final currentUserId = FirebaseAuth.instance.currentUser?.uid;
         final isOwner = currentUserId == jobData['customerId'];
+        final isAcceptedWorker = currentUserId == jobData['acceptedWorkerId'];
+        final jobStatus = jobData['status'] ?? 'open';
 
         return Scaffold(
           backgroundColor: BrikolikColors.background,
@@ -53,6 +55,7 @@ class JobDetailsScreen extends StatelessWidget {
                       _buildClientCard(context, jobData),
                       const SizedBox(height: 24),
                       if (isOwner) _buildOffersSection(context, jobId),
+                      if (isAcceptedWorker) _buildAcceptedBanner(context, jobData),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -60,9 +63,73 @@ class JobDetailsScreen extends StatelessWidget {
               ),
             ],
           ),
-          bottomNavigationBar: isOwner ? null : _buildBottomBar(context, jobId),
+          bottomNavigationBar: isOwner 
+              ? null 
+              : isAcceptedWorker 
+                  ? _buildAcceptedBottomBar(context)
+                  : jobStatus == 'inprogress'
+                      ? null // Job already taken, hide offer button for other workers
+                      : _buildBottomBar(context, jobId),
         );
       },
+    );
+  }
+
+  Widget _buildAcceptedBanner(BuildContext context, Map<String, dynamic> jobData) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFE8F5E9), Color(0xFFC8E6C9)],
+        ),
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(color: BrikolikColors.success, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.celebration_rounded, size: 40, color: BrikolikColors.success),
+          const SizedBox(height: 10),
+          Text(
+            'Félicitations ! 🎉',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: BrikolikColors.success),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${jobData['customerName'] ?? 'Le client'} a accepté votre offre.\nVous pouvez maintenant le contacter pour organiser la mission.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontFamily: 'Nunito', fontSize: 14, color: BrikolikColors.textSecondary, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAcceptedBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        border: const Border(top: BorderSide(color: BrikolikColors.border, width: 1)),
+      ),
+      child: GestureDetector(
+        onTap: () => Navigator.pushNamed(context, '/chat'),
+        child: Container(
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF43A047), Color(0xFF66BB6A)]),
+            borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.chat_rounded, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Contacter le client', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -374,6 +441,7 @@ class JobDetailsScreen extends StatelessWidget {
             return Column(
               children: snapshot.data!.docs.map((doc) {
                  final offer = doc.data() as Map<String, dynamic>;
+                 final isAccepted = offer['status'] == 'accepted';
                  return Padding(
                    padding: const EdgeInsets.only(bottom: 10),
                    child: _OfferCard(
@@ -383,6 +451,8 @@ class JobDetailsScreen extends StatelessWidget {
                      price: offer['price'] ?? '...',
                      message: offer['message'] ?? '',
                      isPro: true,
+                     isAccepted: isAccepted,
+                     onAccept: isAccepted ? null : () => _acceptOffer(context, jobId, doc.id, offer['workerId'] ?? '', offer['workerName'] ?? 'Artisan'),
                    ),
                  );
               }).toList(),
@@ -391,6 +461,43 @@ class JobDetailsScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _acceptOffer(BuildContext context, String jobId, String offerId, String workerId, String workerName) async {
+    try {
+      // 1. Update job status to 'inprogress' and save accepted worker
+      await FirebaseFirestore.instance.collection('jobs').doc(jobId).update({
+        'status': 'inprogress',
+        'acceptedWorkerId': workerId,
+        'acceptedWorkerName': workerName,
+        'acceptedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2. Mark the offer as accepted
+      await FirebaseFirestore.instance
+          .collection('jobs').doc(jobId)
+          .collection('offers').doc(offerId)
+          .update({'status': 'accepted'});
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Vous avez accepté l\'offre de $workerName !'),
+            backgroundColor: BrikolikColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('=== ACCEPT ERROR: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildBottomBar(BuildContext context, String jobId) {
@@ -513,6 +620,7 @@ class JobDetailsScreen extends StatelessWidget {
                     setState(() => isSubmitting = true);
                     try {
                       final workerId = FirebaseAuth.instance.currentUser?.uid;
+                      debugPrint('=== OFFER: workerId=$workerId, jobId=$jobId');
                       if (workerId == null) {
                         Navigator.pop(ctx);
                         return;
@@ -520,6 +628,7 @@ class JobDetailsScreen extends StatelessWidget {
                       
                       final workerDoc = await FirebaseFirestore.instance.collection('users').doc(workerId).get();
                       final wName = workerDoc.data()?['fullName'] ?? 'Artisan';
+                      debugPrint('=== OFFER: workerName=$wName');
                       
                       await FirebaseFirestore.instance.collection('jobs').doc(jobId).collection('offers').add({
                          'workerId': workerId,
@@ -528,18 +637,38 @@ class JobDetailsScreen extends StatelessWidget {
                          'message': messageCtrl.text,
                          'createdAt': FieldValue.serverTimestamp(),
                       });
+                      debugPrint('=== OFFER: offer saved!');
                       
                       await FirebaseFirestore.instance.collection('jobs').doc(jobId).update({
                          'offersCount': FieldValue.increment(1)
                       });
+                      debugPrint('=== OFFER: offersCount incremented!');
                       
-                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('✅ Offre envoyée avec succès !'),
+                            backgroundColor: BrikolikColors.success,
+                          ),
+                        );
+                      }
                     } catch(e) {
+                      debugPrint('=== OFFER ERROR: $e');
                       setState(() => isSubmitting = false);
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('❌ Erreur: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   },
                   child: Container(
                     height: 52,
+                    width: double.infinity,
                     decoration: BoxDecoration(
                       gradient: isSubmitting ? null : BrikolikColors.brandGradient,
                       color: isSubmitting ? BrikolikColors.surfaceVariant : null,
@@ -640,6 +769,8 @@ class _OfferCard extends StatelessWidget {
   final String price;
   final String message;
   final bool isPro;
+  final bool isAccepted;
+  final VoidCallback? onAccept;
 
   const _OfferCard({
     required this.name,
@@ -648,6 +779,8 @@ class _OfferCard extends StatelessWidget {
     required this.price,
     required this.message,
     required this.isPro,
+    this.isAccepted = false,
+    this.onAccept,
   });
 
   @override
@@ -658,22 +791,48 @@ class _OfferCard extends StatelessWidget {
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(BrikolikRadius.lg),
         border: Border.all(
-          color: isPro ? BrikolikColors.primary : BrikolikColors.border,
-          width: isPro ? 1.5 : 1,
+          color: isAccepted ? BrikolikColors.success : (isPro ? BrikolikColors.primary : BrikolikColors.border),
+          width: isAccepted ? 2 : (isPro ? 1.5 : 1),
         ),
-        boxShadow: isPro
+        boxShadow: isAccepted
             ? [
                 BoxShadow(
-                  color: BrikolikColors.primary.withValues(alpha: 0.08),
+                  color: BrikolikColors.success.withValues(alpha: 0.12),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 )
               ]
-            : [],
+            : isPro
+                ? [
+                    BoxShadow(
+                      color: BrikolikColors.primary.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isAccepted)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: BrikolikColors.successLight,
+                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle_rounded, size: 16, color: BrikolikColors.success),
+                  SizedBox(width: 6),
+                  Text('Offre acceptée', style: TextStyle(fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
+                ],
+              ),
+            ),
           Row(
             children: [
               BrikolikAvatar(name: name, size: 40),
@@ -718,17 +877,17 @@ class _OfferCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: BrikolikColors.primaryLight,
+                  color: isAccepted ? BrikolikColors.successLight : BrikolikColors.primaryLight,
                   borderRadius:
                       BorderRadius.circular(BrikolikRadius.sm),
                 ),
                 child: Text(
                   price,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: BrikolikColors.primary,
+                    color: isAccepted ? BrikolikColors.success : BrikolikColors.primary,
                   ),
                 ),
               ),
@@ -742,44 +901,59 @@ class _OfferCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Container(
+          if (isAccepted)
+            Row(
+              children: [
+                Expanded(
+                  child: BrikolikButton(
+                    label: 'Contacter',
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/chat'),
+                    outlined: false,
                     height: 40,
-                    decoration: BoxDecoration(
-                      gradient: BrikolikColors.brandGradient,
-                      borderRadius:
-                          BorderRadius.circular(BrikolikRadius.md),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Accepter',
-                        style: TextStyle(
-                          fontFamily: 'Nunito',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                          color: Colors.white,
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onAccept,
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: BrikolikColors.brandGradient,
+                        borderRadius:
+                            BorderRadius.circular(BrikolikRadius.md),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'Accepter',
+                          style: TextStyle(
+                            fontFamily: 'Nunito',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: BrikolikButton(
-                  label: 'Contacter',
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/chat'),
-                  outlined: true,
-                  height: 40,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BrikolikButton(
+                    label: 'Contacter',
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/chat'),
+                    outlined: true,
+                    height: 40,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

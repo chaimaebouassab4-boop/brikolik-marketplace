@@ -49,9 +49,11 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   Future<void> _loadProfile() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       return;
     }
+    // Pre-fill email from Auth no matter what
+    _email = _auth.currentUser?.email ?? '';
     try {
       final doc = await _db.collection('users').doc(uid).get();
       if (doc.exists && mounted) {
@@ -60,7 +62,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         _phoneCtrl.text = data['phone']     ?? '';
         _bioCtrl.text   = data['bio']       ?? '';
         _cityCtrl.text  = data['city']      ?? '';
-        _email          = data['email']     ?? _auth.currentUser?.email ?? '';
+        _email          = data['email']     ?? _email;
         final savedServices = List<String>.from(data['services'] ?? []);
         _services
           ..clear()
@@ -80,14 +82,14 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await _db.collection('users').doc(uid).update({
+      await _db.collection('users').doc(uid).set({
         'fullName': _nameCtrl.text.trim(),
         'phone':    _phoneCtrl.text.trim(),
         'bio':      _bioCtrl.text.trim(),
         'city':     _cityCtrl.text.trim(),
         'services': _services,
-        'updatedAt': Timestamp.now(),
-      });
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

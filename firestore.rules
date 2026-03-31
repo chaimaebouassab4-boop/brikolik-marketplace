@@ -1,13 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Profils utilisateurs
     match /users/{userId} {
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /{document=**} {
-      allow read, write: if false;
+    // Missions
+    match /jobs/{jobId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.customerId == request.auth.uid;
+
+      // Offres : le client (propriétaire du job) OU l'artisan peuvent modifier
+      match /offers/{offerId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null;
+        allow update: if request.auth != null;
+        allow delete: if request.auth != null && resource.data.workerId == request.auth.uid;
+      }
     }
   }
 }

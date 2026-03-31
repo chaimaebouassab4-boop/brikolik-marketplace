@@ -342,7 +342,7 @@ class _JobListScreenState extends State<JobListScreen> {
 
             return JobCard(
               job: jobMap,
-              onTap: () => Navigator.pushNamed(context, '/job-details'),
+              onTap: () => Navigator.pushNamed(context, '/job-details', arguments: filteredDocs[i].id),
             );
           },
         );
