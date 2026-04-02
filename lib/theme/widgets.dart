@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import 'app_theme.dart';
 
 // ─────────────────────────────────────────────
@@ -562,6 +564,10 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions;
   final VoidCallback? onBackPressed;
   final bool showBackButton;
+  final bool transparent;
+  final bool useBrandBackground;
+  final double? height;
+  final bool showDivider;
 
   const BrikolikAppBar({
     super.key,
@@ -569,18 +575,51 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.actions,
     this.onBackPressed,
     this.showBackButton = true,
+    this.transparent = false,
+    this.useBrandBackground = true,
+    this.height,
+    this.showDivider = true,
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool hasBrandBackground = useBrandBackground && !transparent;
+    final Color foreground =
+        hasBrandBackground || transparent ? Colors.white : BrikolikColors.textPrimary;
+
     return AppBar(
-      backgroundColor: BrikolikColors.surface,
-      foregroundColor: BrikolikColors.textPrimary,
+      systemOverlayStyle:
+          hasBrandBackground ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      toolbarHeight: height ?? 72,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
-      leading: showBackButton 
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: hasBrandBackground ? BrikolikColors.brandGradient : null,
+          color: hasBrandBackground
+              ? null
+              : (transparent ? Colors.transparent : BrikolikColors.surface),
+        ),
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: (transparent || !showDivider)
+              ? null
+              : Container(
+                  height: 1,
+                  color: hasBrandBackground
+                      ? Colors.white.withOpacity(0.14)
+                      : BrikolikColors.border,
+                ),
+        ),
+      ),
+      leading: showBackButton
           ? IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              icon: Icon(
+                Icons.arrow_back_ios_new_rounded,
+                size: 20,
+                color: foreground,
+              ),
               onPressed: onBackPressed ?? () {
                 if (Navigator.canPop(context)) {
                   Navigator.pop(context);
@@ -593,44 +632,173 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
       automaticallyImplyLeading: false,
       titleSpacing: showBackButton ? 0 : 20,
       title: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         children: [
-          GestureDetector(
-            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: BrikolikColors.primaryLight,
-                border: Border.all(color: BrikolikColors.border),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamedAndRemoveUntil(
+                  context, '/welcome', (route) => false),
+              child: SizedBox(
+                width: 54,
+                height: 54,
                 child: Image.asset(
                   'lib/assets/lasgbrik-removebg-preview.png',
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, __, ___) => Icon(
                     Icons.home_rounded,
-                    color: BrikolikColors.primary,
-                    size: 18,
+                    color: foreground,
+                    size: 24,
                   ),
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Text(title),
+          Expanded(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: foreground,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
       actions: actions,
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(color: BrikolikColors.border, height: 1),
-      ),
     );
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
+  Size get preferredSize => Size.fromHeight((height ?? 72) + (showDivider ? 1 : 0));
 }
+
+// ── Shared Bottom Navigation Bar ──────────────
+class BrikolikBottomNav extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int>? onTap;
+
+  const BrikolikBottomNav({
+    super.key,
+    this.currentIndex = 0,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: BrikolikColors.surface,
+          boxShadow: [
+            BoxShadow(
+              color: BrikolikColors.primary.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: currentIndex,
+          selectedItemColor: BrikolikColors.primary,
+          unselectedItemColor: BrikolikColors.textSecondary,
+          onTap: (i) {
+            if (onTap != null) {
+              onTap!(i);
+              return;
+            }
+            // Default navigation behavior
+            switch (i) {
+              case 0:
+                Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
+                break;
+              case 1:
+                Navigator.pushNamed(context, '/jobs');
+                break;
+              case 2:
+                Navigator.pushNamed(context, '/chat');
+                break;
+              case 3:
+                Navigator.pushNamed(context, '/customer-profile');
+                break;
+            }
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home_rounded),
+              label: 'Accueil',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.work_outline_rounded),
+              activeIcon: Icon(Icons.work_rounded),
+              label: 'Missions',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline_rounded),
+              activeIcon: Icon(Icons.chat_bubble_rounded),
+              label: 'Messages',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline_rounded),
+              activeIcon: Icon(Icons.person_rounded),
+              label: 'Profil',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Layout helper to keep header/footer consistent ──────────────────────────
+class BrikolikPageScaffold extends StatelessWidget {
+  final String title;
+  final Widget body;
+  final bool showBottomNav;
+  final int bottomNavIndex;
+  final bool showBackButton;
+  final bool useBrandHeader;
+  final bool transparentAppBar;
+  final VoidCallback? onBackPressed;
+  final List<Widget>? actions;
+
+  const BrikolikPageScaffold({
+    super.key,
+    required this.title,
+    required this.body,
+    this.showBottomNav = false,
+    this.bottomNavIndex = 0,
+    this.showBackButton = true,
+    this.useBrandHeader = true,
+    this.transparentAppBar = false,
+    this.onBackPressed,
+    this.actions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: BrikolikColors.background,
+      appBar: BrikolikAppBar(
+        title: title,
+        showBackButton: showBackButton,
+        onBackPressed: onBackPressed,
+        transparent: transparentAppBar,
+        useBrandBackground: useBrandHeader,
+        actions: actions,
+      ),
+      body: body,
+      bottomNavigationBar:
+          showBottomNav ? BrikolikBottomNav(currentIndex: bottomNavIndex) : null,
+    );
+  }
+}
+

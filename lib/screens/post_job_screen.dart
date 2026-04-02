@@ -301,7 +301,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         const SizedBox(height: 24),
         BrikolikInput(
           hint: 'Ex : Fuite d\'eau sous le lavabo, besoin de remplacement...',
-          label: 'Titre de votre demande',
+          label: 'Tache demandee',
           controller: _titleCtrl,
           prefixIcon: Icons.title_rounded,
         ),
@@ -557,7 +557,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
               value: _selectedCategory ?? '—'),
           const Divider(height: 20),
           _SummaryRow(
-              label: 'Titre',
+              label: 'Tache',
               value: _titleCtrl.text.isEmpty
                   ? '—'
                   : _titleCtrl.text),

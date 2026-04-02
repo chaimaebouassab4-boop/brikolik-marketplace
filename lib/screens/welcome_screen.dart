@@ -207,33 +207,35 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: Row(
         children: [
-          Row(children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: const LinearGradient(
-                  colors: [BrikolikColors.primary, BrikolikColors.accent],
-                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                // If on home page, scroll to top, otherwise navigate to home
+                if (ModalRoute.of(context)?.settings.name != '/') {
+                  Navigator.pushNamed(context, '/');
+                } else {
+                  _scrollCtrl.animateTo(0, duration: const Duration(milliseconds: 500), curve: Curves.easeInOut);
+                }
+              },
+              child: Row(children: [
+                SizedBox(
+                  width: 50, height: 50,
+                  child: Image.asset('lib/assets/lasgbrik-removebg-preview.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.build_rounded, color: Colors.white, size: 28),
+                  ),
                 ),
-                boxShadow: [BoxShadow(color: BrikolikColors.primary.withOpacity(0.4), blurRadius: 10, offset: const Offset(0, 3))],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset('lib/assets/lasgbrik-removebg-preview.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.build_rounded, color: Colors.white, size: 18),
-                ),
-              ),
+                const SizedBox(width: 8),
+                const Text('BRIKOLIK',
+                  style: TextStyle(
+                    fontFamily: 'Nunito', fontSize: 18,
+                    fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 2.0,
+                  )),
+              ]),
             ),
-            const SizedBox(width: 10),
-            const Text('BRIKOLIK',
-              style: TextStyle(
-                fontFamily: 'Nunito', fontSize: 15,
-                fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 2.0,
-              )),
-          ]),
+          ),
           const Spacer(),
           if (isWide) ...[
             _NavLink('Services'),
@@ -245,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen>
               onTap: () => Navigator.pushNamed(context, '/login')),
           const SizedBox(width: 8),
           _NavBtn(label: "S'inscrire", filled: true,
-              onTap: () => Navigator.pushReplacementNamed(context, '/role')),
+              onTap: () => Navigator.pushReplacementNamed(context, '/login')),
         ],
       ),
     );
@@ -343,32 +345,21 @@ class _HomeScreenState extends State<HomeScreen>
                             alignment: Alignment.center,
                             children: [
                               Container(
-                                width: 100, height: 100,
+                                width: 130, height: 130,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: BrikolikColors.primary
                                       .withOpacity(0.12 * _pulse.value),
                                 ),
                               ),
-                              Container(
-                                width: 78, height: 78,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(22),
-                                  color: Colors.white.withOpacity(0.12),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.2),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(22),
-                                  child: Image.asset(
-                                    'lib/assets/lasgbrik-removebg-preview.png',
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.build_rounded,
-                                      color: Colors.white, size: 34,
-                                    ),
+                              SizedBox(
+                                width: 108, height: 108,
+                                child: Image.asset(
+                                  'lib/assets/lasgbrik-removebg-preview.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.build_rounded,
+                                    color: Colors.white, size: 34,
                                   ),
                                 ),
                               ),

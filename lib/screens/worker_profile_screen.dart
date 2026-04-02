@@ -16,6 +16,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   final _phoneCtrl = TextEditingController();
   final _bioCtrl   = TextEditingController();
   final _cityCtrl  = TextEditingController();
+  final _customServiceCtrl = TextEditingController();
 
   final List<String> _services = [];
   final List<String> _allServices = [
@@ -42,7 +43,27 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     _phoneCtrl.dispose();
     _bioCtrl.dispose();
     _cityCtrl.dispose();
+    _customServiceCtrl.dispose();
     super.dispose();
+  }
+
+  void _addCustomService() {
+    final service = _customServiceCtrl.text.trim();
+    if (service.isEmpty) return;
+
+    final normalized = service.toLowerCase();
+    final exists = _services.any((s) => s.toLowerCase() == normalized) ||
+        _allServices.any((s) => s.toLowerCase() == normalized);
+    if (exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ce service existe deja.')),
+      );
+      return;
+    }
+
+    setState(() => _services.add(service));
+    _customServiceCtrl.clear();
+    FocusScope.of(context).unfocus();
   }
 
   // ── Charger les données depuis Firestore ──────────────────
@@ -254,10 +275,36 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                               ),
                             ),
                           ),
+                        BrikolikInput(
+                          hint: 'Ex: Installation climatisation',
+                          label: 'Ajouter un service personnalise',
+                          controller: _customServiceCtrl,
+                          prefixIcon: Icons.add_task_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _addCustomService,
+                            icon: const Icon(Icons.add_rounded, size: 16),
+                            label: const Text('Ajouter le service'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: BrikolikColors.accent,
+                              textStyle: const TextStyle(
+                                fontFamily: 'Nunito',
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: _allServices.map((s) {
+                          children: [
+                            ..._allServices,
+                            ..._services.where((s) => !_allServices.contains(s)),
+                          ].map((s) {
                             final selected = _services.contains(s);
                             return CategoryChip(
                               label: s,

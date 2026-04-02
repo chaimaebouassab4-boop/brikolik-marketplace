@@ -31,10 +31,20 @@ class _JobListScreenState extends State<JobListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
+      appBar: BrikolikAppBar(
+        title: 'Missions',
+        showBackButton: false,
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.notifications_outlined),
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(),
             _buildSearchBar(),
             _buildCategoryBar(),
             const SizedBox(height: 8),
@@ -81,103 +91,11 @@ class _JobListScreenState extends State<JobListScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const BrikolikBottomNav(currentIndex: 1),
     );
   }
 
-  Widget _buildTopBar() {
-    return Container(
-      color: BrikolikColors.surface,
-      padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false),
-            child: Container(
-              width: 42,
-              height: 42,
-              margin: const EdgeInsets.only(right: 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                color: BrikolikColors.primaryLight,
-                border: Border.all(color: BrikolikColors.border),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'lib/assets/lasgbrik-removebg-preview.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.home_rounded,
-                    color: BrikolikColors.primary,
-                    size: 22,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bonjour 👋',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: BrikolikColors.muted),
-                ),
-                Text(
-                  'Services disponibles',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ],
-            ),
-          ),
-          // Notification bell
-          Stack(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: BrikolikColors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
-                  border: Border.all(color: BrikolikColors.border),
-                ),
-                child: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(Icons.notifications_outlined,
-                      size: 22, color: BrikolikColors.textPrimary),
-                  padding: EdgeInsets.zero,
-                ),
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    gradient: BrikolikColors.brandGradient,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                        color: BrikolikColors.surface, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () =>
-                Navigator.pushNamed(context, '/customer-profile'),
-            child: const BrikolikAvatar(name: 'Karim B.', size: 42),
-          ),
-        ],
-      ),
-    );
-  }
+  // Top bar was replaced by BrikolikAppBar in Scaffold
 
   Widget _buildSearchBar() {
     return Container(
@@ -350,48 +268,7 @@ class _JobListScreenState extends State<JobListScreen> {
     );
   }
 
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: BrikolikColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: BrikolikColors.primary.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _bottomNavIndex,
-        onTap: (i) => setState(() => _bottomNavIndex = i),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home_rounded),
-            label: 'Accueil',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.work_outline_rounded),
-            activeIcon: Icon(Icons.work_rounded),
-            label: 'Missions',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            activeIcon: Icon(Icons.chat_bubble_rounded),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline_rounded),
-            activeIcon: Icon(Icons.person_rounded),
-            label: 'Profil',
-          ),
-        ],
-      ),
-    );
-  }
+  // Bottom nav was replaced by BrikolikBottomNav
 }
 
 // ── Job Card ───────────────────────────────────

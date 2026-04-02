@@ -49,6 +49,11 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
+      extendBodyBehindAppBar: true,
+      appBar: const BrikolikAppBar(
+        title: '',
+        transparent: true,
+      ),
       body: Stack(
         children: [
           // Decorative top gradient banner
@@ -123,14 +128,18 @@ class _LoginScreenState extends State<LoginScreen>
                   color: Colors.white, size: 22),
             ),
             const SizedBox(width: 12),
-            const Text(
-              'BRIKOLIK',
-              style: TextStyle(
-                fontFamily: 'Nunito',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 2,
+            const Expanded(
+              child: Text(
+                'BRIKOLIK',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Nunito',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 2,
+                ),
               ),
             ),
           ],

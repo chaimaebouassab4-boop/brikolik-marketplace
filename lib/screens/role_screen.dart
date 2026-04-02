@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
+import '../theme/widgets.dart';
 
 class RoleScreen extends StatefulWidget {
   const RoleScreen({super.key});
@@ -12,10 +14,16 @@ class RoleScreen extends StatefulWidget {
 
 class _RoleScreenState extends State<RoleScreen> {
   String? _selectedRole; // 'customer' | 'worker'
-
   bool _isSaving = false;
 
-  void _continue() async {
+  Future<void> _handleBack() async {
+    final popped = await Navigator.maybePop(context);
+    if (!popped && mounted) {
+      Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
+    }
+  }
+
+  Future<void> _continue() async {
     if (_selectedRole == null || _isSaving) return;
     setState(() => _isSaving = true);
 
@@ -43,24 +51,18 @@ class _RoleScreenState extends State<RoleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: BrikolikColors.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white, size: 20),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-      ),
+    return BrikolikPageScaffold(
+      title: '',
+      onBackPressed: _handleBack,
+      showBackButton: true,
+      useBrandHeader: true,
       body: Stack(
         children: [
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: 180,
+            height: 200,
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -72,7 +74,7 @@ class _RoleScreenState extends State<RoleScreen> {
             ),
           ),
           Positioned(
-            top: 140,
+            top: 160,
             left: 0,
             right: 0,
             bottom: 0,
@@ -90,24 +92,23 @@ class _RoleScreenState extends State<RoleScreen> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
                         _buildHeader(),
                         const SizedBox(height: 32),
                         _RoleCard(
                           title: 'Je cherche un service',
                           subtitle:
-                              'Postez vos besoins et recevez des offres de pros qualifies',
+                              'Postez vos besoins et recevez des offres de pros qualifiés',
                           emoji: '🏠',
                           features: const [
-                            'Trouvez des artisans pres de chez vous',
+                            'Trouvez des artisans près de chez vous',
                             'Comparez les offres et tarifs',
-                            'Suivez vos demandes en temps reel',
+                            'Suivez vos demandes en temps réel',
                           ],
                           value: 'customer',
                           selected: _selectedRole == 'customer',
@@ -117,12 +118,12 @@ class _RoleScreenState extends State<RoleScreen> {
                         _RoleCard(
                           title: 'Je propose mes services',
                           subtitle:
-                              'Developpez votre activite et trouvez des clients facilement',
+                              'Développez votre activité et trouvez des clients facilement',
                           emoji: '🔧',
                           features: const [
-                            'Gerez vos missions facilement',
+                            'Gérez vos missions facilement',
                             'Obtenez des avis clients',
-                            'Developpez votre reputation',
+                            'Développez votre réputation',
                           ],
                           value: 'worker',
                           selected: _selectedRole == 'worker',
@@ -140,8 +141,7 @@ class _RoleScreenState extends State<RoleScreen> {
                               color: _selectedRole == null
                                   ? BrikolikColors.surfaceVariant
                                   : null,
-                              borderRadius:
-                                  BorderRadius.circular(BrikolikRadius.md),
+                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
                               boxShadow: _selectedRole != null
                                   ? [
                                       BoxShadow(
@@ -157,8 +157,7 @@ class _RoleScreenState extends State<RoleScreen> {
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                borderRadius:
-                                    BorderRadius.circular(BrikolikRadius.md),
+                                borderRadius: BorderRadius.circular(BrikolikRadius.md),
                                 onTap: _selectedRole != null ? _continue : null,
                                 child: Container(
                                   height: 52,
@@ -253,7 +252,7 @@ class _RoleScreenState extends State<RoleScreen> {
         ),
         const SizedBox(height: 60),
         Text(
-          'Choisissez votre profil pour personnaliser votre experience',
+          'Choisissez votre profil pour personnaliser votre expérience',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -336,6 +335,8 @@ class _RoleCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),
@@ -344,7 +345,8 @@ class _RoleCard extends StatelessWidget {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          gradient: selected ? BrikolikColors.brandGradient : null,
+                          gradient:
+                              selected ? BrikolikColors.brandGradient : null,
                           color: selected ? null : Colors.transparent,
                           shape: BoxShape.circle,
                           border: selected
