@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthServiceException implements Exception {
   final String code;
@@ -46,6 +47,8 @@ class AuthService {
         'email': trimmedEmail,
         'fullName': trimmedFullName,
         'createdAt': Timestamp.now(),
+        'isVerified': false,
+        'verificationRequested': false,
       });
     } on FirebaseException catch (e) {
       await _rollbackSignupUser(user);
@@ -73,8 +76,43 @@ class AuthService {
     );
   }
 
-  /// Retourne le rôle de l'utilisateur connecté ('customer' | 'worker' | null).
-  /// Retourne null en cas d'erreur (permissions, réseau, etc.) sans crasher.
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      UserCredential credential;
+
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider();
+        credential = await _auth.signInWithPopup(provider);
+      } else {
+        credential = await _auth.signInWithProvider(GoogleAuthProvider());
+      }
+
+      final user = credential.user;
+      if (user == null) {
+        throw const AuthServiceException(
+          code: 'auth-user-null',
+          message: 'Connexion Google impossible. Reessayez.',
+        );
+      }
+
+      await _upsertUserProfile(user);
+      return credential;
+    } on FirebaseAuthException catch (e) {
+      throw AuthServiceException(
+        code: e.code,
+        message: _firebaseGoogleErrorMessage(e),
+      );
+    } catch (e) {
+      if (e is AuthServiceException) rethrow;
+      throw const AuthServiceException(
+        code: 'google-signin-failed',
+        message: 'Connexion Google impossible pour le moment.',
+      );
+    }
+  }
+
+  /// Retourne le rÃ´le de l'utilisateur connectÃ© ('customer' | 'worker' | null).
+  /// Retourne null en cas d'erreur (permissions, rÃ©seau, etc.) sans crasher.
   Future<String?> getUserRole() async {
     try {
       final user = _auth.currentUser;
@@ -83,9 +121,45 @@ class AuthService {
       if (!doc.exists) return null;
       return doc.data()?['role'] as String?;
     } catch (e) {
-      print('getUserRole error (ignored): $e');
-      return null; // redirige vers /role par défaut
+      debugPrint('getUserRole error (ignored): $e');
+      return null; // redirige vers /role par dÃ©faut
     }
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUserProfile() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      final doc = await _db.collection('users').doc(user.uid).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    } catch (e) {
+      debugPrint('getCurrentUserProfile error (ignored): $e');
+      return null;
+    }
+  }
+
+  Future<bool> isCurrentUserVerified() async {
+    final profile = await getCurrentUserProfile();
+    return profile?['isVerified'] == true;
+  }
+
+  Future<void> requestIdentityVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthServiceException(
+        code: 'auth-user-null',
+        message: 'Vous devez etre connecte pour envoyer la demande.',
+      );
+    }
+
+    await _db.collection('users').doc(user.uid).set({
+      'verificationRequested': true,
+      'verificationRequestedAt': FieldValue.serverTimestamp(),
+      'isVerified': false,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> _rollbackSignupUser(User user) async {
@@ -98,12 +172,42 @@ class AuthService {
     } catch (_) {}
   }
 
+  Future<void> _upsertUserProfile(User user) async {
+    final userRef = _db.collection('users').doc(user.uid);
+    final snapshot = await userRef.get();
+
+    await userRef.set({
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'fullName': (user.displayName ?? '').trim(),
+      'photoUrl': user.photoURL,
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (!snapshot.exists) 'createdAt': FieldValue.serverTimestamp(),
+      if (!snapshot.exists) 'isVerified': false,
+      if (!snapshot.exists) 'verificationRequested': false,
+    }, SetOptions(merge: true));
+  }
+
   String _firestoreSignupErrorMessage(FirebaseException e) {
     switch (e.code) {
       case 'permission-denied':
         return 'Inscription bloquee: Firestore refuse la creation du profil. Le compte a ete annule.';
       default:
         return 'Compte cree mais profil non enregistre. Le compte a ete annule, reessayez.';
+    }
+  }
+
+  String _firebaseGoogleErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'popup-closed-by-user':
+      case 'cancelled-popup-request':
+        return 'Connexion Google annulee.';
+      case 'account-exists-with-different-credential':
+        return 'Un compte existe deja avec un autre mode de connexion.';
+      case 'operation-not-allowed':
+        return 'Google Sign-In est desactive dans Firebase Auth.';
+      default:
+        return 'Connexion Google impossible. Reessayez.';
     }
   }
 }

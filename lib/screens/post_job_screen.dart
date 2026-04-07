@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
+import '../widgets/verification_gate.dart';
 
 class PostJobScreen extends StatefulWidget {
   const PostJobScreen({super.key});
@@ -12,169 +14,665 @@ class PostJobScreen extends StatefulWidget {
 }
 
 class _PostJobScreenState extends State<PostJobScreen> {
+  static const List<_JobCategory> _categories = [
+    _JobCategory('Plomberie', Icons.water_drop_outlined),
+    _JobCategory('Electricite', Icons.bolt_outlined),
+    _JobCategory('Nettoyage', Icons.cleaning_services_outlined),
+    _JobCategory('Peinture', Icons.format_paint_outlined),
+    _JobCategory('Jardinage', Icons.grass_outlined),
+    _JobCategory('Menuiserie', Icons.carpenter_outlined),
+    _JobCategory('Maconnerie', Icons.construction_outlined),
+    _JobCategory('Autre', Icons.more_horiz_rounded),
+  ];
+
+  static const List<_UrgencyOption> _urgencyOptions = [
+    _UrgencyOption(
+        'Urgent (24h)', Icons.flash_on_rounded, BrikolikColors.error),
+    _UrgencyOption(
+        'Cette semaine', Icons.today_rounded, BrikolikColors.warning),
+    _UrgencyOption(
+        'Ce mois', Icons.calendar_month_outlined, BrikolikColors.primary),
+    _UrgencyOption('Flexible', Icons.schedule_rounded, BrikolikColors.success),
+  ];
+
+  static const List<String> _steps = ['Categorie', 'Details', 'Budget'];
+
+  final GlobalKey<FormState> _detailsFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _budgetFormKey = GlobalKey<FormState>();
+
+  final TextEditingController _titleCtrl = TextEditingController();
+  final TextEditingController _descCtrl = TextEditingController();
+  final TextEditingController _locationCtrl = TextEditingController();
+  final TextEditingController _budgetMinCtrl = TextEditingController();
+  final TextEditingController _budgetMaxCtrl = TextEditingController();
+
   int _currentStep = 0;
+  bool _isAccessLoading = true;
+  bool _isSubmitting = false;
+  bool _isVerified = false;
+  bool _verificationRequested = false;
   String? _selectedCategory;
   String? _selectedUrgency;
-  final _titleCtrl      = TextEditingController();
-  final _descCtrl       = TextEditingController();
-  final _locationCtrl   = TextEditingController();
-  final _budgetMinCtrl  = TextEditingController();
-  final _budgetMaxCtrl  = TextEditingController();
 
-  final List<Map<String, dynamic>> _categories = [
-    {'label': 'Plomberie',   'icon': Icons.water_drop_outlined},
-    {'label': 'Électricité', 'icon': Icons.bolt_outlined},
-    {'label': 'Nettoyage',   'icon': Icons.cleaning_services_outlined},
-    {'label': 'Peinture',    'icon': Icons.format_paint_outlined},
-    {'label': 'Jardinage',   'icon': Icons.grass_outlined},
-    {'label': 'Menuiserie',  'icon': Icons.carpenter_outlined},
-    {'label': 'Maçonnerie',  'icon': Icons.construction_outlined},
-    {'label': 'Autre',       'icon': Icons.more_horiz_rounded},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadAccessStatus();
+  }
 
-  final List<Map<String, dynamic>> _urgencies = [
-    {
-      'label': 'Urgent (24h)',
-      'icon': Icons.flash_on_rounded,
-      'color': BrikolikColors.error
-    },
-    {
-      'label': 'Cette semaine',
-      'icon': Icons.today_rounded,
-      'color': BrikolikColors.warning
-    },
-    {
-      'label': 'Ce mois',
-      'icon': Icons.calendar_month_outlined,
-      'color': BrikolikColors.primary
-    },
-    {
-      'label': 'Flexible',
-      'icon': Icons.schedule_rounded,
-      'color': BrikolikColors.success
-    },
-  ];
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _locationCtrl.dispose();
+    _budgetMinCtrl.dispose();
+    _budgetMaxCtrl.dispose();
+    super.dispose();
+  }
 
-  final List<String> _steps = ['Catégorie', 'Détails', 'Budget'];
+  Future<void> _loadAccessStatus() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      if (mounted) {
+        setState(() => _isAccessLoading = false);
+      }
+      return;
+    }
+
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final data = userDoc.data() ?? const <String, dynamic>{};
+      if (!mounted) return;
+      setState(() {
+        _isVerified = data['isVerified'] == true;
+        _verificationRequested = data['verificationRequested'] == true;
+      });
+    } catch (_) {
+      // Leave default values and keep the feature locked if user data cannot be read.
+    } finally {
+      if (mounted) {
+        setState(() => _isAccessLoading = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  bool _validateCurrentStep() {
+    if (_currentStep == 0) {
+      if (_selectedCategory == null) {
+        _showMessage('Selectionnez une categorie pour continuer.');
+        return false;
+      }
+      return true;
+    }
+
+    if (_currentStep == 1) {
+      final valid = _detailsFormKey.currentState?.validate() ?? false;
+      if (!valid) return false;
+      if (_selectedUrgency == null) {
+        _showMessage('Choisissez un niveau d urgence.');
+        return false;
+      }
+      return true;
+    }
+
+    final valid = _budgetFormKey.currentState?.validate() ?? false;
+    if (!valid) return false;
+
+    final min = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
+    final max = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
+    if (max < min) {
+      _showMessage('Le budget maximum doit etre superieur au minimum.');
+      return false;
+    }
+
+    return true;
+  }
+
+  void _goToNextStep() {
+    if (!_validateCurrentStep()) return;
+    if (_currentStep < _steps.length - 1) {
+      setState(() => _currentStep += 1);
+    } else {
+      _submitJob();
+    }
+  }
+
+  void _goToPreviousStep() {
+    if (_currentStep == 0) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() => _currentStep -= 1);
+  }
+
+  Future<void> _submitJob() async {
+    if (!_validateCurrentStep()) return;
+
+    if (!_isVerified) {
+      _showMessage('Verification admin requise avant de poster une mission.');
+      return;
+    }
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      _showMessage('Veuillez vous authentifier.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userName = userDoc.data()?['fullName'] ?? 'Client';
+      final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
+      final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
+
+      await FirebaseFirestore.instance.collection('jobs').add({
+        'title': _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'category': _selectedCategory,
+        'location': _locationCtrl.text.trim(),
+        'urgency': _selectedUrgency,
+        'budgetMin': budgetMin,
+        'budgetMax': budgetMax,
+        'budget': '$budgetMin-$budgetMax MAD',
+        'customerId': uid,
+        'customerName': userName,
+        'status': 'open',
+        'createdAt': FieldValue.serverTimestamp(),
+        'offersCount': 0,
+        'rating': 0.0,
+      });
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/jobs');
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage('Erreur: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_isAccessLoading) {
+      return const Scaffold(
+        backgroundColor: BrikolikColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: BrikolikColors.primary),
+        ),
+      );
+    }
+
+    if (!_isVerified) {
+      return Scaffold(
+        backgroundColor: BrikolikColors.background,
+        appBar: BrikolikAppBar(
+          title: 'Poster un service',
+          onBackPressed: _goToPreviousStep,
+        ),
+        body: VerificationGate(
+          title: 'Verification necessaire',
+          message:
+              'Votre compte doit etre valide par un administrateur avant de pouvoir poster une mission.',
+          verificationRequested: _verificationRequested,
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: BrikolikColors.background,
       appBar: BrikolikAppBar(
         title: 'Poster un service',
-        onBackPressed: () {
-          if (_currentStep > 0) {
-            setState(() => _currentStep--);
-          } else {
-            Navigator.pop(context);
-          }
-        },
+        onBackPressed: _goToPreviousStep,
       ),
       body: Column(
         children: [
-          _buildProgressBar(),
+          _ProgressHeader(currentStep: _currentStep, steps: _steps),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: [
-                _buildStep1(),
-                _buildStep2(),
-                _buildStep3(),
-              ][_currentStep],
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              switchInCurve: Curves.easeOut,
+              switchOutCurve: Curves.easeIn,
+              transitionBuilder: (child, animation) {
+                final slide = Tween<Offset>(
+                  begin: const Offset(0.02, 0),
+                  end: Offset.zero,
+                ).animate(animation);
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(position: slide, child: child),
+                );
+              },
+              child: SingleChildScrollView(
+                key: ValueKey<int>(_currentStep),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                child: _buildStepContent(),
+              ),
             ),
           ),
-          _buildBottomBar(),
+          _BottomActions(
+            isLast: _currentStep == _steps.length - 1,
+            isSubmitting: _isSubmitting,
+            onBack: _goToPreviousStep,
+            onNext: _goToNextStep,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildProgressBar() {
+  Widget _buildStepContent() {
+    switch (_currentStep) {
+      case 0:
+        return _buildCategoryStep();
+      case 1:
+        return _buildDetailsStep();
+      default:
+        return _buildBudgetStep();
+    }
+  }
+
+  Widget _buildCategoryStep() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Quel service cherchez-vous ?',
+            style: Theme.of(context).textTheme.headlineLarge),
+        const SizedBox(height: 8),
+        Text(
+          'Choisissez une categorie pour recevoir des offres plus precises.',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 20),
+        GridView.builder(
+          itemCount: _categories.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.35,
+          ),
+          itemBuilder: (context, index) {
+            final item = _categories[index];
+            final selected = _selectedCategory == item.label;
+
+            return Material(
+              color: BrikolikColors.surface,
+              borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+                onTap: () => setState(() => _selectedCategory = item.label),
+                child: Ink(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+                    gradient: selected ? BrikolikColors.brandGradient : null,
+                    border: Border.all(
+                      color:
+                          selected ? Colors.transparent : BrikolikColors.border,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: selected
+                            ? BrikolikColors.primary.withValues(alpha: 0.22)
+                            : Colors.black.withValues(alpha: 0.03),
+                        blurRadius: selected ? 12 : 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.white.withValues(alpha: 0.2)
+                              : BrikolikColors.primaryLight,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          item.icon,
+                          color:
+                              selected ? Colors.white : BrikolikColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        item.label,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: selected
+                              ? Colors.white
+                              : BrikolikColors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsStep() {
+    return Form(
+      key: _detailsFormKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Decrivez votre besoin',
+              style: Theme.of(context).textTheme.headlineLarge),
+          const SizedBox(height: 8),
+          Text(
+            'Plus votre demande est claire, plus les offres seront pertinentes.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+          BrikolikInput(
+            hint: 'Ex: Fuite d eau sous le lavabo',
+            label: 'Titre de la demande',
+            controller: _titleCtrl,
+            prefixIcon: Icons.title_rounded,
+            onChanged: (_) => setState(() {}),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Le titre est obligatoire';
+              }
+              if (value.trim().length < 8) {
+                return 'Ajoutez plus de details (8 caracteres min).';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          BrikolikInput(
+            hint: 'Precisez ce qu il faut faire et le contexte.',
+            label: 'Description',
+            controller: _descCtrl,
+            maxLines: 5,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'La description est obligatoire';
+              }
+              if (value.trim().length < 20) {
+                return 'Donnez plus de contexte (20 caracteres min).';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          BrikolikInput(
+            hint: 'Ex: Casablanca, Maarif',
+            label: 'Adresse ou quartier',
+            controller: _locationCtrl,
+            prefixIcon: Icons.location_on_outlined,
+            onChanged: (_) => setState(() {}),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Le lieu est obligatoire';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 22),
+          Text('Delai souhaite',
+              style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 12),
+          ..._urgencyOptions.map((option) {
+            final selected = _selectedUrgency == option.label;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Material(
+                color: BrikolikColors.surface,
+                borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                  onTap: () => setState(() => _selectedUrgency = option.label),
+                  child: Ink(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                      color: selected
+                          ? option.color.withValues(alpha: 0.08)
+                          : BrikolikColors.surface,
+                      border: Border.all(
+                        color: selected ? option.color : BrikolikColors.border,
+                        width: selected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: option.color.withValues(alpha: 0.14),
+                            shape: BoxShape.circle,
+                          ),
+                          child:
+                              Icon(option.icon, size: 18, color: option.color),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            option.label,
+                            style: const TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: BrikolikColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          Icon(Icons.check_circle_rounded, color: option.color),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBudgetStep() {
+    return Form(
+      key: _budgetFormKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Definissez votre budget',
+              style: Theme.of(context).textTheme.headlineLarge),
+          const SizedBox(height: 8),
+          Text(
+            'Un budget realiste vous aide a recevoir des offres rapidement.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: BrikolikColors.surface,
+              borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+              border: Border.all(color: BrikolikColors.border),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: BrikolikInput(
+                    hint: '150',
+                    label: 'Min (MAD)',
+                    controller: _budgetMinCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                    validator: (value) {
+                      final parsed = int.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Min invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text('-',
+                      style: Theme.of(context).textTheme.headlineMedium),
+                ),
+                Expanded(
+                  child: BrikolikInput(
+                    hint: '450',
+                    label: 'Max (MAD)',
+                    controller: _budgetMaxCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                    validator: (value) {
+                      final parsed = int.tryParse((value ?? '').trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Max invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: BrikolikColors.heroGradient,
+              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+              border: Border.all(color: BrikolikColors.border),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.tips_and_updates_outlined,
+                    color: BrikolikColors.primary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Astuce: donnez une fourchette pour garder de la flexibilite avec les artisans.',
+                    style: TextStyle(
+                      fontFamily: 'Nunito',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: BrikolikColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text('Recapitulatif',
+              style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 12),
+          _SummaryCard(
+            category: _selectedCategory ?? '-',
+            title:
+                _titleCtrl.text.trim().isEmpty ? '-' : _titleCtrl.text.trim(),
+            location: _locationCtrl.text.trim().isEmpty
+                ? '-'
+                : _locationCtrl.text.trim(),
+            urgency: _selectedUrgency ?? '-',
+            budget:
+                '${_budgetMinCtrl.text.trim().isEmpty ? '-' : _budgetMinCtrl.text.trim()} - ${_budgetMaxCtrl.text.trim().isEmpty ? '-' : _budgetMaxCtrl.text.trim()} MAD',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressHeader extends StatelessWidget {
+  const _ProgressHeader({required this.currentStep, required this.steps});
+
+  final int currentStep;
+  final List<String> steps;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      color: BrikolikColors.surface,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+      decoration: const BoxDecoration(
+        color: BrikolikColors.surface,
+        border: Border(bottom: BorderSide(color: BrikolikColors.border)),
+      ),
       child: Row(
-        children: List.generate(_steps.length, (i) {
-          final isDone   = i < _currentStep;
-          final isActive = i == _currentStep;
+        children: List.generate(steps.length, (index) {
+          final isDone = index < currentStep;
+          final isActive = index == currentStep;
+
           return Expanded(
             child: Row(
               children: [
-                Column(
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        gradient: (isDone || isActive)
-                            ? BrikolikColors.brandGradient
-                            : null,
-                        color: (isDone || isActive)
-                            ? null
-                            : BrikolikColors.surfaceVariant,
-                        shape: BoxShape.circle,
-                        boxShadow: (isDone || isActive)
-                            ? [
-                                BoxShadow(
-                                  color: BrikolikColors.primary
-                                      .withValues(alpha: 0.25),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : [],
-                      ),
-                      child: Center(
-                        child: isDone
-                            ? const Icon(Icons.check_rounded,
-                                size: 15, color: Colors.white)
-                            : Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  fontFamily: 'Nunito',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: isActive
-                                      ? Colors.white
-                                      : BrikolikColors.textHint,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _steps[i],
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 11,
-                        fontWeight: isActive
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: isActive
-                            ? BrikolikColors.primary
-                            : BrikolikColors.textHint,
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    gradient: (isDone || isActive)
+                        ? BrikolikColors.brandGradient
+                        : null,
+                    color: (isDone || isActive)
+                        ? null
+                        : BrikolikColors.surfaceVariant,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: isDone
+                        ? const Icon(Icons.check_rounded,
+                            color: Colors.white, size: 16)
+                        : Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: isActive
+                                  ? Colors.white
+                                  : BrikolikColors.textHint,
+                            ),
+                          ),
+                  ),
                 ),
-                if (i < _steps.length - 1)
+                if (index < steps.length - 1)
                   Expanded(
                     child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
                       height: 2,
-                      margin: const EdgeInsets.only(
-                          bottom: 20, left: 4, right: 4),
-                      decoration: BoxDecoration(
-                        gradient: i < _currentStep
-                            ? BrikolikColors.brandGradient
-                            : null,
-                        color: i < _currentStep
-                            ? null
-                            : BrikolikColors.border,
-                        borderRadius:
-                            BorderRadius.circular(BrikolikRadius.full),
-                      ),
+                      color: isDone
+                          ? BrikolikColors.primary
+                          : BrikolikColors.border,
                     ),
                   ),
               ],
@@ -184,367 +682,84 @@ class _PostJobScreenState extends State<PostJobScreen> {
       ),
     );
   }
+}
 
-  Widget _buildStep1() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quel type de service\navez-vous besoin ?',
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-            'Sélectionnez la catégorie qui correspond à votre besoin',
-            style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 24),
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.4,
-          children: _categories.map((cat) {
-            final selected = _selectedCategory == cat['label'];
-            return GestureDetector(
-              onTap: () =>
-                  setState(() => _selectedCategory = cat['label']),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: selected
-                      ? BrikolikColors.brandGradient
-                      : null,
-                  color: selected ? null : BrikolikColors.surface,
-                  borderRadius:
-                      BorderRadius.circular(BrikolikRadius.lg),
-                  border: Border.all(
-                    color: selected
-                        ? Colors.transparent
-                        : BrikolikColors.border,
-                    width: 1,
-                  ),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: BrikolikColors.primary
-                                .withValues(alpha: 0.2),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          )
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : BrikolikColors.primaryLight,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        cat['icon'],
-                        size: 22,
-                        color: selected
-                            ? Colors.white
-                            : BrikolikColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      cat['label'],
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: selected
-                            ? Colors.white
-                            : BrikolikColors.textPrimary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
+class _BottomActions extends StatelessWidget {
+  const _BottomActions({
+    required this.isLast,
+    required this.isSubmitting,
+    required this.onBack,
+    required this.onNext,
+  });
 
-  Widget _buildStep2() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Décrivez votre besoin',
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-            'Plus votre description est précise, meilleures seront les offres',
-            style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 24),
-        BrikolikInput(
-          hint: 'Ex : Fuite d\'eau sous le lavabo, besoin de remplacement...',
-          label: 'Tache demandee',
-          controller: _titleCtrl,
-          prefixIcon: Icons.title_rounded,
-        ),
-        const SizedBox(height: 16),
-        BrikolikInput(
-          hint: 'Décrivez le problème en détail...',
-          label: 'Description',
-          controller: _descCtrl,
-          maxLines: 5,
-        ),
-        const SizedBox(height: 16),
-        BrikolikInput(
-          hint: 'Ex : Casablanca, Maarif',
-          label: 'Adresse ou quartier',
-          controller: _locationCtrl,
-          prefixIcon: Icons.location_on_outlined,
-        ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: BrikolikColors.primaryLight,
-                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
-              ),
-              child: const Icon(Icons.schedule_rounded,
-                  size: 16, color: BrikolikColors.primary),
+  final bool isLast;
+  final bool isSubmitting;
+  final VoidCallback onBack;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+        decoration: BoxDecoration(
+          color: BrikolikColors.surface,
+          border: const Border(top: BorderSide(color: BrikolikColors.border)),
+          boxShadow: [
+            BoxShadow(
+              color: BrikolikColors.primary.withValues(alpha: 0.07),
+              blurRadius: 14,
+              offset: const Offset(0, -2),
             ),
-            const SizedBox(width: 10),
-            Text('Urgence',
-                style: Theme.of(context).textTheme.headlineSmall),
           ],
         ),
-        const SizedBox(height: 12),
-        ...(_urgencies.map(
-          (u) {
-            final selected = _selectedUrgency == u['label'];
-            return GestureDetector(
-              onTap: () =>
-                  setState(() => _selectedUrgency = u['label']),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: selected
-                      ? (u['color'] as Color).withValues(alpha: 0.07)
-                      : BrikolikColors.surface,
-                  borderRadius:
-                      BorderRadius.circular(BrikolikRadius.md),
-                  border: Border.all(
-                    color: selected
-                        ? u['color'] as Color
-                        : BrikolikColors.border,
-                    width: selected ? 1.5 : 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color:
-                            (u['color'] as Color).withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(u['icon'] as IconData,
-                          size: 18, color: u['color'] as Color),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      u['label'],
-                      style: TextStyle(
-                        fontFamily: 'Nunito',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: selected
-                            ? BrikolikColors.textPrimary
-                            : BrikolikColors.textSecondary,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (selected)
-                      Container(
-                        width: 22,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: u['color'] as Color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.check_rounded,
-                            size: 13, color: Colors.white),
-                      ),
-                  ],
-                ),
-              ),
-            );
-          },
-        )),
-      ],
-    );
-  }
-
-  Widget _buildStep3() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quel est votre budget ?',
-          style: Theme.of(context).textTheme.headlineLarge,
-        ),
-        const SizedBox(height: 8),
-        Text(
-            'Définissez une fourchette de budget pour attirer les bons prestataires',
-            style: Theme.of(context).textTheme.bodyMedium),
-        const SizedBox(height: 28),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: BrikolikColors.surface,
-            borderRadius: BorderRadius.circular(BrikolikRadius.lg),
-            border: Border.all(color: BrikolikColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: BrikolikColors.primaryLight,
-                      borderRadius:
-                          BorderRadius.circular(BrikolikRadius.sm),
-                    ),
-                    child: const Icon(Icons.payments_outlined,
-                        size: 16, color: BrikolikColors.primary),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('Fourchette de prix',
-                      style: Theme.of(context).textTheme.titleLarge),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: BrikolikInput(
-                      hint: '100',
-                      label: 'Minimum (MAD)',
-                      controller: _budgetMinCtrl,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12),
-                    child: Text('–',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium),
-                  ),
-                  Expanded(
-                    child: BrikolikInput(
-                      hint: '500',
-                      label: 'Maximum (MAD)',
-                      controller: _budgetMaxCtrl,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Tip banner
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            gradient: BrikolikColors.heroGradient,
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
-            border: Border.all(color: BrikolikColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: BrikolikColors.primaryLight,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.lightbulb_outline_rounded,
-                    size: 16, color: BrikolikColors.primary),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Définir un budget clair augmente les chances de recevoir des offres rapidement.',
-                  style: const TextStyle(
-                    fontFamily: 'Nunito',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: BrikolikColors.textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Row(
+        child: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: BrikolikColors.primaryLight,
-                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+            SizedBox(
+              width: 108,
+              child: BrikolikButton(
+                label: 'Retour',
+                outlined: true,
+                onPressed: isSubmitting ? null : onBack,
               ),
-              child: const Icon(Icons.receipt_long_outlined,
-                  size: 16, color: BrikolikColors.primary),
             ),
             const SizedBox(width: 10),
-            Text('Récapitulatif',
-                style: Theme.of(context).textTheme.headlineSmall),
+            Expanded(
+              child: BrikolikButton(
+                label: isLast ? 'Publier ma demande' : 'Continuer',
+                icon:
+                    isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                isLoading: isSubmitting,
+                onPressed: isSubmitting ? null : onNext,
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 12),
-        _buildSummaryCard(),
-      ],
+      ),
     );
   }
+}
 
-  Widget _buildSummaryCard() {
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.category,
+    required this.title,
+    required this.location,
+    required this.urgency,
+    required this.budget,
+  });
+
+  final String category;
+  final String title;
+  final String location;
+  final String urgency;
+  final String budget;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(BrikolikRadius.lg),
@@ -552,165 +767,26 @@ class _PostJobScreenState extends State<PostJobScreen> {
       ),
       child: Column(
         children: [
-          _SummaryRow(
-              label: 'Catégorie',
-              value: _selectedCategory ?? '—'),
+          _SummaryRow(label: 'Categorie', value: category),
           const Divider(height: 20),
-          _SummaryRow(
-              label: 'Tache',
-              value: _titleCtrl.text.isEmpty
-                  ? '—'
-                  : _titleCtrl.text),
+          _SummaryRow(label: 'Titre', value: title),
           const Divider(height: 20),
-          _SummaryRow(
-              label: 'Lieu',
-              value: _locationCtrl.text.isEmpty
-                  ? '—'
-                  : _locationCtrl.text),
+          _SummaryRow(label: 'Lieu', value: location),
           const Divider(height: 20),
-          _SummaryRow(
-              label: 'Urgence',
-              value: _selectedUrgency ?? '—'),
+          _SummaryRow(label: 'Urgence', value: urgency),
+          const Divider(height: 20),
+          _SummaryRow(label: 'Budget', value: budget),
         ],
-      ),
-    );
-  }
-
-  bool _isSubmitting = false;
-
-  Future<void> _submitJob() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez vous authentifier.')),
-      );
-      return;
-    }
-
-    if (_titleCtrl.text.trim().isEmpty || _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez remplir le titre et la catégorie.')),
-      );
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-    try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final userName = userDoc.data()?['fullName'] ?? 'Client';
-
-      await FirebaseFirestore.instance.collection('jobs').add({
-        'title': _titleCtrl.text.trim(),
-        'description': _descCtrl.text.trim(),
-        'category': _selectedCategory,
-        'location': _locationCtrl.text.trim(),
-        'urgency': _selectedUrgency,
-        'budget': '${_budgetMinCtrl.text}–${_budgetMaxCtrl.text} MAD',
-        'customerId': uid,
-        'customerName': userName,
-        'status': 'open',
-        'createdAt': FieldValue.serverTimestamp(),
-        'offersCount': 0,
-        'rating': 0.0,
-      });
-
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/jobs');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
-  Widget _buildBottomBar() {
-    final isLast = _currentStep == _steps.length - 1;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-      decoration: BoxDecoration(
-        color: BrikolikColors.surface,
-        border: const Border(
-            top: BorderSide(color: BrikolikColors.border, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: BrikolikColors.primary.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: GestureDetector(
-        onTap: () {
-          if (_isSubmitting) return;
-          if (isLast) {
-            _submitJob();
-          } else {
-            setState(() => _currentStep++);
-          }
-        },
-        child: Container(
-          height: 52,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: _isSubmitting ? null : BrikolikColors.brandGradient,
-            color: _isSubmitting ? BrikolikColors.surfaceVariant : null,
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
-            boxShadow: _isSubmitting ? [] : [
-              BoxShadow(
-                color: BrikolikColors.accent.withValues(alpha: 0.28),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 22, height: 22,
-                    child: CircularProgressIndicator(color: BrikolikColors.primary, strokeWidth: 2.5),
-                  )
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isLast) ...[
-                        const Icon(Icons.check_rounded,
-                            color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        isLast ? 'Publier ma demande' : 'Continuer',
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                      if (!isLast) ...[
-                        const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded,
-                            color: Colors.white, size: 18),
-                      ],
-                    ],
-                  ),
-          ),
-        ),
       ),
     );
   }
 }
 
-// ── Summary Row ───────────────────────────────
 class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({required this.label, required this.value});
+
   final String label;
   final String value;
-
-  const _SummaryRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -718,13 +794,35 @@ class _SummaryRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
-        Text(value,
+        Expanded(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: value == '—'
+                  color: value == '-'
                       ? BrikolikColors.textHint
                       : BrikolikColors.textPrimary,
-                )),
+                ),
+          ),
+        ),
       ],
     );
   }
+}
+
+class _JobCategory {
+  const _JobCategory(this.label, this.icon);
+
+  final String label;
+  final IconData icon;
+}
+
+class _UrgencyOption {
+  const _UrgencyOption(this.label, this.icon, this.color);
+
+  final String label;
+  final IconData icon;
+  final Color color;
 }

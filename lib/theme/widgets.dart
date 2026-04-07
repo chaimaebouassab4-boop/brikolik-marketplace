@@ -3,11 +3,11 @@ import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
 
-// ─────────────────────────────────────────────
-//  BRIKOLIK SHARED WIDGETS – Retro Purple & Blues
-// ─────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+//  BRIKOLIK SHARED WIDGETS â€“ Retro Purple & Blues
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-// ── Primary CTA Button ────────────────────────
+// â”€â”€ Primary CTA Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -83,7 +83,7 @@ class BrikolikButton extends StatelessWidget {
   }
 }
 
-// ── Secondary/Ghost Button ────────────────────
+// â”€â”€ Secondary/Ghost Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikSecondaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -125,7 +125,7 @@ class BrikolikSecondaryButton extends StatelessWidget {
   }
 }
 
-// ── Input Field ───────────────────────────────
+// â”€â”€ Input Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikInput extends StatelessWidget {
   final String hint;
   final String? label;
@@ -182,7 +182,7 @@ class BrikolikInput extends StatelessWidget {
   }
 }
 
-// ── Section Header ────────────────────────────
+// â”€â”€ Section Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class SectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
@@ -224,7 +224,7 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-// ── Status Badge ──────────────────────────────
+// â”€â”€ Status Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class StatusBadge extends StatelessWidget {
   final String label;
   final Color color;
@@ -250,7 +250,7 @@ class StatusBadge extends StatelessWidget {
       );
 
   factory StatusBadge.closed() => const StatusBadge(
-        label: 'Terminé',
+        label: 'TerminÃ©',
         color: BrikolikColors.textSecondary,
         bgColor: BrikolikColors.surfaceVariant,
       );
@@ -276,7 +276,7 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-// ── Avatar with initials fallback ─────────────
+// â”€â”€ Avatar with initials fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikAvatar extends StatelessWidget {
   final String? imageUrl;
   final String name;
@@ -328,7 +328,7 @@ class BrikolikAvatar extends StatelessWidget {
   }
 }
 
-// ── Star Rating Row ───────────────────────────
+// â”€â”€ Star Rating Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class StarRating extends StatelessWidget {
   final double rating;
   final int reviewCount;
@@ -374,7 +374,7 @@ class StarRating extends StatelessWidget {
   }
 }
 
-// ── Divider with label ────────────────────────
+// â”€â”€ Divider with label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class DividerWithLabel extends StatelessWidget {
   final String label;
 
@@ -401,7 +401,7 @@ class DividerWithLabel extends StatelessWidget {
   }
 }
 
-// ── Category Chip ─────────────────────────────
+// â”€â”€ Category Chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class CategoryChip extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -467,7 +467,7 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
-// ── Empty State ───────────────────────────────
+// â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -524,7 +524,7 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-// ── Gradient Brand Logo Box ───────────────────
+// â”€â”€ Gradient Brand Logo Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikLogoBox extends StatelessWidget {
   final double size;
   final double iconSize;
@@ -558,7 +558,7 @@ class BrikolikLogoBox extends StatelessWidget {
   }
 }
 
-// ── Global AppBar ─────────────────────────────
+// â”€â”€ Global AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
@@ -584,12 +584,16 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasBrandBackground = useBrandBackground && !transparent;
-    final Color foreground =
-        hasBrandBackground || transparent ? Colors.white : BrikolikColors.textPrimary;
+    final Color foreground = hasBrandBackground || transparent
+        ? Colors.white
+        : BrikolikColors.textPrimary;
+    final int logoCacheWidth =
+        (54 * MediaQuery.devicePixelRatioOf(context)).round();
 
     return AppBar(
-      systemOverlayStyle:
-          hasBrandBackground ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      systemOverlayStyle: hasBrandBackground
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
       toolbarHeight: height ?? 72,
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -608,7 +612,7 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
               : Container(
                   height: 1,
                   color: hasBrandBackground
-                      ? Colors.white.withOpacity(0.14)
+                      ? Colors.white.withValues(alpha: 0.14)
                       : BrikolikColors.border,
                 ),
         ),
@@ -620,13 +624,14 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
                 size: 20,
                 color: foreground,
               ),
-              onPressed: onBackPressed ?? () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushReplacementNamed(context, '/welcome');
-                }
-              },
+              onPressed: onBackPressed ??
+                  () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushReplacementNamed(context, '/');
+                    }
+                  },
             )
           : null,
       automaticallyImplyLeading: false,
@@ -634,22 +639,20 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => Navigator.pushNamedAndRemoveUntil(
-                  context, '/welcome', (route) => false),
-              child: SizedBox(
-                width: 54,
-                height: 54,
-                child: Image.asset(
-                  'lib/assets/lasgbrik-removebg-preview.png',
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(
-                    Icons.home_rounded,
-                    color: foreground,
-                    size: 24,
-                  ),
+          GestureDetector(
+            onTap: () => Navigator.pushNamedAndRemoveUntil(
+                context, '/', (route) => false),
+            child: SizedBox(
+              width: 54,
+              height: 54,
+              child: Image.asset(
+                'lib/assets/lasgbrik-removebg-preview.png',
+                fit: BoxFit.contain,
+                cacheWidth: logoCacheWidth,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.home_rounded,
+                  color: foreground,
+                  size: 24,
                 ),
               ),
             ),
@@ -673,10 +676,11 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight((height ?? 72) + (showDivider ? 1 : 0));
+  Size get preferredSize =>
+      Size.fromHeight((height ?? 72) + (showDivider ? 1 : 0));
 }
 
-// ── Shared Bottom Navigation Bar ──────────────
+// â”€â”€ Shared Bottom Navigation Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
@@ -689,6 +693,34 @@ class BrikolikBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String routeForIndex(int index) {
+      switch (index) {
+        case 0:
+          return '/';
+        case 1:
+          return '/jobs';
+        case 2:
+          return '/chat';
+        case 3:
+          return '/customer-profile';
+        default:
+          return '/';
+      }
+    }
+
+    void handleNavigation(int index) {
+      final route = routeForIndex(index);
+      final currentRoute = ModalRoute.of(context)?.settings.name;
+      if (currentRoute == route) return;
+
+      if (route == '/') {
+        Navigator.pushNamedAndRemoveUntil(context, route, (r) => false);
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, route);
+    }
+
     return SafeArea(
       top: false,
       child: Container(
@@ -712,21 +744,7 @@ class BrikolikBottomNav extends StatelessWidget {
               onTap!(i);
               return;
             }
-            // Default navigation behavior
-            switch (i) {
-              case 0:
-                Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
-                break;
-              case 1:
-                Navigator.pushNamed(context, '/jobs');
-                break;
-              case 2:
-                Navigator.pushNamed(context, '/chat');
-                break;
-              case 3:
-                Navigator.pushNamed(context, '/customer-profile');
-                break;
-            }
+            handleNavigation(i);
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -758,7 +776,7 @@ class BrikolikBottomNav extends StatelessWidget {
   }
 }
 
-// ─── Layout helper to keep header/footer consistent ──────────────────────────
+// â”€â”€â”€ Layout helper to keep header/footer consistent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikPageScaffold extends StatelessWidget {
   final String title;
   final Widget body;
@@ -796,9 +814,9 @@ class BrikolikPageScaffold extends StatelessWidget {
         actions: actions,
       ),
       body: body,
-      bottomNavigationBar:
-          showBottomNav ? BrikolikBottomNav(currentIndex: bottomNavIndex) : null,
+      bottomNavigationBar: showBottomNav
+          ? BrikolikBottomNav(currentIndex: bottomNavIndex)
+          : null,
     );
   }
 }
-

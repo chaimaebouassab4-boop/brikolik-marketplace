@@ -19,21 +19,22 @@ class _RoleScreenState extends State<RoleScreen> {
   Future<void> _handleBack() async {
     final popped = await Navigator.maybePop(context);
     if (!popped && mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/welcome', (route) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
     }
   }
 
   Future<void> _continue() async {
     if (_selectedRole == null || _isSaving) return;
     setState(() => _isSaving = true);
+    var isVerified = false;
 
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .update({'role': _selectedRole});
+        final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+        final snapshot = await userRef.get();
+        isVerified = snapshot.data()?['isVerified'] == true;
+        await userRef.update({'role': _selectedRole});
       }
     } catch (_) {
       // On continue même si la sauvegarde échoue
@@ -44,6 +45,15 @@ class _RoleScreenState extends State<RoleScreen> {
     if (!mounted) return;
     if (_selectedRole == 'customer') {
       Navigator.pushNamed(context, '/customer-profile');
+    } else if (!isVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La verification admin est obligatoire avant de creer un profil artisan.',
+          ),
+        ),
+      );
+      Navigator.pushNamed(context, '/identity-verification');
     } else {
       Navigator.pushNamed(context, '/worker-profile');
     }
@@ -94,7 +104,8 @@ class _RoleScreenState extends State<RoleScreen> {
                 return SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -112,7 +123,8 @@ class _RoleScreenState extends State<RoleScreen> {
                           ],
                           value: 'customer',
                           selected: _selectedRole == 'customer',
-                          onTap: () => setState(() => _selectedRole = 'customer'),
+                          onTap: () =>
+                              setState(() => _selectedRole = 'customer'),
                         ),
                         const SizedBox(height: 14),
                         _RoleCard(
@@ -141,7 +153,8 @@ class _RoleScreenState extends State<RoleScreen> {
                               color: _selectedRole == null
                                   ? BrikolikColors.surfaceVariant
                                   : null,
-                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                              borderRadius:
+                                  BorderRadius.circular(BrikolikRadius.md),
                               boxShadow: _selectedRole != null
                                   ? [
                                       BoxShadow(
@@ -157,7 +170,8 @@ class _RoleScreenState extends State<RoleScreen> {
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                                borderRadius:
+                                    BorderRadius.circular(BrikolikRadius.md),
                                 onTap: _selectedRole != null ? _continue : null,
                                 child: Container(
                                   height: 52,
@@ -169,11 +183,13 @@ class _RoleScreenState extends State<RoleScreen> {
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
                                             valueColor:
-                                                AlwaysStoppedAnimation<Color>(Colors.white),
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
                                           ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               'Continuer',

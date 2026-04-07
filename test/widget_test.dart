@@ -4,6 +4,9 @@ import 'package:brikolik_mvp/main.dart';
 void main() {
   testWidgets('App launches smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const BrikolikApp());
-    expect(find.text('Brikolik'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Accueil'), findsWidgets);
+    expect(find.text('Services populaires'), findsOneWidget);
   });
 }

@@ -19,11 +19,10 @@ class _LoginScreenState extends State<LoginScreen>
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final _emailCtrl    = TextEditingController();
-  final _nameCtrl     = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController(text: 'CHAIMAE2026@');
-  final _formKey      = GlobalKey<FormState>();
-  
+  final _formKey = GlobalKey<FormState>();
 
   late final TabController _tabCtrl;
 
@@ -43,6 +42,52 @@ class _LoginScreenState extends State<LoginScreen>
     _nameCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _routeAfterAuth() async {
+    final profile = await _authService.getCurrentUserProfile();
+    if (!mounted) return;
+
+    if (profile?['isVerified'] != true) {
+      Navigator.pushReplacementNamed(context, '/identity-verification');
+      return;
+    }
+
+    final role = profile?['role'] as String?;
+    if (role == 'customer') {
+      Navigator.pushReplacementNamed(context, '/customer-profile');
+    } else if (role == 'worker') {
+      Navigator.pushReplacementNamed(context, '/worker-profile');
+    } else {
+      Navigator.pushReplacementNamed(context, '/role');
+    }
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithGoogle();
+      await _routeAfterAuth();
+    } on AuthServiceException catch (e) {
+      _showSnack(e.message);
+    } on FirebaseAuthException catch (e) {
+      _showSnack(_friendlyAuthMessage(e));
+    } catch (_) {
+      _showSnack('Connexion Google impossible. Reessayez.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -146,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 28),
         Text(
-          _isLogin ? 'Bon retour 👋' : 'Créer un compte',
+          _isLogin ? 'Bon retour' : 'Creer un compte',
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 28,
@@ -157,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen>
         const SizedBox(height: 6),
         Text(
           _isLogin
-              ? 'Connectez-vous pour accéder aux services'
+              ? 'Connectez-vous pour acceder aux services'
               : 'Rejoignez la plateforme Brikolik',
           style: TextStyle(
             fontFamily: 'Nunito',
@@ -218,7 +263,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 14),
                   BrikolikInput(
-                    hint: '••••••••',
+                    hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
                     label: 'Mot de passe',
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
@@ -231,11 +276,11 @@ class _LoginScreenState extends State<LoginScreen>
                         size: 20,
                         color: BrikolikColors.muted,
                       ),
-                      onPressed: () => setState(
-                          () => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     validator: (v) => (v == null || v.length < 6)
-                        ? 'Minimum 6 caractères'
+                        ? 'Minimum 6 caracteres'
                         : null,
                   ),
                   if (_isLogin) ...[
@@ -251,7 +296,7 @@ class _LoginScreenState extends State<LoginScreen>
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
                         child: const Text(
-                          'Mot de passe oublié ?',
+                          'Mot de passe oublie ?',
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 13,
@@ -265,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 20),
                   // Gradient CTA button
                   _GradientButton(
-                    label: _isLogin ? 'Se connecter' : 'Créer mon compte',
+                    label: _isLogin ? 'Se connecter' : 'Creer mon compte',
                     isLoading: _isLoading,
                     onPressed: () async {
                       if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -277,56 +322,36 @@ class _LoginScreenState extends State<LoginScreen>
                             email: _emailCtrl.text,
                             password: _passwordCtrl.text,
                           );
-                          print("LOGIN SUCCESS");
-                          if (mounted) {
-                            final role = await _authService.getUserRole();
-                            if (!mounted) return;
-                            if (role == 'customer') {
-                              Navigator.pushReplacementNamed(context, '/customer-profile');
-                            } else if (role == 'worker') {
-                              Navigator.pushReplacementNamed(context, '/worker-profile');
-                            } else {
-                              // Pas encore de rôle choisi
-                              Navigator.pushReplacementNamed(context, '/role');
-                            }
-                          }
+                          debugPrint("LOGIN SUCCESS");
+                          await _routeAfterAuth();
                         } else {
                           await _authService.signUp(
                             email: _emailCtrl.text,
                             password: _passwordCtrl.text,
                             fullName: _nameCtrl.text,
                           );
-                          print("SIGNUP SUCCESS");
+                          debugPrint("SIGNUP SUCCESS");
                           if (mounted) {
-                            Navigator.pushReplacementNamed(context, '/role');
+                            Navigator.pushReplacementNamed(
+                              context,
+                              '/identity-verification',
+                            );
                           }
                         }
                       } on FirebaseAuthException catch (e) {
                         final action = _isLogin ? 'LOGIN' : 'SIGNUP';
                         final details = '${e.code} | ${e.message}';
                         final friendlyMessage = _friendlyAuthMessage(e);
-                        print("ERROR $action: $details");
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(friendlyMessage)),
-                          );
-                        }
+                        debugPrint("ERROR $action: $details");
+                        _showSnack(friendlyMessage);
                       } on AuthServiceException catch (e) {
                         final action = _isLogin ? 'LOGIN' : 'SIGNUP';
-                        print("ERROR $action: ${e.code} | ${e.message}");
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.message)),
-                          );
-                        }
+                        debugPrint("ERROR $action: ${e.code} | ${e.message}");
+                        _showSnack(e.message);
                       } catch (e) {
                         final action = _isLogin ? 'LOGIN' : 'SIGNUP';
-                        print("ERROR $action: $e");
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Erreur $action: $e')),
-                          );
-                        }
+                        debugPrint("ERROR $action: $e");
+                        _showSnack('Erreur $action: $e');
                       } finally {
                         if (mounted) {
                           setState(() => _isLoading = false);
@@ -416,7 +441,7 @@ class _LoginScreenState extends State<LoginScreen>
           child: _SocialButton(
             label: 'Google',
             icon: Icons.g_mobiledata_rounded,
-            onTap: () {},
+            onTap: _handleGoogleSignIn,
           ),
         ),
         const SizedBox(width: 12),
@@ -432,7 +457,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-// ── Gradient CTA Button ──────────────────────
+// â”€â”€ Gradient CTA Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _GradientButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -469,8 +494,7 @@ class _GradientButton extends StatelessWidget {
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
               : Text(
@@ -489,7 +513,7 @@ class _GradientButton extends StatelessWidget {
   }
 }
 
-// ── Social Button ─────────────────────────────
+// â”€â”€ Social Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _SocialButton extends StatelessWidget {
   final String label;
   final IconData icon;

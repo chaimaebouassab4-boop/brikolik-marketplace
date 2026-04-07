@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class JobListScreen extends StatefulWidget {
   const JobListScreen({super.key});
@@ -12,34 +13,76 @@ class JobListScreen extends StatefulWidget {
 }
 
 class _JobListScreenState extends State<JobListScreen> {
-  int _selectedCategory = 0;
-  int _bottomNavIndex   = 0;
-  final _searchCtrl = TextEditingController();
-
-  final List<Map<String, dynamic>> _categories = [
-    {'label': 'Tous',        'icon': Icons.grid_view_rounded},
-    {'label': 'Plomberie',   'icon': Icons.water_drop_outlined},
-    {'label': 'Électricité', 'icon': Icons.bolt_outlined},
-    {'label': 'Nettoyage',   'icon': Icons.cleaning_services_outlined},
-    {'label': 'Peinture',    'icon': Icons.format_paint_outlined},
-    {'label': 'Jardinage',   'icon': Icons.grass_outlined},
+  static const List<_CategoryOption> _categories = [
+    _CategoryOption(
+        label: 'Tous', icon: Icons.grid_view_rounded, values: ['Tous']),
+    _CategoryOption(
+        label: 'Plomberie',
+        icon: Icons.water_drop_outlined,
+        values: ['Plomberie']),
+    _CategoryOption(
+        label: 'Electricite',
+        icon: Icons.bolt_outlined,
+        values: ['Electricite', 'Électricité']),
+    _CategoryOption(
+        label: 'Nettoyage',
+        icon: Icons.cleaning_services_outlined,
+        values: ['Nettoyage']),
+    _CategoryOption(
+        label: 'Peinture',
+        icon: Icons.format_paint_outlined,
+        values: ['Peinture']),
+    _CategoryOption(
+        label: 'Jardinage', icon: Icons.grass_outlined, values: ['Jardinage']),
+    _CategoryOption(
+        label: 'Menuiserie',
+        icon: Icons.carpenter_outlined,
+        values: ['Menuiserie']),
+    _CategoryOption(
+        label: 'Maconnerie',
+        icon: Icons.construction_outlined,
+        values: ['Maconnerie', 'Maçonnerie']),
   ];
 
-  // Removed hardcoded _jobs list
+  final TextEditingController _searchCtrl = TextEditingController();
+  int _selectedCategory = 0;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  Query<Map<String, dynamic>> _jobsQuery() {
+    final selected = _categories[_selectedCategory];
+    Query<Map<String, dynamic>> query = FirebaseFirestore.instance
+        .collection('jobs')
+        .orderBy('createdAt', descending: true)
+        .limit(100);
+
+    if (selected.label == 'Tous') {
+      return query;
+    }
+
+    if (selected.values.length == 1) {
+      return query.where('category', isEqualTo: selected.values.first);
+    }
+
+    return query.where('category', whereIn: selected.values);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      appBar: BrikolikAppBar(
+      appBar: const BrikolikAppBar(
         title: 'Missions',
         showBackButton: false,
+        useBrandBackground: false,
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined),
-          ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
+          Icon(Icons.notifications_outlined),
+          SizedBox(width: 12),
         ],
       ),
       body: SafeArea(
@@ -95,8 +138,6 @@ class _JobListScreenState extends State<JobListScreen> {
     );
   }
 
-  // Top bar was replaced by BrikolikAppBar in Scaffold
-
   Widget _buildSearchBar() {
     return Container(
       color: BrikolikColors.surface,
@@ -111,7 +152,7 @@ class _JobListScreenState extends State<JobListScreen> {
           color: BrikolikColors.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: 'Chercher un service…',
+          hintText: 'Chercher un service...',
           filled: true,
           fillColor: BrikolikColors.surfaceVariant,
           prefixIcon: const Icon(Icons.search_rounded,
@@ -123,8 +164,8 @@ class _JobListScreenState extends State<JobListScreen> {
               gradient: BrikolikColors.brandGradient,
               borderRadius: BorderRadius.circular(BrikolikRadius.sm),
             ),
-            child: const Icon(Icons.tune_rounded,
-                size: 16, color: Colors.white),
+            child:
+                const Icon(Icons.tune_rounded, size: 16, color: Colors.white),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
@@ -159,14 +200,13 @@ class _JobListScreenState extends State<JobListScreen> {
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
               itemCount: _categories.length,
               separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, i) {
-                final cat = _categories[i];
+              itemBuilder: (context, index) {
+                final category = _categories[index];
                 return CategoryChip(
-                  label: cat['label'],
-                  icon: cat['icon'],
-                  selected: _selectedCategory == i,
-                  onTap: () =>
-                      setState(() => _selectedCategory = i),
+                  label: category.label,
+                  icon: category.icon,
+                  selected: _selectedCategory == index,
+                  onTap: () => setState(() => _selectedCategory = index),
                 );
               },
             ),
@@ -178,89 +218,100 @@ class _JobListScreenState extends State<JobListScreen> {
   }
 
   Widget _buildJobList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('jobs')
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return EmptyState(
+        icon: Icons.lock_outline_rounded,
+        title: 'Connexion requise',
+        subtitle:
+            'Connectez-vous pour consulter les missions et envoyer des offres.',
+        actionLabel: 'Se connecter',
+        onAction: () => Navigator.pushNamed(context, '/login'),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _jobsQuery().snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: BrikolikColors.primary));
+          return const Center(
+              child: CircularProgressIndicator(color: BrikolikColors.primary));
         }
         if (snapshot.hasError) {
+          final error = snapshot.error;
+          if (error is FirebaseException && error.code == 'permission-denied') {
+            return EmptyState(
+              icon: Icons.gpp_bad_outlined,
+              title: 'Acces refuse',
+              subtitle:
+                  'Vos permissions Firestore ne permettent pas de lire les missions. Verifiez les regles de securite.',
+              actionLabel: 'Se connecter',
+              onAction: () => Navigator.pushNamed(context, '/login'),
+            );
+          }
           return Center(child: Text('Erreur: ${snapshot.error}'));
         }
 
-        final catFilter = _categories[_selectedCategory]['label'];
-        
-        // Filter locally by category
-        final docs = snapshot.data?.docs.where((doc) {
-          if (catFilter == 'Tous') return true;
-          final d = doc.data() as Map<String, dynamic>;
-          return d['category'] == catFilter;
-        }).toList() ?? [];
-
-        // Appliquer aussi le filtre de recherche simple (sur le titre)
+        final docs = snapshot.data?.docs ??
+            const <QueryDocumentSnapshot<Map<String, dynamic>>>[];
         final query = _searchCtrl.text.trim().toLowerCase();
         final filteredDocs = docs.where((doc) {
           if (query.isEmpty) return true;
-          final d = doc.data() as Map<String, dynamic>;
-          final title = (d['title'] as String?)?.toLowerCase() ?? '';
+          final title = (doc.data()['title'] as String?)?.toLowerCase() ?? '';
           return title.contains(query);
         }).toList();
 
         if (filteredDocs.isEmpty) {
           return const EmptyState(
             icon: Icons.work_off_outlined,
-            title: 'Aucune mission trouvée',
-            subtitle: 'Soyez le premier à poster une demande dans cette catégorie !',
+            title: 'Aucune mission trouvee',
+            subtitle:
+                'Essayez une autre recherche ou postez une nouvelle demande.',
           );
         }
 
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+          cacheExtent: 600,
           itemCount: filteredDocs.length,
           separatorBuilder: (_, __) => const SizedBox(height: 14),
-          itemBuilder: (context, i) {
-            final data = filteredDocs[i].data() as Map<String, dynamic>;
+          itemBuilder: (context, index) {
+            final data = filteredDocs[index].data();
             final category = data['category'] as String? ?? 'Autre';
-            
-            IconData icon = Icons.work_outline_rounded;
-            switch(category) {
-              case 'Plomberie': icon = Icons.water_drop_outlined; break;
-              case 'Électricité': icon = Icons.bolt_outlined; break;
-              case 'Nettoyage': icon = Icons.cleaning_services_outlined; break;
-              case 'Peinture': icon = Icons.format_paint_outlined; break;
-              case 'Jardinage': icon = Icons.grass_outlined; break;
-              case 'Menuiserie': icon = Icons.carpenter_outlined; break;
-              case 'Maçonnerie': icon = Icons.construction_outlined; break;
-            }
 
-            String timeStr = "À l'instant";
+            String timeStr = "A l'instant";
             final createdAt = data['createdAt'] as Timestamp?;
             if (createdAt != null) {
-               final diff = DateTime.now().difference(createdAt.toDate());
-               if (diff.inMinutes < 60) timeStr = 'Il y a ${diff.inMinutes} min';
-               else if (diff.inHours < 24) timeStr = 'Il y a ${diff.inHours} h';
-               else timeStr = 'Il y a ${diff.inDays} j';
+              final diff = DateTime.now().difference(createdAt.toDate());
+              if (diff.inMinutes < 60) {
+                timeStr = 'Il y a ${diff.inMinutes} min';
+              } else if (diff.inHours < 24) {
+                timeStr = 'Il y a ${diff.inHours} h';
+              } else {
+                timeStr = 'Il y a ${diff.inDays} j';
+              }
             }
 
             final jobMap = {
               'status': data['status'] ?? 'open',
               'offers': data['offersCount'] ?? 0,
-              'icon': icon,
+              'icon': _iconForCategory(category),
               'category': category,
               'time': timeStr,
               'title': data['title'] ?? 'Sans titre',
-              'location': data['location'] ?? '📍 Non spécifié',
-              'budget': data['budget'] ?? '???',
+              'location': data['location'] ?? 'Lieu non specifie',
+              'budget': data['budget'] ?? 'Budget non defini',
               'name': data['customerName'] ?? 'Client',
               'rating': (data['rating'] ?? 0.0).toDouble(),
             };
 
             return JobCard(
               job: jobMap,
-              onTap: () => Navigator.pushNamed(context, '/job-details', arguments: filteredDocs[i].id),
+              onTap: () => Navigator.pushNamed(
+                context,
+                '/job-details',
+                arguments: filteredDocs[index].id,
+              ),
             );
           },
         );
@@ -268,189 +319,217 @@ class _JobListScreenState extends State<JobListScreen> {
     );
   }
 
-  // Bottom nav was replaced by BrikolikBottomNav
+  IconData _iconForCategory(String category) {
+    switch (category) {
+      case 'Plomberie':
+        return Icons.water_drop_outlined;
+      case 'Electricite':
+      case 'Électricité':
+        return Icons.bolt_outlined;
+      case 'Nettoyage':
+        return Icons.cleaning_services_outlined;
+      case 'Peinture':
+        return Icons.format_paint_outlined;
+      case 'Jardinage':
+        return Icons.grass_outlined;
+      case 'Menuiserie':
+        return Icons.carpenter_outlined;
+      case 'Maconnerie':
+      case 'Maçonnerie':
+        return Icons.construction_outlined;
+      default:
+        return Icons.work_outline_rounded;
+    }
+  }
 }
 
-// ── Job Card ───────────────────────────────────
 class JobCard extends StatelessWidget {
+  const JobCard({super.key, required this.job, required this.onTap});
+
   final Map<String, dynamic> job;
   final VoidCallback onTap;
 
-  const JobCard({super.key, required this.job, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
-    final isOpen   = job['status'] == 'open';
+    final isOpen = job['status'] == 'open';
     final hasOffers = (job['offers'] as int) > 0;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: BrikolikColors.surface,
-          borderRadius: BorderRadius.circular(BrikolikRadius.lg),
-          border: Border.all(color: BrikolikColors.border, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: BrikolikColors.primary.withValues(alpha: 0.05),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header row
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: BrikolikColors.primaryLight,
-                          borderRadius:
-                              BorderRadius.circular(BrikolikRadius.sm),
+    return Material(
+      color: BrikolikColors.surface,
+      borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        onTap: onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+            border: Border.all(color: BrikolikColors.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: BrikolikColors.primary.withValues(alpha: 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: BrikolikColors.primaryLight,
+                            borderRadius:
+                                BorderRadius.circular(BrikolikRadius.sm),
+                          ),
+                          child: Icon(job['icon'] as IconData,
+                              size: 20, color: BrikolikColors.primary),
                         ),
-                        child: Icon(job['icon'] as IconData,
-                            size: 20, color: BrikolikColors.primary),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              job['category'],
-                              style: const TextStyle(
-                                fontFamily: 'Nunito',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: BrikolikColors.secondary,
-                                letterSpacing: 0.5,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                job['category'],
+                                style: const TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: BrikolikColors.secondary,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
-                            ),
-                            Text(
-                              job['time'],
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
+                              Text(job['time'],
+                                  style: Theme.of(context).textTheme.bodySmall),
+                            ],
+                          ),
                         ),
-                      ),
-                      isOpen
-                          ? StatusBadge.open()
-                          : StatusBadge.inProgress(),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Title
-                  Text(
-                    job['title'],
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Location + budget
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined,
-                          size: 14, color: BrikolikColors.muted),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          job['location'],
-                          style: Theme.of(context).textTheme.bodyMedium,
-                          overflow: TextOverflow.ellipsis,
+                        isOpen ? StatusBadge.open() : StatusBadge.inProgress(),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      job['title'],
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined,
+                            size: 14, color: BrikolikColors.muted),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            job['location'],
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: BrikolikColors.brandGradient,
+                            borderRadius:
+                                BorderRadius.circular(BrikolikRadius.full),
+                          ),
+                          child: Text(
+                            job['budget'],
+                            style: const TextStyle(
+                              fontFamily: 'Nunito',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: const BoxDecoration(
+                  color: BrikolikColors.surfaceVariant,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(BrikolikRadius.lg),
+                    bottomRight: Radius.circular(BrikolikRadius.lg),
+                  ),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    BrikolikAvatar(name: job['name'], size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        job['name'],
+                        style: Theme.of(context).textTheme.titleSmall,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    StarRating(rating: job['rating'], starSize: 12),
+                    const SizedBox(width: 8),
+                    if (hasOffers)
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          gradient: BrikolikColors.brandGradient,
+                          color: BrikolikColors.accentLight,
                           borderRadius:
                               BorderRadius.circular(BrikolikRadius.full),
+                          border: Border.all(
+                              color:
+                                  BrikolikColors.accent.withValues(alpha: 0.3)),
                         ),
                         child: Text(
-                          job['budget'],
+                          '${job['offers']} offre${job['offers'] > 1 ? 's' : ''}',
                           style: const TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            color: BrikolikColors.accent,
                           ),
                         ),
+                      )
+                    else
+                      Text(
+                        'Aucune offre',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: BrikolikColors.textHint,
+                            ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Footer
-            Container(
-              decoration: const BoxDecoration(
-                color: BrikolikColors.surfaceVariant,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(BrikolikRadius.lg),
-                  bottomRight: Radius.circular(BrikolikRadius.lg),
+                  ],
                 ),
               ),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  BrikolikAvatar(name: job['name'], size: 28),
-                  const SizedBox(width: 8),
-                  Text(
-                    job['name'],
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(width: 8),
-                  StarRating(rating: job['rating'], starSize: 12),
-                  const Spacer(),
-                  if (hasOffers)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: BrikolikColors.accentLight,
-                        borderRadius:
-                            BorderRadius.circular(BrikolikRadius.full),
-                        border: Border.all(
-                            color: BrikolikColors.accent.withValues(alpha: 0.3)),
-                      ),
-                      child: Text(
-                        '${job['offers']} offre${job['offers'] > 1 ? 's' : ''}',
-                        style: const TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: BrikolikColors.accent,
-                        ),
-                      ),
-                    )
-                  else
-                    Text(
-                      'Aucune offre',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: BrikolikColors.textHint),
-                    ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _CategoryOption {
+  const _CategoryOption({
+    required this.label,
+    required this.icon,
+    required this.values,
+  });
+
+  final String label;
+  final IconData icon;
+  final List<String> values;
 }
