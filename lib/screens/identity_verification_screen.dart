@@ -114,14 +114,14 @@ class _IdentityVerificationScreenState
                   verificationRequested: verificationRequested,
                 ),
                 const SizedBox(height: 18),
-                _InfoCard(
+                const _InfoCard(
                   icon: Icons.verified_user_outlined,
                   title: 'Acces protege',
                   body:
                       'Avant de poster une mission ou publier un profil artisan, votre compte doit etre approuve manuellement par un administrateur.',
                 ),
                 const SizedBox(height: 12),
-                _InfoCard(
+                const _InfoCard(
                   icon: Icons.schedule_outlined,
                   title: 'Ce qui se passe ensuite',
                   body:
@@ -135,7 +135,7 @@ class _IdentityVerificationScreenState
                     onPressed: _continueAfterApproval,
                   )
                 else if (verificationRequested)
-                  BrikolikButton(
+                  const BrikolikButton(
                     label: 'Demande en attente',
                     icon: Icons.hourglass_top_rounded,
                     onPressed: null,

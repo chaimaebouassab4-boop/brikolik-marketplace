@@ -587,14 +587,15 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
     final Color foreground = hasBrandBackground || transparent
         ? Colors.white
         : BrikolikColors.textPrimary;
+    const double logoSize = 68;
     final int logoCacheWidth =
-        (54 * MediaQuery.devicePixelRatioOf(context)).round();
+        (logoSize * MediaQuery.devicePixelRatioOf(context)).round();
 
     return AppBar(
       systemOverlayStyle: hasBrandBackground
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
-      toolbarHeight: height ?? 72,
+      toolbarHeight: height ?? 78,
       backgroundColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
@@ -643,8 +644,8 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
             onTap: () => Navigator.pushNamedAndRemoveUntil(
                 context, '/', (route) => false),
             child: SizedBox(
-              width: 54,
-              height: 54,
+              width: logoSize,
+              height: logoSize,
               child: Image.asset(
                 'lib/assets/lasgbrik-removebg-preview.png',
                 fit: BoxFit.contain,

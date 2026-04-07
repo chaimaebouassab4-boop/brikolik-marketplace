@@ -360,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
                     },
                   ),
                   const SizedBox(height: 20),
-                  const DividerWithLabel(label: 'ou continuer avec'),
+                  const DividerWithLabel(label: 'ou continuer avec Google'),
                   const SizedBox(height: 20),
                   _buildSocialButtons(),
                 ],
@@ -435,24 +435,10 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildSocialButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: _SocialButton(
-            label: 'Google',
-            icon: Icons.g_mobiledata_rounded,
-            onTap: _handleGoogleSignIn,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _SocialButton(
-            label: 'Facebook',
-            icon: Icons.facebook_rounded,
-            onTap: () {},
-          ),
-        ),
-      ],
+    return _SocialButton(
+      label: 'Google',
+      icon: Icons.g_mobiledata_rounded,
+      onTap: _handleGoogleSignIn,
     );
   }
 }

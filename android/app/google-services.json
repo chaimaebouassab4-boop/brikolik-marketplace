@@ -12,7 +12,20 @@
           "package_name": "com.example.brikolik_mvp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "522253592483-45tdet1ucft9nql2uq3au2lpj6evshtr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.brikolik_mvp",
+            "certificate_hash": "81e8320ff0d2fd5690cd77148fc407651d3ce5f2"
+          }
+        },
+        {
+          "client_id": "522253592483-ui0a7gp1h9hk0nal8896ljcbjcrm3u0i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBvu6jrEclErGtf4xwAIA4p4moDAa02OXU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "522253592483-ui0a7gp1h9hk0nal8896ljcbjcrm3u0i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "522253592483-0ctcrknodg7ip3229ctogt4iq2s87dfp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.brikolikMvp"
+              }
+            }
+          ]
         }
       }
     }

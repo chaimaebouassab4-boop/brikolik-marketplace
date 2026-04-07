@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthServiceException implements Exception {
   final String code;
@@ -84,7 +85,20 @@ class AuthService {
         final provider = GoogleAuthProvider();
         credential = await _auth.signInWithPopup(provider);
       } else {
-        credential = await _auth.signInWithProvider(GoogleAuthProvider());
+        final googleUser = await GoogleSignIn().signIn();
+        if (googleUser == null) {
+          throw const AuthServiceException(
+            code: 'google-cancelled',
+            message: 'Connexion Google annulee.',
+          );
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final googleCredential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        credential = await _auth.signInWithCredential(googleCredential);
       }
 
       final user = credential.user;
@@ -206,6 +220,8 @@ class AuthService {
         return 'Un compte existe deja avec un autre mode de connexion.';
       case 'operation-not-allowed':
         return 'Google Sign-In est desactive dans Firebase Auth.';
+      case 'invalid-credential':
+        return 'Configuration Google invalide. Verifiez SHA-1/SHA-256 dans Firebase.';
       default:
         return 'Connexion Google impossible. Reessayez.';
     }
