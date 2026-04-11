@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<Map<String, dynamic>> _messages = [
     {'text': 'Bonjour, je suis disponible pour votre mission.', 'isMe': true},
     {'text': 'Parfait ! Vous pouvez venir demain matin ?', 'isMe': false},
-    {'text': 'Oui, je serai là à 9h.', 'isMe': true},
+    {'text': 'Oui, je serai la a 9h.', 'isMe': true},
   ];
 
   void _sendMessage() {
@@ -75,8 +76,7 @@ class _ChatScreenState extends State<ChatScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Ahmed El Alami',
+                Text('Ahmed El Alami'.tr(),
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 15,
@@ -95,8 +95,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Text(
-                      'En ligne · Casablanca',
+                    Text('En ligne - Casablanca'.tr(),
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 11,
@@ -114,8 +113,7 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(
             onPressed: () =>
                 Navigator.pushNamed(context, '/rating'),
-            child: const Text(
-              'Terminer',
+            child: Text('Terminer'.tr(),
               style: TextStyle(
                 fontFamily: 'Nunito',
                 color: BrikolikColors.accent,
@@ -256,7 +254,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: BrikolikColors.textPrimary,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Écrire un message...',
+                      hintText: 'Ecrire un message...'.tr(),
                       hintStyle: const TextStyle(
                         fontFamily: 'Nunito',
                         color: BrikolikColors.textHint,
@@ -315,4 +313,5 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
+
 

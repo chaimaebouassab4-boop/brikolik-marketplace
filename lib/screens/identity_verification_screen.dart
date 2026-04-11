@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
@@ -53,7 +54,9 @@ class _IdentityVerificationScreenState
     final role = await _authService.getUserRole();
     if (!mounted) return;
 
-    if (role == 'customer') {
+    if (role == 'admin') {
+      Navigator.pushReplacementNamed(context, '/admin-verifications');
+    } else if (role == 'customer') {
       Navigator.pushReplacementNamed(context, '/customer-profile');
     } else if (role == 'worker') {
       Navigator.pushReplacementNamed(context, '/worker-profile');
@@ -241,8 +244,7 @@ class _VerificationHero extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.18),
                     ),
                   ),
-                  child: const Text(
-                    'Validation admin',
+                  child: Text('Validation admin'.tr(),
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 11,
@@ -253,7 +255,7 @@ class _VerificationHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  title,
+                  title.tr(),
                   style: const TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 22,
@@ -263,7 +265,7 @@ class _VerificationHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  subtitle,
+                  subtitle.tr(),
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 13,
@@ -320,12 +322,12 @@ class _InfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  title.tr(),
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  body,
+                  body.tr(),
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -336,3 +338,4 @@ class _InfoCard extends StatelessWidget {
     );
   }
 }
+

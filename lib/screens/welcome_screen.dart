@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
@@ -268,14 +269,13 @@ class _HeroSection extends StatelessWidget {
                       border: Border.all(
                           color: Colors.white.withValues(alpha: 0.24)),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.verified_outlined,
                             size: 14, color: Colors.white),
                         SizedBox(width: 6),
-                        Text(
-                          'Artisans verifies au Maroc',
+                        Text('Artisans verifies au Maroc'.tr(),
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 12,
@@ -287,8 +287,7 @@ class _HeroSection extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  const Text(
-                    'Reparez, entretenez, avancez.',
+                  Text('Reparez, entretenez, avancez.'.tr(),
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 30,
@@ -299,7 +298,8 @@ class _HeroSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    'Publiez votre besoin et recevez des offres fiables en quelques minutes.',
+                    'Publiez votre besoin et recevez des offres fiables en quelques minutes.'
+                        .tr(),
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 14,
@@ -337,13 +337,12 @@ class _SearchCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(BrikolikRadius.lg),
             border: Border.all(color: BrikolikColors.border),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Icon(Icons.search_rounded, color: BrikolikColors.muted),
               SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  'Chercher un service ou un artisan',
+                child: Text('Chercher un service ou un artisan'.tr(),
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 14,
@@ -480,7 +479,7 @@ class _ServiceTile extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          item.label,
+                          item.label.tr(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -554,7 +553,7 @@ class _WorkerCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            worker.specialty,
+                            worker.specialty.tr(),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -589,8 +588,7 @@ class _WorkerCard extends StatelessWidget {
                     color: BrikolikColors.primaryLight,
                     borderRadius: BorderRadius.circular(BrikolikRadius.full),
                   ),
-                  child: Text(
-                    '${worker.jobs} missions terminees',
+                  child: Text('${worker.jobs} missions terminees',
                     style: const TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 11,
@@ -641,7 +639,7 @@ class _JobCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(BrikolikRadius.full),
                     ),
                     child: Text(
-                      data.category,
+                      data.category.tr(),
                       style: const TextStyle(
                         fontFamily: 'Nunito',
                         fontSize: 11,
@@ -750,7 +748,7 @@ class _Metric extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          label,
+          label.tr(),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -788,13 +786,13 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+          child: Text(title.tr(), style: Theme.of(context).textTheme.headlineSmall),
         ),
         if (actionLabel != null)
           TextButton(
             onPressed: onAction,
             child: Text(
-              actionLabel!,
+              actionLabel!.tr(),
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 13,
@@ -888,3 +886,4 @@ class _JobPreview {
   final String budget;
   final String postedAgo;
 }
+

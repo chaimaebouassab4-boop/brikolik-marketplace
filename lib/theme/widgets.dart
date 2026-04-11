@@ -1,23 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_theme.dart';
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-//  BRIKOLIK SHARED WIDGETS â€“ Retro Purple & Blues
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-// â”€â”€ Primary CTA Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final bool outlined;
-  final IconData? icon;
-  final double? height;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
-
   const BrikolikButton({
     super.key,
     required this.label,
@@ -29,6 +16,15 @@ class BrikolikButton extends StatelessWidget {
     this.backgroundColor,
     this.foregroundColor,
   });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final bool outlined;
+  final IconData? icon;
+  final double? height;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -48,7 +44,7 @@ class BrikolikButton extends StatelessWidget {
                 Icon(icon, size: 18),
                 const SizedBox(width: 8),
               ],
-              Text(label),
+              Text(label.tr()),
             ],
           );
 
@@ -61,7 +57,9 @@ class BrikolikButton extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: foregroundColor ?? BrikolikColors.primary,
             side: BorderSide(
-                color: foregroundColor ?? BrikolikColors.primary, width: 1.5),
+              color: foregroundColor ?? BrikolikColors.primary,
+              width: 1.5,
+            ),
           ),
           child: child,
         ),
@@ -83,13 +81,7 @@ class BrikolikButton extends StatelessWidget {
   }
 }
 
-// â”€â”€ Secondary/Ghost Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikSecondaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final double? height;
-
   const BrikolikSecondaryButton({
     super.key,
     required this.label,
@@ -97,6 +89,11 @@ class BrikolikSecondaryButton extends StatelessWidget {
     this.icon,
     this.height,
   });
+
+  final String label;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +114,7 @@ class BrikolikSecondaryButton extends StatelessWidget {
               Icon(icon, size: 18),
               const SizedBox(width: 8),
             ],
-            Text(label),
+            Text(label.tr()),
           ],
         ),
       ),
@@ -125,20 +122,7 @@ class BrikolikSecondaryButton extends StatelessWidget {
   }
 }
 
-// â”€â”€ Input Field â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikInput extends StatelessWidget {
-  final String hint;
-  final String? label;
-  final TextEditingController? controller;
-  final bool obscureText;
-  final TextInputType keyboardType;
-  final IconData? prefixIcon;
-  final Widget? suffixWidget;
-  final String? Function(String?)? validator;
-  final void Function(String)? onChanged;
-  final int maxLines;
-  final bool enabled;
-
   const BrikolikInput({
     super.key,
     required this.hint,
@@ -153,6 +137,18 @@ class BrikolikInput extends StatelessWidget {
     this.maxLines = 1,
     this.enabled = true,
   });
+
+  final String hint;
+  final String? label;
+  final TextEditingController? controller;
+  final bool obscureText;
+  final TextInputType keyboardType;
+  final IconData? prefixIcon;
+  final Widget? suffixWidget;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged;
+  final int maxLines;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -171,8 +167,8 @@ class BrikolikInput extends StatelessWidget {
         color: BrikolikColors.textPrimary,
       ),
       decoration: InputDecoration(
-        hintText: hint,
-        labelText: label,
+        hintText: hint.tr(),
+        labelText: label?.tr(),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, size: 20, color: BrikolikColors.muted)
             : null,
@@ -182,12 +178,7 @@ class BrikolikInput extends StatelessWidget {
   }
 }
 
-// â”€â”€ Section Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class SectionHeader extends StatelessWidget {
-  final String title;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
   const SectionHeader({
     super.key,
     required this.title,
@@ -195,12 +186,16 @@ class SectionHeader extends StatelessWidget {
     this.onAction,
   });
 
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: Theme.of(context).textTheme.headlineSmall),
+        Text(title.tr(), style: Theme.of(context).textTheme.headlineSmall),
         if (actionLabel != null)
           TextButton(
             onPressed: onAction,
@@ -210,7 +205,7 @@ class SectionHeader extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             child: Text(
-              actionLabel!,
+              actionLabel!.tr(),
               style: const TextStyle(
                 color: BrikolikColors.accent,
                 fontFamily: 'Nunito',
@@ -224,18 +219,17 @@ class SectionHeader extends StatelessWidget {
   }
 }
 
-// â”€â”€ Status Badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class StatusBadge extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color bgColor;
-
   const StatusBadge({
     super.key,
     required this.label,
     required this.color,
     required this.bgColor,
   });
+
+  final String label;
+  final Color color;
+  final Color bgColor;
 
   factory StatusBadge.open() => const StatusBadge(
         label: 'Ouvert',
@@ -250,7 +244,7 @@ class StatusBadge extends StatelessWidget {
       );
 
   factory StatusBadge.closed() => const StatusBadge(
-        label: 'TerminÃ©',
+        label: 'Termine',
         color: BrikolikColors.textSecondary,
         bgColor: BrikolikColors.surfaceVariant,
       );
@@ -264,7 +258,7 @@ class StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(BrikolikRadius.full),
       ),
       child: Text(
-        label,
+        label.tr(),
         style: TextStyle(
           fontFamily: 'Nunito',
           fontSize: 12,
@@ -276,12 +270,7 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-// â”€â”€ Avatar with initials fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikAvatar extends StatelessWidget {
-  final String? imageUrl;
-  final String name;
-  final double size;
-
   const BrikolikAvatar({
     super.key,
     this.imageUrl,
@@ -289,10 +278,18 @@ class BrikolikAvatar extends StatelessWidget {
     this.size = 44,
   });
 
+  final String? imageUrl;
+  final String name;
+  final double size;
+
   String get _initials {
     final parts = name.trim().split(' ');
-    if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    if (parts[0].isNotEmpty) return parts[0][0].toUpperCase();
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    if (parts.isNotEmpty && parts[0].isNotEmpty) {
+      return parts[0][0].toUpperCase();
+    }
     return '?';
   }
 
@@ -328,18 +325,17 @@ class BrikolikAvatar extends StatelessWidget {
   }
 }
 
-// â”€â”€ Star Rating Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class StarRating extends StatelessWidget {
-  final double rating;
-  final int reviewCount;
-  final double starSize;
-
   const StarRating({
     super.key,
     required this.rating,
     this.reviewCount = 0,
     this.starSize = 14,
   });
+
+  final double rating;
+  final int reviewCount;
+  final double starSize;
 
   @override
   Widget build(BuildContext context) {
@@ -374,11 +370,10 @@ class StarRating extends StatelessWidget {
   }
 }
 
-// â”€â”€ Divider with label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class DividerWithLabel extends StatelessWidget {
-  final String label;
-
   const DividerWithLabel({super.key, required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
@@ -388,7 +383,7 @@ class DividerWithLabel extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
-            label,
+            label.tr(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: BrikolikColors.muted,
@@ -401,13 +396,7 @@ class DividerWithLabel extends StatelessWidget {
   }
 }
 
-// â”€â”€ Category Chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class CategoryChip extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool selected;
-  final VoidCallback? onTap;
-
   const CategoryChip({
     super.key,
     required this.label,
@@ -415,6 +404,11 @@ class CategoryChip extends StatelessWidget {
     this.selected = false,
     this.onTap,
   });
+
+  final String label;
+  final IconData? icon;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -436,9 +430,9 @@ class CategoryChip extends StatelessWidget {
                     color: BrikolikColors.primary.withValues(alpha: 0.18),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ]
-              : [],
+              : const [],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -452,7 +446,7 @@ class CategoryChip extends StatelessWidget {
               const SizedBox(width: 6),
             ],
             Text(
-              label,
+              label.tr(),
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 13,
@@ -467,14 +461,7 @@ class CategoryChip extends StatelessWidget {
   }
 }
 
-// â”€â”€ Empty State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-
   const EmptyState({
     super.key,
     required this.icon,
@@ -483,6 +470,12 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
   });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -503,17 +496,21 @@ class EmptyState extends StatelessWidget {
               child: Icon(icon, size: 38, color: BrikolikColors.primary),
             ),
             const SizedBox(height: 20),
-            Text(title,
-                style: Theme.of(context).textTheme.headlineSmall,
-                textAlign: TextAlign.center),
+            Text(
+              title.tr(),
+              style: Theme.of(context).textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
-            Text(subtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center),
+            Text(
+              subtitle.tr(),
+              style: Theme.of(context).textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
             if (actionLabel != null) ...[
               const SizedBox(height: 24),
               BrikolikButton(
-                label: actionLabel!,
+                label: actionLabel!.tr(),
                 onPressed: onAction,
               ),
             ],
@@ -524,18 +521,17 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-// â”€â”€ Gradient Brand Logo Box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikLogoBox extends StatelessWidget {
-  final double size;
-  final double iconSize;
-  final IconData icon;
-
   const BrikolikLogoBox({
     super.key,
     this.size = 56,
     this.iconSize = 28,
     this.icon = Icons.build_rounded,
   });
+
+  final double size;
+  final double iconSize;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -558,17 +554,7 @@ class BrikolikLogoBox extends StatelessWidget {
   }
 }
 
-// â”€â”€ Global AppBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title;
-  final List<Widget>? actions;
-  final VoidCallback? onBackPressed;
-  final bool showBackButton;
-  final bool transparent;
-  final bool useBrandBackground;
-  final double? height;
-  final bool showDivider;
-
   const BrikolikAppBar({
     super.key,
     required this.title,
@@ -579,16 +565,27 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.useBrandBackground = true,
     this.height,
     this.showDivider = true,
+    this.showLocaleSwitch = true,
   });
+
+  final String title;
+  final List<Widget>? actions;
+  final VoidCallback? onBackPressed;
+  final bool showBackButton;
+  final bool transparent;
+  final bool useBrandBackground;
+  final double? height;
+  final bool showDivider;
+  final bool showLocaleSwitch;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasBrandBackground = useBrandBackground && !transparent;
-    final Color foreground = hasBrandBackground || transparent
+    final hasBrandBackground = useBrandBackground && !transparent;
+    final foreground = hasBrandBackground || transparent
         ? Colors.white
         : BrikolikColors.textPrimary;
-    const double logoSize = 68;
-    final int logoCacheWidth =
+    const logoSize = 68.0;
+    final logoCacheWidth =
         (logoSize * MediaQuery.devicePixelRatioOf(context)).round();
 
     return AppBar(
@@ -642,7 +639,10 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
         children: [
           GestureDetector(
             onTap: () => Navigator.pushNamedAndRemoveUntil(
-                context, '/', (route) => false),
+              context,
+              '/',
+              (route) => false,
+            ),
             child: SizedBox(
               width: logoSize,
               height: logoSize,
@@ -661,7 +661,7 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              title,
+              title.tr(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -672,7 +672,14 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: actions,
+      actions: [
+        if (showLocaleSwitch)
+          _LocaleToggleButton(
+            foreground: foreground,
+            transparent: transparent,
+          ),
+        ...?actions,
+      ],
     );
   }
 
@@ -681,16 +688,15 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
       Size.fromHeight((height ?? 72) + (showDivider ? 1 : 0));
 }
 
-// â”€â”€ Shared Bottom Navigation Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int>? onTap;
-
   const BrikolikBottomNav({
     super.key,
     this.currentIndex = 0,
     this.onTap,
   });
+
+  final int currentIndex;
+  final ValueChanged<int>? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -749,26 +755,26 @@ class BrikolikBottomNav extends StatelessWidget {
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home_rounded),
-              label: 'Accueil',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home_rounded),
+              label: 'Accueil'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.work_outline_rounded),
-              activeIcon: Icon(Icons.work_rounded),
-              label: 'Missions',
+              icon: const Icon(Icons.work_outline_rounded),
+              activeIcon: const Icon(Icons.work_rounded),
+              label: 'Missions'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat_bubble_outline_rounded),
-              activeIcon: Icon(Icons.chat_bubble_rounded),
-              label: 'Messages',
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              activeIcon: const Icon(Icons.chat_bubble_rounded),
+              label: 'Messages'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline_rounded),
-              activeIcon: Icon(Icons.person_rounded),
-              label: 'Profil',
+              icon: const Icon(Icons.person_outline_rounded),
+              activeIcon: const Icon(Icons.person_rounded),
+              label: 'Profil'.tr(),
             ),
           ],
         ),
@@ -777,18 +783,7 @@ class BrikolikBottomNav extends StatelessWidget {
   }
 }
 
-// â”€â”€â”€ Layout helper to keep header/footer consistent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class BrikolikPageScaffold extends StatelessWidget {
-  final String title;
-  final Widget body;
-  final bool showBottomNav;
-  final int bottomNavIndex;
-  final bool showBackButton;
-  final bool useBrandHeader;
-  final bool transparentAppBar;
-  final VoidCallback? onBackPressed;
-  final List<Widget>? actions;
-
   const BrikolikPageScaffold({
     super.key,
     required this.title,
@@ -801,6 +796,16 @@ class BrikolikPageScaffold extends StatelessWidget {
     this.onBackPressed,
     this.actions,
   });
+
+  final String title;
+  final Widget body;
+  final bool showBottomNav;
+  final int bottomNavIndex;
+  final bool showBackButton;
+  final bool useBrandHeader;
+  final bool transparentAppBar;
+  final VoidCallback? onBackPressed;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -818,6 +823,40 @@ class BrikolikPageScaffold extends StatelessWidget {
       bottomNavigationBar: showBottomNav
           ? BrikolikBottomNav(currentIndex: bottomNavIndex)
           : null,
+    );
+  }
+}
+
+class _LocaleToggleButton extends StatelessWidget {
+  const _LocaleToggleButton({
+    required this.foreground,
+    required this.transparent,
+  });
+
+  final Color foreground;
+  final bool transparent;
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = context.locale.languageCode == 'ar';
+    final nextLocale = isArabic ? const Locale('fr') : const Locale('ar');
+    final label = isArabic ? 'FR' : 'AR';
+
+    return TextButton(
+      onPressed: () => context.setLocale(nextLocale),
+      style: TextButton.styleFrom(
+        minimumSize: const Size(44, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: transparent ? Colors.white : foreground,
+        ),
+      ),
     );
   }
 }

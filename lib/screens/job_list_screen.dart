@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
@@ -23,7 +24,7 @@ class _JobListScreenState extends State<JobListScreen> {
     _CategoryOption(
         label: 'Electricite',
         icon: Icons.bolt_outlined,
-        values: ['Electricite', 'Électricité']),
+        values: ['Electricite', 'Électricite', 'Ã‰lectricitÃ©']),
     _CategoryOption(
         label: 'Nettoyage',
         icon: Icons.cleaning_services_outlined,
@@ -41,7 +42,7 @@ class _JobListScreenState extends State<JobListScreen> {
     _CategoryOption(
         label: 'Maconnerie',
         icon: Icons.construction_outlined,
-        values: ['Maconnerie', 'Maçonnerie']),
+        values: ['Maconnerie', 'Maçonnerie', 'MaÃ§onnerie']),
   ];
 
   final TextEditingController _searchCtrl = TextEditingController();
@@ -112,15 +113,14 @@ class _JobListScreenState extends State<JobListScreen> {
           child: InkWell(
             borderRadius: BorderRadius.circular(BrikolikRadius.full),
             onTap: () => Navigator.pushNamed(context, '/post-job'),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.add_rounded, color: Colors.white, size: 20),
                   SizedBox(width: 8),
-                  Text(
-                    'Poster un service',
+                  Text('Poster un service'.tr(),
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontWeight: FontWeight.w700,
@@ -152,7 +152,7 @@ class _JobListScreenState extends State<JobListScreen> {
           color: BrikolikColors.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: 'Chercher un service...',
+          hintText: 'Chercher un service...'.tr(),
           filled: true,
           fillColor: BrikolikColors.surfaceVariant,
           prefixIcon: const Icon(Icons.search_rounded,
@@ -324,7 +324,8 @@ class _JobListScreenState extends State<JobListScreen> {
       case 'Plomberie':
         return Icons.water_drop_outlined;
       case 'Electricite':
-      case 'Électricité':
+      case 'Électricite':
+      case 'Ã‰lectricitÃ©':
         return Icons.bolt_outlined;
       case 'Nettoyage':
         return Icons.cleaning_services_outlined;
@@ -336,6 +337,7 @@ class _JobListScreenState extends State<JobListScreen> {
         return Icons.carpenter_outlined;
       case 'Maconnerie':
       case 'Maçonnerie':
+      case 'MaÃ§onnerie':
         return Icons.construction_outlined;
       default:
         return Icons.work_outline_rounded;
@@ -505,8 +507,7 @@ class JobCard extends StatelessWidget {
                         ),
                       )
                     else
-                      Text(
-                        'Aucune offre',
+                      Text('Aucune offre'.tr(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: BrikolikColors.textHint,
                             ),
@@ -533,3 +534,4 @@ class _CategoryOption {
   final IconData icon;
   final List<String> values;
 }
+

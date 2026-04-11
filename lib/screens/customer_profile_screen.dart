@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
@@ -37,7 +38,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     super.dispose();
   }
 
-  // ── Charger les données depuis Firestore ──────────────────
+  // â”€â”€ Charger les donnÃ©es depuis Firestore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _loadProfile() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) {
@@ -60,7 +61,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     }
   }
 
-  // ── Sauvegarder dans Firestore ────────────────────────────
+  // â”€â”€ Sauvegarder dans Firestore â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Future<void> _save() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
@@ -75,8 +76,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Profil enregistré avec succès !'),
+          SnackBar(
+            content: Text('Profil enregistre avec succes !'.tr()),
             backgroundColor: BrikolikColors.success,
           ),
         );
@@ -148,7 +149,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: Text('Informations personnelles',
+                              child: Text('Informations personnelles'.tr(),
                                   style: Theme.of(context).textTheme.titleLarge),
                             ),
                           ],
@@ -163,7 +164,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         const SizedBox(height: 14),
                         BrikolikInput(
                           hint: '06 XX XX XX XX',
-                          label: 'Téléphone',
+                          label: 'Telephone',
                           controller: _phoneCtrl,
                           keyboardType: TextInputType.phone,
                           prefixIcon: Icons.phone_outlined,
@@ -195,7 +196,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      const Text('Email',
+                                      Text('Email'.tr(),
                                           style: TextStyle(
                                             fontFamily: 'Nunito',
                                             fontSize: 11,
@@ -237,7 +238,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Votre profil aide les artisans à mieux comprendre vos besoins.',
+                            'Votre profil aide les artisans a mieux comprendre vos besoins.'
+                                .tr(),
                             style: TextStyle(
                               fontFamily: 'Nunito',
                               fontSize: 13,
@@ -283,13 +285,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                       AlwaysStoppedAnimation<Color>(BrikolikColors.primary),
                                 ),
                               )
-                            : const Row(
+                            : Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.save_rounded, color: Colors.white, size: 18),
                                   SizedBox(width: 8),
-                                  Text(
-                                    'Enregistrer et continuer',
+                                  Text('Enregistrer et continuer'.tr(),
                                     style: TextStyle(
                                       fontFamily: 'Nunito',
                                       fontSize: 16,
@@ -309,7 +310,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     );
   }
 
-  // ── Avatar section ────────────────────────────────────────
+  // â”€â”€ Avatar section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAvatarSection() {
     return AnimatedBuilder(
       animation: _nameCtrl,
@@ -320,13 +321,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             children: [
               BrikolikAvatar(name: displayName, size: 90),
               const SizedBox(height: 16),
-              Text(
-                'Complétez votre profil',
+              Text('Completez votre profil'.tr(),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 4),
-              Text(
-                'Ces informations sont visibles par les artisans.',
+              Text('Ces informations sont visibles par les artisans.'.tr(),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -337,3 +336,4 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
     );
   }
 }
+

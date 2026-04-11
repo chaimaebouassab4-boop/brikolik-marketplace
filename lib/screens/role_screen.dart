@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,7 @@ class RoleScreen extends StatefulWidget {
 }
 
 class _RoleScreenState extends State<RoleScreen> {
-  String? _selectedRole; // 'customer' | 'worker'
+  String? _selectedRole;
   bool _isSaving = false;
 
   Future<void> _handleBack() async {
@@ -36,8 +37,6 @@ class _RoleScreenState extends State<RoleScreen> {
         isVerified = snapshot.data()?['isVerified'] == true;
         await userRef.update({'role': _selectedRole});
       }
-    } catch (_) {
-      // On continue même si la sauvegarde échoue
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -45,18 +44,18 @@ class _RoleScreenState extends State<RoleScreen> {
     if (!mounted) return;
     if (_selectedRole == 'customer') {
       Navigator.pushNamed(context, '/customer-profile');
-    } else if (!isVerified) {
+      return;
+    }
+
+    if (!isVerified) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'La verification admin est obligatoire avant de creer un profil artisan.',
-          ),
-        ),
+        SnackBar(content: Text('role.worker_verification_required'.tr())),
       );
       Navigator.pushNamed(context, '/identity-verification');
-    } else {
-      Navigator.pushNamed(context, '/worker-profile');
+      return;
     }
+
+    Navigator.pushNamed(context, '/worker-profile');
   }
 
   @override
@@ -112,32 +111,28 @@ class _RoleScreenState extends State<RoleScreen> {
                         _buildHeader(),
                         const SizedBox(height: 32),
                         _RoleCard(
-                          title: 'Je cherche un service',
-                          subtitle:
-                              'Postez vos besoins et recevez des offres de pros qualifiés',
-                          emoji: '🏠',
-                          features: const [
-                            'Trouvez des artisans près de chez vous',
-                            'Comparez les offres et tarifs',
-                            'Suivez vos demandes en temps réel',
+                          title: 'looking_for_service'.tr(),
+                          subtitle: 'role.looking_for_service_subtitle'.tr(),
+                          icon: Icons.home_repair_service_outlined,
+                          features: [
+                            'role.looking_feature_1'.tr(),
+                            'role.looking_feature_2'.tr(),
+                            'role.looking_feature_3'.tr(),
                           ],
-                          value: 'customer',
                           selected: _selectedRole == 'customer',
                           onTap: () =>
                               setState(() => _selectedRole = 'customer'),
                         ),
                         const SizedBox(height: 14),
                         _RoleCard(
-                          title: 'Je propose mes services',
-                          subtitle:
-                              'Développez votre activité et trouvez des clients facilement',
-                          emoji: '🔧',
-                          features: const [
-                            'Gérez vos missions facilement',
-                            'Obtenez des avis clients',
-                            'Développez votre réputation',
+                          title: 'offer_services'.tr(),
+                          subtitle: 'role.offer_services_subtitle'.tr(),
+                          icon: Icons.handyman_outlined,
+                          features: [
+                            'role.offer_feature_1'.tr(),
+                            'role.offer_feature_2'.tr(),
+                            'role.offer_feature_3'.tr(),
                           ],
-                          value: 'worker',
                           selected: _selectedRole == 'worker',
                           onTap: () => setState(() => _selectedRole = 'worker'),
                         ),
@@ -155,17 +150,6 @@ class _RoleScreenState extends State<RoleScreen> {
                                   : null,
                               borderRadius:
                                   BorderRadius.circular(BrikolikRadius.md),
-                              boxShadow: _selectedRole != null
-                                  ? [
-                                      BoxShadow(
-                                        color: BrikolikColors.accent.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        blurRadius: 14,
-                                        offset: const Offset(0, 4),
-                                      )
-                                    ]
-                                  : [],
                             ),
                             child: Material(
                               color: Colors.transparent,
@@ -173,51 +157,49 @@ class _RoleScreenState extends State<RoleScreen> {
                                 borderRadius:
                                     BorderRadius.circular(BrikolikRadius.md),
                                 onTap: _selectedRole != null ? _continue : null,
-                                child: Container(
+                                child: SizedBox(
                                   height: 52,
-                                  alignment: Alignment.center,
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2.5,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                    Colors.white),
-                                          ),
-                                        )
-                                      : Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              'Continuer',
-                                              style: TextStyle(
-                                                fontFamily: 'Nunito',
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
+                                  child: Center(
+                                    child: _isSaving
+                                        ? const SizedBox(
+                                            width: 22,
+                                            height: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.5,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text('common.continue'.tr(),
+                                                style: TextStyle(
+                                                  fontFamily: 'Nunito',
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: _selectedRole != null
+                                                      ? Colors.white
+                                                      : BrikolikColors.textHint,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Icon(
+                                                Icons.arrow_forward_rounded,
                                                 color: _selectedRole != null
                                                     ? Colors.white
                                                     : BrikolikColors.textHint,
+                                                size: 18,
                                               ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Icon(
-                                              Icons.arrow_forward_rounded,
-                                              color: _selectedRole != null
-                                                  ? Colors.white
-                                                  : BrikolikColors.textHint,
-                                              size: 18,
-                                            ),
-                                          ],
-                                        ),
+                                            ],
+                                          ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -234,31 +216,26 @@ class _RoleScreenState extends State<RoleScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(BrikolikRadius.sm),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.35),
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Icons.build_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.35),
+              width: 1,
             ),
-          ],
+          ),
+          child: const Icon(
+            Icons.build_rounded,
+            color: Colors.white,
+            size: 20,
+          ),
         ),
         const SizedBox(height: 18),
-        const Text(
-          'Comment\nvoulez-vous utiliser\nBrikolik ?',
-          style: TextStyle(
+        Text('choose_role'.tr(),
+          style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 26,
             fontWeight: FontWeight.w800,
@@ -266,9 +243,8 @@ class _RoleScreenState extends State<RoleScreen> {
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 60),
-        Text(
-          'Choisissez votre profil pour personnaliser votre expérience',
+        const SizedBox(height: 12),
+        Text('role.subtitle'.tr(),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       ],
@@ -277,23 +253,21 @@ class _RoleScreenState extends State<RoleScreen> {
 }
 
 class _RoleCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final String emoji;
-  final List<String> features;
-  final String value;
-  final bool selected;
-  final VoidCallback onTap;
-
   const _RoleCard({
     required this.title,
     required this.subtitle,
-    required this.emoji,
+    required this.icon,
     required this.features,
-    required this.value,
     required this.selected,
     required this.onTap,
   });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final List<String> features;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +275,6 @@ class _RoleCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOut,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: BrikolikColors.surface,
@@ -310,21 +283,6 @@ class _RoleCard extends StatelessWidget {
             color: selected ? BrikolikColors.primary : BrikolikColors.border,
             width: selected ? 2 : 1,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: BrikolikColors.primary.withValues(alpha: 0.14),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  )
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  )
-                ],
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,8 +295,9 @@ class _RoleCard extends StatelessWidget {
                 color: selected ? null : BrikolikColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(BrikolikRadius.md),
               ),
-              child: Center(
-                child: Text(emoji, style: const TextStyle(fontSize: 24)),
+              child: Icon(
+                icon,
+                color: selected ? Colors.white : BrikolikColors.primary,
               ),
             ),
             const SizedBox(width: 14),
@@ -346,42 +305,7 @@ class _RoleCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          gradient:
-                              selected ? BrikolikColors.brandGradient : null,
-                          color: selected ? null : Colors.transparent,
-                          shape: BoxShape.circle,
-                          border: selected
-                              ? null
-                              : Border.all(
-                                  color: BrikolikColors.border,
-                                  width: 2,
-                                ),
-                        ),
-                        child: selected
-                            ? const Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: 14,
-                              )
-                            : null,
-                      ),
-                    ],
-                  ),
+                  Text(title, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
@@ -405,13 +329,11 @@ class _RoleCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               feature,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontFamily: 'Nunito',
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: selected
-                                    ? BrikolikColors.textSecondary
-                                    : BrikolikColors.textHint,
+                                color: BrikolikColors.textSecondary,
                               ),
                             ),
                           ),
@@ -428,3 +350,4 @@ class _RoleCard extends StatelessWidget {
     );
   }
 }
+

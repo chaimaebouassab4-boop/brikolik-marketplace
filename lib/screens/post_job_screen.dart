@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
@@ -288,11 +289,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Quel service cherchez-vous ?',
+        Text('Quel service cherchez-vous ?'.tr(),
             style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 8),
-        Text(
-          'Choisissez une categorie pour recevoir des offres plus precises.',
+        Text('Choisissez une categorie pour recevoir des offres plus precises.'.tr(),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
@@ -384,11 +384,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Decrivez votre besoin',
+          Text('Decrivez votre besoin'.tr(),
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           Text(
-            'Plus votre demande est claire, plus les offres seront pertinentes.',
+            'Plus votre demande est claire, plus les offres seront pertinentes.'
+                .tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -439,7 +440,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             },
           ),
           const SizedBox(height: 22),
-          Text('Delai souhaite',
+          Text('Delai souhaite'.tr(),
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           ..._urgencyOptions.map((option) {
@@ -509,11 +510,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Definissez votre budget',
+          Text('Definissez votre budget'.tr(),
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
-          Text(
-            'Un budget realiste vous aide a recevoir des offres rapidement.',
+          Text('Un budget realiste vous aide a recevoir des offres rapidement.'.tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -574,14 +574,15 @@ class _PostJobScreenState extends State<PostJobScreen> {
               borderRadius: BorderRadius.circular(BrikolikRadius.md),
               border: Border.all(color: BrikolikColors.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Icon(Icons.tips_and_updates_outlined,
                     color: BrikolikColors.primary),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Astuce: donnez une fourchette pour garder de la flexibilite avec les artisans.',
+                    'Astuce: donnez une fourchette pour garder de la flexibilite avec les artisans.'
+                        .tr(),
                     style: TextStyle(
                       fontFamily: 'Nunito',
                       fontSize: 13,
@@ -594,7 +595,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
           ),
           const SizedBox(height: 22),
-          Text('Recapitulatif',
+          Text('Recapitulatif'.tr(),
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           _SummaryCard(
@@ -652,8 +653,7 @@ class _ProgressHeader extends StatelessWidget {
                     child: isDone
                         ? const Icon(Icons.check_rounded,
                             color: Colors.white, size: 16)
-                        : Text(
-                            '${index + 1}',
+                        : Text('${index + 1}',
                             style: TextStyle(
                               fontFamily: 'Nunito',
                               fontSize: 12,
@@ -826,3 +826,4 @@ class _UrgencyOption {
   final IconData icon;
   final Color color;
 }
+

@@ -1,27 +1,149 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Profils utilisateurs
-    match /users/{userId} {
-      allow create: if request.auth != null;
-      allow read: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    // Missions
-    match /jobs/{jobId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null && resource.data.customerId == request.auth.uid;
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
 
-      // Offres : le client (propriétaire du job) OU l'artisan peuvent modifier
+    function isWhitelistedAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && exists(
+          /databases/$(database)/documents/admin_emails/$(request.auth.token.email)
+        );
+    }
+
+    function isAdmin() {
+      return isWhitelistedAdminEmail()
+        || (
+          isSignedIn()
+          && get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == 'admin'
+        );
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn()
+        && get(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        ).data.isVerified == true;
+    }
+
+    function verificationFields() {
+      return [
+        'isVerified',
+        'verificationRequested',
+        'verificationRequestedAt',
+        'verificationStatus',
+        'verifiedAt',
+        'rejectedAt',
+        'verificationReason',
+        'verifiedBy'
+      ];
+    }
+
+    function ownerEditableFields() {
+      return [
+        'fullName',
+        'phone',
+        'bio',
+        'city',
+        'services',
+        'photoUrl',
+        'updatedAt',
+        'role'
+      ];
+    }
+
+    function ownerUpdateIsSafe() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      let roleAllowed = !('role' in request.resource.data)
+        || request.resource.data.role in ['customer', 'worker']
+        || (
+          request.resource.data.role == 'admin'
+          && isWhitelistedAdminEmail()
+        );
+      let touchesWorkerFields = changed.hasAny(['bio', 'services']);
+      let canEditWorkerFields =
+        !touchesWorkerFields || resource.data.isVerified == true;
+
+      return changed.hasOnly(ownerEditableFields())
+        && !changed.hasAny(verificationFields())
+        && roleAllowed
+        && canEditWorkerFields;
+    }
+
+    match /users/{userId} {
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && (
+          (
+            request.resource.data.isVerified == false
+            && request.resource.data.verificationRequested == false
+            && (
+              !('role' in request.resource.data)
+              || request.resource.data.role in ['customer', 'worker']
+            )
+          )
+          || (
+            isWhitelistedAdminEmail()
+            && request.resource.data.role == 'admin'
+            && request.resource.data.isVerified == true
+            && request.resource.data.verificationRequested == false
+            && request.resource.data.verificationStatus == 'approved'
+          )
+        );
+
+      allow read: if isSignedIn();
+      allow update: if isAdmin() || (isOwner(userId) && ownerUpdateIsSafe());
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    match /jobs/{jobId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser();
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && (
+            resource.data.customerId == request.auth.uid
+            || resource.data.workerId == request.auth.uid
+          )
+        );
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.customerId == request.auth.uid);
+
       match /offers/{offerId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null;
-        allow update: if request.auth != null;
-        allow delete: if request.auth != null && resource.data.workerId == request.auth.uid;
+        allow read: if isSignedIn();
+        allow create: if isVerifiedUser();
+        allow update: if isAdmin()
+          || (
+            isSignedIn()
+            && (
+              resource.data.workerId == request.auth.uid
+              || resource.data.customerId == request.auth.uid
+            )
+          );
+        allow delete: if isAdmin()
+          || (isSignedIn() && resource.data.workerId == request.auth.uid);
       }
+    }
+
+    // Queue d'envoi d'emails (via l'extension Firebase Trigger Email)
+    match /mail/{mailId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['to', 'message']);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Liste blanche des emails admin (doc id = email en minuscule)
+    match /admin_emails/{emailId} {
+      allow read, write: if isAdmin();
     }
   }
 }

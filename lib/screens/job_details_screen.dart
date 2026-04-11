@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
@@ -13,7 +14,7 @@ class JobDetailsScreen extends StatelessWidget {
     if (jobId == null) {
       return Scaffold(
         appBar: const BrikolikAppBar(title: 'Erreur', showBackButton: true),
-        body: const Center(child: Text('Mission introuvable')),
+        body: Center(child: Text('Mission introuvable'.tr())),
       );
     }
 
@@ -24,7 +25,7 @@ class JobDetailsScreen extends StatelessWidget {
           return const Scaffold(body: Center(child: CircularProgressIndicator(color: BrikolikColors.primary)));
         }
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-          return const Scaffold(body: Center(child: Text('Mission introuvable')));
+          return Scaffold(body: Center(child: Text('Mission introuvable'.tr())));
         }
 
         final jobData = snapshot.data!.data() as Map<String, dynamic>;
@@ -90,13 +91,12 @@ class JobDetailsScreen extends StatelessWidget {
         children: [
           const Icon(Icons.celebration_rounded, size: 40, color: BrikolikColors.success),
           const SizedBox(height: 10),
-          Text(
-            'Félicitations ! 🎉',
+          Text('Felicitations !'.tr(),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: BrikolikColors.success),
           ),
           const SizedBox(height: 6),
           Text(
-            '${jobData['customerName'] ?? 'Le client'} a accepté votre offre.\nVous pouvez maintenant le contacter pour organiser la mission.',
+            '${jobData['customerName'] ?? 'Le client'} a accepte votre offre.\nVous pouvez maintenant le contacter pour organiser la mission.',
             textAlign: TextAlign.center,
             style: const TextStyle(fontFamily: 'Nunito', fontSize: 14, color: BrikolikColors.textSecondary, height: 1.5),
           ),
@@ -125,7 +125,7 @@ class JobDetailsScreen extends StatelessWidget {
             children: [
               Icon(Icons.chat_rounded, color: Colors.white, size: 20),
               SizedBox(width: 8),
-              Text('Contacter le client', style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white)),
+              Text('Contacter le client'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white)),
             ],
           ),
         ),
@@ -137,12 +137,12 @@ class JobDetailsScreen extends StatelessWidget {
     final cat = jobData['category'] as String? ?? 'Autre';
     IconData icon = Icons.work_outline;
     if (cat == 'Plomberie') icon = Icons.water_drop_outlined;
-    else if (cat == 'Électricité') icon = Icons.bolt_outlined;
+    else if (cat == 'Electricite' || cat == 'Électricite') icon = Icons.bolt_outlined;
     else if (cat == 'Nettoyage') icon = Icons.cleaning_services_outlined;
     else if (cat == 'Peinture') icon = Icons.format_paint_outlined;
     else if (cat == 'Jardinage') icon = Icons.grass_outlined;
     else if (cat == 'Menuiserie') icon = Icons.carpenter_outlined;
-    else if (cat == 'Maçonnerie') icon = Icons.construction_outlined;
+    else if (cat == 'Maconnerie' || cat == 'Maçonnerie') icon = Icons.construction_outlined;
 
     return SliverAppBar(
       expandedHeight: 200,
@@ -233,7 +233,7 @@ class JobDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildStatusRow(BuildContext context, Map<String, dynamic> jobData) {
-    String timeStr = "À l'instant";
+    String timeStr = "A l'instant";
     final createdAt = jobData['createdAt'] as Timestamp?;
     if (createdAt != null) {
       final diff = DateTime.now().difference(createdAt.toDate());
@@ -279,7 +279,7 @@ class JobDetailsScreen extends StatelessWidget {
           _InfoTile(
             icon: Icons.payments_outlined,
             label: 'Budget',
-            value: jobData['budget'] ?? 'Non spécifié',
+            value: jobData['budget'] ?? 'Non specifie',
             color: BrikolikColors.success,
           ),
           _VerticalDivider(),
@@ -292,7 +292,7 @@ class JobDetailsScreen extends StatelessWidget {
           _VerticalDivider(),
           _InfoTile(
             icon: Icons.schedule_rounded,
-            label: 'Délai',
+            label: 'Delai',
             value: jobData['urgency'] ?? 'Flexible',
             color: BrikolikColors.warning,
           ),
@@ -305,7 +305,7 @@ class JobDetailsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Description', style: Theme.of(context).textTheme.headlineSmall),
+        Text('Description'.tr(), style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 10),
         Container(
           width: double.infinity,
@@ -332,7 +332,7 @@ class JobDetailsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Client', style: Theme.of(context).textTheme.headlineSmall),
+        Text('Client'.tr(), style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -377,8 +377,7 @@ class JobDetailsScreen extends StatelessWidget {
                               Icon(Icons.shield_outlined,
                                   size: 11, color: BrikolikColors.success),
                               SizedBox(width: 3),
-                              Text(
-                                'Vérifié',
+                              Text('Verifie'.tr(),
                                 style: TextStyle(
                                   fontFamily: 'Nunito',
                                   fontSize: 11,
@@ -426,7 +425,7 @@ class JobDetailsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Offres reçues',
+          title: 'Offres recues',
           actionLabel: '',
           onAction: () {},
         ),
@@ -436,7 +435,7 @@ class JobDetailsScreen extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) return const CircularProgressIndicator(color: BrikolikColors.primary);
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-               return const Text("Vous n'avez pas encore reçu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito'));
+               return const Text("Vous n'avez pas encore recu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito'));
             }
             return Column(
               children: snapshot.data!.docs.map((doc) {
@@ -482,7 +481,7 @@ class JobDetailsScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ Vous avez accepté l\'offre de $workerName !'),
+            content: Text('Vous avez accepte l offre de $workerName !'),
             backgroundColor: BrikolikColors.success,
           ),
         );
@@ -492,7 +491,7 @@ class JobDetailsScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Erreur: $e'),
+            content: Text('Erreur: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -543,8 +542,7 @@ class JobDetailsScreen extends StatelessWidget {
                     Icon(Icons.send_rounded,
                         color: Colors.white, size: 18),
                     SizedBox(width: 8),
-                    Text(
-                      'Faire une offre',
+                    Text('Faire une offre'.tr(),
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontWeight: FontWeight.w700,
@@ -647,8 +645,8 @@ class JobDetailsScreen extends StatelessWidget {
                       if (ctx.mounted) {
                         Navigator.pop(ctx);
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('✅ Offre envoyée avec succès !'),
+                          SnackBar(
+                            content: Text('Offre envoyee avec succes !'.tr()),
                             backgroundColor: BrikolikColors.success,
                           ),
                         );
@@ -659,7 +657,7 @@ class JobDetailsScreen extends StatelessWidget {
                       if (ctx.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('❌ Erreur: $e'),
+                            content: Text('Erreur: $e'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -694,7 +692,7 @@ class JobDetailsScreen extends StatelessWidget {
   }
 }
 
-// ── Info Tile ─────────────────────────────────
+// â”€â”€ Info Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -749,7 +747,7 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-// ── Vertical Divider ──────────────────────────
+// â”€â”€ Vertical Divider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -761,7 +759,7 @@ class _VerticalDivider extends StatelessWidget {
   }
 }
 
-// ── Offer Card ────────────────────────────────
+// â”€â”€ Offer Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class _OfferCard extends StatelessWidget {
   final String name;
   final double rating;
@@ -829,7 +827,7 @@ class _OfferCard extends StatelessWidget {
                 children: [
                   Icon(Icons.check_circle_rounded, size: 16, color: BrikolikColors.success),
                   SizedBox(width: 6),
-                  Text('Offre acceptée', style: TextStyle(fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
+                  Text('Offre acceptee'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
                 ],
               ),
             ),
@@ -928,9 +926,8 @@ class _OfferCard extends StatelessWidget {
                         borderRadius:
                             BorderRadius.circular(BrikolikRadius.md),
                       ),
-                      child: const Center(
-                        child: Text(
-                          'Accepter',
+                      child: Center(
+                        child: Text('Accepter'.tr(),
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontWeight: FontWeight.w700,
@@ -959,3 +956,4 @@ class _OfferCard extends StatelessWidget {
     );
   }
 }
+

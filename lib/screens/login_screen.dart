@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 import '../services/auth_service.dart';
@@ -48,12 +49,17 @@ class _LoginScreenState extends State<LoginScreen>
     final profile = await _authService.getCurrentUserProfile();
     if (!mounted) return;
 
+    final role = profile?['role'] as String?;
+    if (role == 'admin') {
+      Navigator.pushReplacementNamed(context, '/admin-verifications');
+      return;
+    }
+
     if (profile?['isVerified'] != true) {
       Navigator.pushReplacementNamed(context, '/identity-verification');
       return;
     }
 
-    final role = profile?['role'] as String?;
     if (role == 'customer') {
       Navigator.pushReplacementNamed(context, '/customer-profile');
     } else if (role == 'worker') {
@@ -66,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen>
   void _showSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message.tr())),
     );
   }
 
@@ -191,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 28),
         Text(
-          _isLogin ? 'Bon retour' : 'Creer un compte',
+          (_isLogin ? 'Bon retour' : 'Creer un compte').tr(),
           style: const TextStyle(
             fontFamily: 'Nunito',
             fontSize: 28,
@@ -202,8 +208,8 @@ class _LoginScreenState extends State<LoginScreen>
         const SizedBox(height: 6),
         Text(
           _isLogin
-              ? 'Connectez-vous pour acceder aux services'
-              : 'Rejoignez la plateforme Brikolik',
+              ? 'Connectez-vous pour acceder aux services'.tr()
+              : 'Rejoignez la plateforme Brikolik'.tr(),
           style: TextStyle(
             fontFamily: 'Nunito',
             fontSize: 14,
@@ -263,7 +269,7 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                   const SizedBox(height: 14),
                   BrikolikInput(
-                    hint: 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢',
+                    hint: '********',
                     label: 'Mot de passe',
                     controller: _passwordCtrl,
                     obscureText: _obscurePassword,
@@ -295,8 +301,7 @@ class _LoginScreenState extends State<LoginScreen>
                           minimumSize: Size.zero,
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        child: const Text(
-                          'Mot de passe oublie ?',
+                        child: Text('Mot de passe oublie ?'.tr(),
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 13,
@@ -310,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 20),
                   // Gradient CTA button
                   _GradientButton(
-                    label: _isLogin ? 'Se connecter' : 'Creer mon compte',
+                    label: _isLogin ? 'Se connecter'.tr() : 'Creer mon compte'.tr(),
                     isLoading: _isLoading,
                     onPressed: () async {
                       if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -331,12 +336,7 @@ class _LoginScreenState extends State<LoginScreen>
                             fullName: _nameCtrl.text,
                           );
                           debugPrint("SIGNUP SUCCESS");
-                          if (mounted) {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              '/identity-verification',
-                            );
-                          }
+                          await _routeAfterAuth();
                         }
                       } on FirebaseAuthException catch (e) {
                         final action = _isLogin ? 'LOGIN' : 'SIGNUP';
@@ -426,9 +426,9 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         dividerColor: Colors.transparent,
         padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'Connexion'),
-          Tab(text: 'Inscription'),
+        tabs: [
+          Tab(text: 'Connexion'.tr()),
+          Tab(text: 'Inscription'.tr()),
         ],
       ),
     );
@@ -443,7 +443,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 }
 
-// â”€â”€ Gradient CTA Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Gradient CTA Button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _GradientButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -484,7 +484,7 @@ class _GradientButton extends StatelessWidget {
                   ),
                 )
               : Text(
-                  label,
+                  label.tr(),
                   style: const TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 16,
@@ -499,7 +499,7 @@ class _GradientButton extends StatelessWidget {
   }
 }
 
-// â”€â”€ Social Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Ã¢â€â‚¬Ã¢â€â‚¬ Social Button Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 class _SocialButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -529,7 +529,7 @@ class _SocialButton extends StatelessWidget {
             Icon(icon, size: 22, color: BrikolikColors.primary),
             const SizedBox(width: 8),
             Text(
-              label,
+              label.tr(),
               style: const TextStyle(
                 fontFamily: 'Nunito',
                 fontSize: 14,
@@ -543,3 +543,4 @@ class _SocialButton extends StatelessWidget {
     );
   }
 }
+

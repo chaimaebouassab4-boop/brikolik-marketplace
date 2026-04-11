@@ -17,6 +17,7 @@ dependencies:
   firebase_auth: ^4.17.0
   cloud_firestore: ^4.15.0
   google_sign_in: ^6.2.1
+  easy_localization: ^3.0.7
   
 dev_dependencies:
   flutter_test:
@@ -28,6 +29,8 @@ flutter:
 
   assets:
     - lib/assets/
+    - assets/translations/
+    
 
   # Add Nunito from Google Fonts
   # Option A: Use google_fonts package (recommended)

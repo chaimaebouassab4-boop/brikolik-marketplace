@@ -43,13 +43,17 @@ class AuthService {
     }
 
     try {
+      final isAdminEmail = await _isAdminEmail(trimmedEmail);
       await _db.collection('users').doc(user.uid).set({
         'uid': user.uid,
         'email': trimmedEmail,
         'fullName': trimmedFullName,
         'createdAt': Timestamp.now(),
-        'isVerified': false,
+        'isVerified': isAdminEmail,
         'verificationRequested': false,
+        'verificationStatus': isAdminEmail ? 'approved' : 'pending',
+        if (isAdminEmail) 'role': 'admin',
+        if (isAdminEmail) 'verifiedAt': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
       await _rollbackSignupUser(user);
@@ -71,10 +75,14 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    await _auth.signInWithEmailAndPassword(
+    final credential = await _auth.signInWithEmailAndPassword(
       email: email.trim(),
       password: password.trim(),
     );
+    final user = credential.user;
+    if (user != null) {
+      await _ensureAdminRoleIfWhitelisted(user);
+    }
   }
 
   Future<UserCredential> signInWithGoogle() async {
@@ -159,6 +167,11 @@ class AuthService {
     return profile?['isVerified'] == true;
   }
 
+  Future<bool> isCurrentUserAdmin() async {
+    final profile = await getCurrentUserProfile();
+    return profile?['role'] == 'admin';
+  }
+
   Future<void> requestIdentityVerification() async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -172,8 +185,80 @@ class AuthService {
       'verificationRequested': true,
       'verificationRequestedAt': FieldValue.serverTimestamp(),
       'isVerified': false,
+      'verificationStatus': 'pending',
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    final requesterProfile = await getCurrentUserProfile();
+    final requesterName = (requesterProfile?['fullName'] as String?)?.trim();
+    final requesterLabel = (requesterName != null && requesterName.isNotEmpty)
+        ? requesterName
+        : (user.email ?? user.uid);
+
+    final adminEmails = await _getAdminEmails();
+    if (adminEmails.isNotEmpty) {
+      await _queueEmail(
+        to: adminEmails,
+        subject: 'Nouvelle demande de verification Brikolik',
+        text:
+            'Une demande de verification a ete envoyee par $requesterLabel (${user.email ?? 'email indisponible'}).',
+      );
+    }
+  }
+
+  Future<void> updateUserVerificationStatus({
+    required String userId,
+    required bool approved,
+    String? rejectionReason,
+  }) async {
+    final adminUser = _auth.currentUser;
+    if (adminUser == null) {
+      throw const AuthServiceException(
+        code: 'auth-user-null',
+        message: 'Session admin invalide.',
+      );
+    }
+
+    final userRef = _db.collection('users').doc(userId);
+    final userSnapshot = await userRef.get();
+    if (!userSnapshot.exists) {
+      throw const AuthServiceException(
+        code: 'user-not-found',
+        message: 'Utilisateur introuvable.',
+      );
+    }
+
+    final userData = userSnapshot.data() ?? const <String, dynamic>{};
+    final userEmail = (userData['email'] as String?)?.trim();
+    final userName = (userData['fullName'] as String?)?.trim();
+
+    await userRef.set({
+      'isVerified': approved,
+      'verificationRequested': false,
+      'verificationStatus': approved ? 'approved' : 'rejected',
+      'verificationReason':
+          approved ? FieldValue.delete() : (rejectionReason ?? ''),
+      'verifiedAt':
+          approved ? FieldValue.serverTimestamp() : FieldValue.delete(),
+      'rejectedAt':
+          approved ? FieldValue.delete() : FieldValue.serverTimestamp(),
+      'verifiedBy': adminUser.uid,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    if (userEmail != null && userEmail.isNotEmpty) {
+      final displayName =
+          (userName != null && userName.isNotEmpty) ? userName : userEmail;
+      await _queueEmail(
+        to: <String>[userEmail],
+        subject: approved
+            ? 'Verification approuvee - Brikolik'
+            : 'Verification refusee - Brikolik',
+        text: approved
+            ? 'Bonjour $displayName, votre compte Brikolik est maintenant approuve.'
+            : 'Bonjour $displayName, votre demande de verification a ete refusee. ${rejectionReason?.trim().isNotEmpty == true ? 'Raison: ${rejectionReason!.trim()}' : ''}',
+      );
+    }
   }
 
   Future<void> _rollbackSignupUser(User user) async {
@@ -189,17 +274,95 @@ class AuthService {
   Future<void> _upsertUserProfile(User user) async {
     final userRef = _db.collection('users').doc(user.uid);
     final snapshot = await userRef.get();
+    final email = (user.email ?? '').trim();
+    final isAdminEmail = await _isAdminEmail(email);
 
     await userRef.set({
       'uid': user.uid,
-      'email': user.email ?? '',
+      'email': email,
       'fullName': (user.displayName ?? '').trim(),
       'photoUrl': user.photoURL,
       'updatedAt': FieldValue.serverTimestamp(),
       if (!snapshot.exists) 'createdAt': FieldValue.serverTimestamp(),
       if (!snapshot.exists) 'isVerified': false,
       if (!snapshot.exists) 'verificationRequested': false,
+      if (!snapshot.exists) 'verificationStatus': 'pending',
+      if (isAdminEmail) 'role': 'admin',
+      if (isAdminEmail) 'isVerified': true,
+      if (isAdminEmail) 'verificationRequested': false,
+      if (isAdminEmail) 'verificationStatus': 'approved',
+      if (isAdminEmail) 'verifiedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  Future<bool> _isAdminEmail(String? email) async {
+    final normalized = (email ?? '').trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+
+    try {
+      final doc = await _db.collection('admin_emails').doc(normalized).get();
+      return doc.exists;
+    } catch (e) {
+      debugPrint('isAdminEmail error (ignored): $e');
+      return false;
+    }
+  }
+
+  Future<void> _ensureAdminRoleIfWhitelisted(User user) async {
+    final email = (user.email ?? '').trim();
+    final isAdminEmail = await _isAdminEmail(email);
+    if (!isAdminEmail) return;
+
+    await _db.collection('users').doc(user.uid).set({
+      'uid': user.uid,
+      'email': email,
+      'role': 'admin',
+      'isVerified': true,
+      'verificationRequested': false,
+      'verificationStatus': 'approved',
+      'verifiedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
+  Future<List<String>> _getAdminEmails() async {
+    try {
+      final query =
+          await _db.collection('users').where('role', isEqualTo: 'admin').get();
+
+      final emails = query.docs
+          .map((doc) => (doc.data()['email'] as String?)?.trim() ?? '')
+          .where((email) => email.isNotEmpty)
+          .toSet()
+          .toList();
+
+      return emails;
+    } catch (e) {
+      debugPrint('getAdminEmails error (ignored): $e');
+      return <String>[];
+    }
+  }
+
+  Future<void> _queueEmail({
+    required List<String> to,
+    required String subject,
+    required String text,
+  }) async {
+    if (to.isEmpty) return;
+
+    try {
+      await _db.collection('mail').add({
+        'to': to,
+        'message': <String, dynamic>{
+          'subject': subject,
+          'text': text,
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      // Optional email queue: do not block user/admin flows if not configured.
+      debugPrint('queueEmail error (ignored): $e');
+    }
   }
 
   String _firestoreSignupErrorMessage(FirebaseException e) {

@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
@@ -222,8 +223,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         actions: [
           TextButton(
             onPressed: _isSaving ? null : _saveProfile,
-            child: Text(
-              'Terminer',
+            child: Text('Terminer'.tr(),
               style: TextStyle(
                 fontFamily: 'Nunito',
                 fontWeight: FontWeight.w700,
@@ -387,10 +387,11 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                                 .toList(),
                           ),
                           if (_services.isEmpty)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 10),
                               child: Text(
-                                'Selectionnez au moins un service pour recevoir des missions.',
+                                'Selectionnez au moins un service pour recevoir des missions.'
+                                    .tr(),
                                 style: TextStyle(
                                   fontFamily: 'Nunito',
                                   fontSize: 12,
@@ -510,7 +511,7 @@ class _ProfileHero extends StatelessWidget {
                     Text(
                       services.isEmpty
                           ? 'Ajoutez vos specialites pour apparaitre dans les recherches.'
-                          : services.take(3).join(' • '),
+                          : services.take(3).join(' â€¢ '),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -733,3 +734,4 @@ class _VerificationRow extends StatelessWidget {
     );
   }
 }
+

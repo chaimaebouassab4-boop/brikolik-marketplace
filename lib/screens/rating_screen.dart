@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 
@@ -16,12 +17,12 @@ class _RatingScreenState extends State<RatingScreen> {
   bool _isLoading = false;
 
   final List<String> _positiveTags = [
-    'Ponctuel', 'Professionnel', 'Soigné', 'Rapide', 'Bon tarif',
-    'Excellent travail', 'Très recommandé',
+    'Ponctuel', 'Professionnel', 'Soigne', 'Rapide', 'Bon tarif',
+    'Excellent travail', 'Tres recommande',
   ];
 
   final List<String> _negativeTags = [
-    'En retard', 'Travail non soigné', 'Mauvaise communication', 'Cher',
+    'En retard', 'Travail non soigne', 'Mauvaise communication', 'Cher',
   ];
 
   List<String> get _availableTags =>
@@ -32,7 +33,7 @@ class _RatingScreenState extends State<RatingScreen> {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
       appBar: BrikolikAppBar(
-        title: 'Évaluation',
+        title: 'Evaluation',
         showBackButton: false,
       ),
       body: SingleChildScrollView(
@@ -96,7 +97,7 @@ class _RatingScreenState extends State<RatingScreen> {
           Text('Hamid Tazi',
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 4),
-          Text('Plombier professionnel',
+          Text('Plombier professionnel'.tr(),
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 14),
           Container(
@@ -110,12 +111,11 @@ class _RatingScreenState extends State<RatingScreen> {
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 Icon(Icons.check_circle_outline_rounded,
                     size: 16, color: BrikolikColors.success),
                 SizedBox(width: 8),
-                Text(
-                  'Mission terminée',
+                Text('Mission terminee'.tr(),
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 13,
@@ -137,7 +137,7 @@ class _RatingScreenState extends State<RatingScreen> {
       'Mauvais',
       'Passable',
       'Bien',
-      'Très bien',
+      'Tres bien',
       'Excellent',
     ];
     final colors = [
@@ -158,14 +158,12 @@ class _RatingScreenState extends State<RatingScreen> {
       ),
       child: Column(
         children: [
-          Text(
-            'Comment s\'est passée la mission ?',
+          Text('Comment s est passee la mission ?'.tr(),
             style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
-          Text(
-            'Votre avis aide les autres clients à choisir',
+          Text('Votre avis aide les autres clients a choisir'.tr(),
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
@@ -227,7 +225,7 @@ class _RatingScreenState extends State<RatingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('En quelques mots',
+          Text('En quelques mots'.tr(),
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           Wrap(
@@ -268,7 +266,7 @@ class _RatingScreenState extends State<RatingScreen> {
         children: [
           Row(
             children: [
-              Text('Commentaire',
+              Text('Commentaire'.tr(),
                   style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(width: 8),
               Container(
@@ -279,8 +277,7 @@ class _RatingScreenState extends State<RatingScreen> {
                   borderRadius:
                       BorderRadius.circular(BrikolikRadius.full),
                 ),
-                child: Text(
-                  'optionnel',
+                child: Text('optionnel'.tr(),
                   style: TextStyle(
                     fontFamily: 'Nunito',
                     fontSize: 11,
@@ -293,7 +290,7 @@ class _RatingScreenState extends State<RatingScreen> {
           ),
           const SizedBox(height: 12),
           BrikolikInput(
-            hint: 'Partagez votre expérience avec ce prestataire...',
+            hint: 'Partagez votre experience avec ce prestataire...',
             controller: _commentCtrl,
             maxLines: 4,
           ),
@@ -332,14 +329,13 @@ class _RatingScreenState extends State<RatingScreen> {
                             Colors.white),
                       ),
                     )
-                  : const Row(
+                  : Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.rate_review_rounded,
                             color: Colors.white, size: 18),
                         SizedBox(width: 8),
-                        Text(
-                          'Publier mon avis',
+                        Text('Publier mon avis'.tr(),
                           style: TextStyle(
                             fontFamily: 'Nunito',
                             fontSize: 16,
@@ -356,8 +352,7 @@ class _RatingScreenState extends State<RatingScreen> {
         TextButton(
           onPressed: () =>
               Navigator.pushReplacementNamed(context, '/jobs'),
-          child: const Text(
-            'Passer pour l\'instant',
+          child: Text('Passer pour l instant'.tr(),
             style: TextStyle(
               fontFamily: 'Nunito',
               color: BrikolikColors.muted,
@@ -408,11 +403,10 @@ class _RatingScreenState extends State<RatingScreen> {
                     size: 40, color: Colors.white),
               ),
               const SizedBox(height: 20),
-              Text('Merci !',
+              Text('Merci !'.tr(),
                   style: Theme.of(context).textTheme.headlineLarge),
               const SizedBox(height: 8),
-              Text(
-                'Votre avis a été publié. Il aidera d\'autres clients à choisir.',
+              Text('Votre avis a ete publie. Il aidera d autres clients a choisir.'.tr(),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -430,9 +424,8 @@ class _RatingScreenState extends State<RatingScreen> {
                     borderRadius:
                         BorderRadius.circular(BrikolikRadius.md),
                   ),
-                  child: const Center(
-                    child: Text(
-                      'Retour à l\'accueil',
+                  child: Center(
+                    child: Text('Retour a l accueil'.tr(),
                       style: TextStyle(
                         fontFamily: 'Nunito',
                         fontWeight: FontWeight.w700,
@@ -450,3 +443,4 @@ class _RatingScreenState extends State<RatingScreen> {
     );
   }
 }
+
