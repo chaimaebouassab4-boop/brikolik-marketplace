@@ -112,6 +112,7 @@ service cloud.firestore {
           isSignedIn()
           && (
             resource.data.customerId == request.auth.uid
+            || resource.data.acceptedWorkerId == request.auth.uid
             || resource.data.workerId == request.auth.uid
           )
         );

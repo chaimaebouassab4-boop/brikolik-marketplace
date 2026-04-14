@@ -15,8 +15,6 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   late Future<_ContactData> _contactFuture;
   bool _initialized = false;
-  bool _autoTriggered = false;
-  String? _preferredAction;
 
   @override
   void didChangeDependencies() {
@@ -28,7 +26,6 @@ class _ChatScreenState extends State<ChatScreen> {
         ? rawArgs
         : <String, dynamic>{};
 
-    _preferredAction = args['preferredAction'] as String?;
     _contactFuture = _resolveContact(args);
     _initialized = true;
   }
@@ -199,19 +196,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 city: '',
                 role: 'contact',
               );
-
-          if (!_autoTriggered &&
-              (_preferredAction == 'whatsapp' || _preferredAction == 'call')) {
-            _autoTriggered = true;
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              if (!mounted) return;
-              if (_preferredAction == 'whatsapp') {
-                await _openWhatsApp(contact);
-              } else if (_preferredAction == 'call') {
-                await _openCall(contact);
-              }
-            });
-          }
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),

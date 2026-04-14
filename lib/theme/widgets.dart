@@ -580,6 +580,7 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.locale;
     final hasBrandBackground = useBrandBackground && !transparent;
     final foreground = hasBrandBackground || transparent
         ? Colors.white
@@ -589,6 +590,7 @@ class BrikolikAppBar extends StatelessWidget implements PreferredSizeWidget {
         (logoSize * MediaQuery.devicePixelRatioOf(context)).round();
 
     return AppBar(
+      key: ValueKey<String>('brikolik-appbar-${locale.languageCode}'),
       systemOverlayStyle: hasBrandBackground
           ? SystemUiOverlayStyle.light
           : SystemUiOverlayStyle.dark,
@@ -700,6 +702,7 @@ class BrikolikBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final locale = context.locale;
     String routeForIndex(int index) {
       switch (index) {
         case 0:
@@ -742,6 +745,7 @@ class BrikolikBottomNav extends StatelessWidget {
           ],
         ),
         child: BottomNavigationBar(
+          key: ValueKey<String>('brikolik-bottom-nav-${locale.languageCode}'),
           type: BottomNavigationBarType.fixed,
           currentIndex: currentIndex,
           selectedItemColor: BrikolikColors.primary,

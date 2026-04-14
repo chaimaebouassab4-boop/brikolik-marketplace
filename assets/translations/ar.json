@@ -204,5 +204,16 @@
   "Delai souhaite": "الموعد المطلوب",
   "Definissez votre budget": "حدد ميزانيتك",
   "Un budget realiste vous aide a recevoir des offres rapidement.": "الميزانية الواقعية تساعدك على استلام عروض بسرعة.",
-  "Recapitulatif": "الملخص"
+  "Recapitulatif": "الملخص",
+  "Limite de 4 photos maximum.": "الحد الأقصى هو 4 صور.",
+  "Photos du probleme (optionnel)": "صور المشكلة (اختياري)",
+  "Ajoutez jusqu a 4 photos pour mieux expliquer le probleme.": "أضف حتى 4 صور لشرح المشكلة بشكل أفضل.",
+  "Photos du probleme": "صور المشكلة",
+  "Photos de realisation": "صور الإنجاز",
+  "Preuves de realisation": "إثباتات الإنجاز",
+  "Ajoutez 1 a 4 photos du travail termine (before/after).": "أضف من 1 إلى 4 صور للعمل المنجز (قبل/بعد).",
+  "Mettre a jour les preuves": "تحديث الإثباتات",
+  "Terminer la mission": "إنهاء المهمة",
+  "Mission terminee avec succes.": "تم إنهاء المهمة بنجاح.",
+  "Session invalide. Reconnectez-vous.": "الجلسة غير صالحة. يرجى تسجيل الدخول من جديد."
 }

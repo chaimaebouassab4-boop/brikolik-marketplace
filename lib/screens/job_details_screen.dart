@@ -1,7 +1,12 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 
@@ -52,6 +57,22 @@ class JobDetailsScreen extends StatelessWidget {
                       _buildInfoGrid(context, jobData),
                       const SizedBox(height: 24),
                       _buildDescription(context, jobData),
+                      if (_extractStringList(jobData['problemPhotoUrls']).isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _buildPhotoGallerySection(
+                          context,
+                          title: 'Photos du probleme',
+                          photoUrls: _extractStringList(jobData['problemPhotoUrls']),
+                        ),
+                      ],
+                      if (_extractStringList(jobData['completionPhotoUrls']).isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _buildPhotoGallerySection(
+                          context,
+                          title: 'Photos de realisation',
+                          photoUrls: _extractStringList(jobData['completionPhotoUrls']),
+                        ),
+                      ],
                       const SizedBox(height: 24),
                       _buildClientCard(context, jobData),
                       const SizedBox(height: 24),
@@ -67,7 +88,7 @@ class JobDetailsScreen extends StatelessWidget {
           bottomNavigationBar: isOwner 
               ? null 
               : isAcceptedWorker 
-                  ? _buildAcceptedBottomBar(context, jobData)
+                  ? _buildAcceptedBottomBar(context, jobId, jobData)
                   : jobStatus == 'inprogress'
                       ? null // Job already taken, hide offer button for other workers
                       : _buildBottomBar(context, jobId),
@@ -105,32 +126,346 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  void _goToContact(
+  Future<String?> _getContactPhone(String userId) async {
+    final id = userId.trim();
+    if (id.isEmpty) return null;
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final data = doc.data();
+      if (data == null) return null;
+      final phone = (data['phone']?.toString() ?? '').trim();
+      return phone.isEmpty ? null : phone;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? _normalizeForWhatsapp(String rawPhone) {
+    final phone = rawPhone.trim();
+    if (phone.isEmpty) return null;
+    final compact = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (compact.isEmpty) return null;
+    if (compact.startsWith('+')) {
+      return compact.substring(1).replaceAll(RegExp(r'[^0-9]'), '');
+    }
+    if (compact.startsWith('00')) {
+      return compact.substring(2).replaceAll(RegExp(r'[^0-9]'), '');
+    }
+    if (compact.startsWith('0')) {
+      return '212${compact.substring(1).replaceAll(RegExp(r'[^0-9]'), '')}';
+    }
+    return compact.replaceAll(RegExp(r'[^0-9]'), '');
+  }
+
+  String? _normalizeForDial(String rawPhone) {
+    final phone = rawPhone.trim();
+    if (phone.isEmpty) return null;
+    final compact = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (compact.isEmpty) return null;
+    if (compact.startsWith('+')) return compact;
+    if (compact.startsWith('00')) return '+${compact.substring(2)}';
+    if (compact.startsWith('0')) return '+212${compact.substring(1)}';
+    return compact;
+  }
+
+  void _showContactError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message.tr()),
+        backgroundColor: BrikolikColors.error,
+      ),
+    );
+  }
+
+  Future<void> _openWhatsApp(
     BuildContext context, {
     required String contactUserId,
     required String contactName,
-    required String contactRole,
-    required String preferredAction,
-  }) {
-    Navigator.pushNamed(
-      context,
-      '/chat',
-      arguments: <String, dynamic>{
-        'contactUserId': contactUserId,
-        'contactName': contactName,
-        'contactRole': contactRole,
-        'preferredAction': preferredAction,
-      },
+  }) async {
+    final phone = await _getContactPhone(contactUserId);
+    final normalized = _normalizeForWhatsapp(phone ?? '');
+    if (normalized == null) {
+      if (context.mounted) {
+        _showContactError(context, 'Numero WhatsApp indisponible.');
+      }
+      return;
+    }
+
+    final greeting = Uri.encodeComponent(
+      'Bonjour $contactName, je vous contacte depuis Brikolik.',
+    );
+    final uri = Uri.parse('https://wa.me/$normalized?text=$greeting');
+    final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+    if (!launched && context.mounted) {
+      _showContactError(context, 'Impossible d ouvrir WhatsApp.');
+    }
+  }
+
+  Future<void> _openCall(
+    BuildContext context, {
+    required String contactUserId,
+  }) async {
+    final phone = await _getContactPhone(contactUserId);
+    final normalized = _normalizeForDial(phone ?? '');
+    if (normalized == null) {
+      if (context.mounted) {
+        _showContactError(context, 'Numero de telephone indisponible.');
+      }
+      return;
+    }
+
+    final uri = Uri.parse('tel:$normalized');
+    final launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
+    if (!launched && context.mounted) {
+      _showContactError(context, 'Impossible de lancer l appel.');
+    }
+  }
+
+  Future<List<_LocalUploadPhoto>> _pickLocalPhotos({
+    required int maxCount,
+  }) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1800,
+    );
+    if (picked.isEmpty) return <_LocalUploadPhoto>[];
+
+    final limited = picked.take(maxCount).toList();
+    final files = <_LocalUploadPhoto>[];
+    for (final item in limited) {
+      final bytes = await item.readAsBytes();
+      files.add(
+        _LocalUploadPhoto(
+          id: '${DateTime.now().millisecondsSinceEpoch}-${item.name}',
+          bytes: bytes,
+        ),
+      );
+    }
+    return files;
+  }
+
+  Future<List<String>> _uploadCompletionPhotos({
+    required String jobId,
+    required String workerId,
+    required List<_LocalUploadPhoto> photos,
+  }) async {
+    if (photos.isEmpty) return <String>[];
+
+    final urls = <String>[];
+    for (var i = 0; i < photos.length; i++) {
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('jobs/$jobId/completion_photos/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: <String, String>{
+          'uploadedBy': workerId,
+          'type': 'completion',
+        },
+      );
+
+      await ref.putData(photos[i].bytes, metadata);
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
+  }
+
+  Future<void> _showCompletionProofSheet(
+    BuildContext context, {
+    required String jobId,
+    required bool alreadyDone,
+  }) async {
+    final workerId = FirebaseAuth.instance.currentUser?.uid;
+    if (workerId == null) {
+      _showContactError(context, 'Session invalide. Reconnectez-vous.');
+      return;
+    }
+
+    final selectedPhotos = <_LocalUploadPhoto>[];
+    var isSaving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) {
+          final canAddPhotos = selectedPhotos.length < 4;
+          return Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 18,
+              bottom: 20 + MediaQuery.of(sheetContext).viewInsets.bottom,
+            ),
+            decoration: const BoxDecoration(
+              color: BrikolikColors.background,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Preuves de realisation'.tr(),
+                          style: Theme.of(sheetContext).textTheme.headlineMedium,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Ajoutez 1 a 4 photos du travail termine (before/after).'.tr(),
+                    style: Theme.of(sheetContext).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      for (final photo in selectedPhotos)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                              child: Image.memory(
+                                photo.bytes,
+                                width: 82,
+                                height: 82,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () {
+                                  setSheetState(() {
+                                    selectedPhotos.removeWhere((p) => p.id == photo.id);
+                                  });
+                                },
+                                child: Container(
+                                  width: 22,
+                                  height: 22,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (canAddPhotos)
+                        GestureDetector(
+                          onTap: () async {
+                            final remaining = 4 - selectedPhotos.length;
+                            final newPhotos = await _pickLocalPhotos(maxCount: remaining);
+                            if (newPhotos.isEmpty) return;
+                            setSheetState(() {
+                              selectedPhotos.addAll(newPhotos);
+                            });
+                          },
+                          child: Container(
+                            width: 82,
+                            height: 82,
+                            decoration: BoxDecoration(
+                              color: BrikolikColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                              border: Border.all(color: BrikolikColors.border),
+                            ),
+                            child: const Icon(
+                              Icons.add_a_photo_outlined,
+                              color: BrikolikColors.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  BrikolikButton(
+                    label: alreadyDone ? 'Mettre a jour les preuves' : 'Terminer la mission',
+                    icon: Icons.task_alt_rounded,
+                    isLoading: isSaving,
+                    onPressed: isSaving
+                        ? null
+                        : () async {
+                            setSheetState(() => isSaving = true);
+                            try {
+                              final completionPhotoUrls = await _uploadCompletionPhotos(
+                                jobId: jobId,
+                                workerId: workerId,
+                                photos: selectedPhotos,
+                              );
+
+                              await FirebaseFirestore.instance
+                                  .collection('jobs')
+                                  .doc(jobId)
+                                  .update({
+                                'status': 'done',
+                                'completionPhotoUrls': completionPhotoUrls,
+                                'completionPhotosCount': completionPhotoUrls.length,
+                                'completedAt': FieldValue.serverTimestamp(),
+                                'completedBy': workerId,
+                              });
+
+                              if (sheetContext.mounted) {
+                                Navigator.pop(sheetContext);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Mission terminee avec succes.'.tr()),
+                                    backgroundColor: BrikolikColors.success,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (sheetContext.mounted) {
+                                ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                  SnackBar(content: Text('Erreur: $e')),
+                                );
+                              }
+                            } finally {
+                              if (sheetContext.mounted) {
+                                setSheetState(() => isSaving = false);
+                              }
+                            }
+                          },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildAcceptedBottomBar(
     BuildContext context,
+    String jobId,
     Map<String, dynamic> jobData,
   ) {
     final customerId = (jobData['customerId'] as String? ?? '').trim();
     final customerName =
         (jobData['customerName'] as String? ?? 'Client').trim();
+    final alreadyDone = (jobData['status'] as String? ?? '') == 'done';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -138,36 +473,46 @@ class JobDetailsScreen extends StatelessWidget {
         color: BrikolikColors.surface,
         border: const Border(top: BorderSide(color: BrikolikColors.border, width: 1)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: BrikolikButton(
-              label: 'WhatsApp',
-              icon: Icons.chat_bubble_rounded,
-              height: 52,
-              onPressed: () => _goToContact(
-                context,
-                contactUserId: customerId,
-                contactName: customerName,
-                contactRole: 'customer',
-                preferredAction: 'whatsapp',
+          Row(
+            children: [
+              Expanded(
+                child: BrikolikButton(
+                  label: 'WhatsApp',
+                  icon: Icons.chat_bubble_rounded,
+                  height: 52,
+                  onPressed: () => _openWhatsApp(
+                    context,
+                    contactUserId: customerId,
+                    contactName: customerName,
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: BrikolikButton(
+                  label: 'Appeler',
+                  icon: Icons.call_rounded,
+                  height: 52,
+                  outlined: true,
+                  onPressed: () => _openCall(
+                    context,
+                    contactUserId: customerId,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: BrikolikButton(
-              label: 'Appeler',
-              icon: Icons.call_rounded,
-              height: 52,
-              outlined: true,
-              onPressed: () => _goToContact(
-                context,
-                contactUserId: customerId,
-                contactName: customerName,
-                contactRole: 'customer',
-                preferredAction: 'call',
-              ),
+          const SizedBox(height: 10),
+          BrikolikButton(
+            label: alreadyDone ? 'Mettre a jour les preuves' : 'Terminer la mission',
+            icon: Icons.photo_camera_back_rounded,
+            onPressed: () => _showCompletionProofSheet(
+              context,
+              jobId: jobId,
+              alreadyDone: alreadyDone,
             ),
           ),
         ],
@@ -369,6 +714,88 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
+  List<String> _extractStringList(dynamic value) {
+    if (value is! List) return <String>[];
+    return value
+        .whereType<String>()
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
+
+  Widget _buildPhotoGallerySection(
+    BuildContext context, {
+    required String title,
+    required List<String> photoUrls,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title.tr(), style: Theme.of(context).textTheme.headlineSmall),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 98,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: photoUrls.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final url = photoUrls[index];
+              return GestureDetector(
+                onTap: () => _openPhotoPreview(context, url),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                  child: Container(
+                    width: 98,
+                    color: BrikolikColors.surfaceVariant,
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Center(
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          color: BrikolikColors.textHint,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openPhotoPreview(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        backgroundColor: Colors.black,
+        child: InteractiveViewer(
+          minScale: 0.8,
+          maxScale: 4,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const SizedBox(
+              height: 220,
+              child: Center(
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  color: Colors.white54,
+                  size: 38,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildClientCard(BuildContext context, Map<String, dynamic> jobData) {
     final name = (jobData['customerName'] as String? ?? 'Client').trim();
     final customerId = (jobData['customerId'] as String? ?? '').trim();
@@ -441,24 +868,19 @@ class JobDetailsScreen extends StatelessWidget {
                   _ContactCircleButton(
                     icon: Icons.chat_bubble_rounded,
                     backgroundColor: const Color(0xFF25D366),
-                    onTap: () => _goToContact(
+                    onTap: () => _openWhatsApp(
                       context,
                       contactUserId: customerId,
                       contactName: name,
-                      contactRole: 'customer',
-                      preferredAction: 'whatsapp',
                     ),
                   ),
                   const SizedBox(height: 8),
                   _ContactCircleButton(
                     icon: Icons.call_rounded,
                     backgroundColor: BrikolikColors.primary,
-                    onTap: () => _goToContact(
+                    onTap: () => _openCall(
                       context,
                       contactUserId: customerId,
-                      contactName: name,
-                      contactRole: 'customer',
-                      preferredAction: 'call',
                     ),
                   ),
                 ],
@@ -502,19 +924,14 @@ class JobDetailsScreen extends StatelessWidget {
                      isPro: true,
                      isAccepted: isAccepted,
                      onAccept: isAccepted ? null : () => _acceptOffer(context, jobId, doc.id, offer['workerId'] ?? '', offer['workerName'] ?? 'Artisan'),
-                     onContactWhatsApp: () => _goToContact(
+                     onContactWhatsApp: () => _openWhatsApp(
                        context,
                        contactUserId: (offer['workerId'] as String? ?? '').trim(),
                        contactName: (offer['workerName'] as String? ?? 'Artisan').trim(),
-                       contactRole: 'worker',
-                       preferredAction: 'whatsapp',
                      ),
-                     onContactCall: () => _goToContact(
+                     onContactCall: () => _openCall(
                        context,
                        contactUserId: (offer['workerId'] as String? ?? '').trim(),
-                       contactName: (offer['workerName'] as String? ?? 'Artisan').trim(),
-                       contactRole: 'worker',
-                       preferredAction: 'call',
                      ),
                    ),
                  );
@@ -1059,5 +1476,15 @@ class _ContactCircleButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _LocalUploadPhoto {
+  const _LocalUploadPhoto({
+    required this.id,
+    required this.bytes,
+  });
+
+  final String id;
+  final Uint8List bytes;
 }
 

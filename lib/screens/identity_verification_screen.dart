@@ -28,8 +28,8 @@ class _IdentityVerificationScreenState
       await _authService.requestIdentityVerification();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Votre demande a bien ete envoyee a l admin.'),
+        SnackBar(
+          content: Text('Votre demande a bien ete envoyee a l admin.'.tr()),
           backgroundColor: BrikolikColors.success,
         ),
       );
@@ -41,7 +41,7 @@ class _IdentityVerificationScreenState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible d envoyer la demande: $e')),
+        SnackBar(content: Text("Impossible d'envoyer la demande : $e")),
       );
     } finally {
       if (mounted) {

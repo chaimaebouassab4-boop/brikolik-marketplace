@@ -67,8 +67,10 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.sizeOf(context);
+    final currentLocale = context.locale;
 
     return Scaffold(
+      key: ValueKey<String>('home-${currentLocale.languageCode}'),
       backgroundColor: BrikolikColors.background,
       appBar: BrikolikAppBar(
         title: 'Accueil',

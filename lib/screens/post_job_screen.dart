@@ -1,7 +1,11 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'dart:typed_data';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
@@ -46,6 +50,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
   final TextEditingController _locationCtrl = TextEditingController();
   final TextEditingController _budgetMinCtrl = TextEditingController();
   final TextEditingController _budgetMaxCtrl = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+
+  static const int _maxProblemPhotos = 4;
+  final List<_LocalUploadPhoto> _problemPhotos = <_LocalUploadPhoto>[];
 
   int _currentStep = 0;
   bool _isAccessLoading = true;
@@ -102,6 +110,75 @@ class _PostJobScreenState extends State<PostJobScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
+  }
+
+  Future<void> _pickProblemPhotos() async {
+    final remainingSlots = _maxProblemPhotos - _problemPhotos.length;
+    if (remainingSlots <= 0) {
+      _showMessage('Limite de 4 photos maximum.'.tr());
+      return;
+    }
+
+    final picked = await _picker.pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1800,
+    );
+    if (picked.isEmpty) return;
+
+    final limited = picked.take(remainingSlots).toList();
+    final localPhotos = <_LocalUploadPhoto>[];
+    for (final photo in limited) {
+      final bytes = await photo.readAsBytes();
+      localPhotos.add(
+        _LocalUploadPhoto(
+          id: '${DateTime.now().millisecondsSinceEpoch}-${photo.name}',
+          bytes: bytes,
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _problemPhotos.addAll(localPhotos);
+    });
+
+    if (picked.length > remainingSlots) {
+      _showMessage('Limite de 4 photos maximum.'.tr());
+    }
+  }
+
+  void _removeProblemPhoto(String photoId) {
+    setState(() {
+      _problemPhotos.removeWhere((photo) => photo.id == photoId);
+    });
+  }
+
+  Future<List<String>> _uploadProblemPhotos({
+    required String jobId,
+    required String customerId,
+  }) async {
+    if (_problemPhotos.isEmpty) return <String>[];
+
+    final urls = <String>[];
+    for (var i = 0; i < _problemPhotos.length; i++) {
+      final photo = _problemPhotos[i];
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('jobs/$jobId/problem_photos/${timestamp}_$i.jpg');
+
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: <String, String>{
+          'uploadedBy': customerId,
+          'type': 'problem',
+        },
+      );
+
+      await ref.putData(photo.bytes, metadata);
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
   }
 
   bool _validateCurrentStep() {
@@ -175,8 +252,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
       final userName = userDoc.data()?['fullName'] ?? 'Client';
       final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
       final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
+      final jobRef = FirebaseFirestore.instance.collection('jobs').doc();
+      final problemPhotoUrls = await _uploadProblemPhotos(
+        jobId: jobRef.id,
+        customerId: uid,
+      );
 
-      await FirebaseFirestore.instance.collection('jobs').add({
+      await jobRef.set({
         'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'category': _selectedCategory,
@@ -191,6 +273,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         'createdAt': FieldValue.serverTimestamp(),
         'offersCount': 0,
         'rating': 0.0,
+        'problemPhotoUrls': problemPhotoUrls,
+        'problemPhotosCount': problemPhotoUrls.length,
       });
 
       if (!mounted) return;
@@ -439,6 +523,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
               return null;
             },
           ),
+          const SizedBox(height: 18),
+          _buildProblemPhotosCard(),
           const SizedBox(height: 22),
           Text('Delai souhaite'.tr(),
               style: Theme.of(context).textTheme.headlineSmall),
@@ -498,6 +584,108 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProblemPhotosCard() {
+    final canAddMore = _problemPhotos.length < _maxProblemPhotos;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(color: BrikolikColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Photos du probleme (optionnel)'.tr(),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Ajoutez jusqu a 4 photos pour mieux expliquer le probleme.'.tr(),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final photo in _problemPhotos)
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                      child: Image.memory(
+                        photo.bytes,
+                        width: 82,
+                        height: 82,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () => _removeProblemPhoto(photo.id),
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              if (canAddMore)
+                GestureDetector(
+                  onTap: _pickProblemPhotos,
+                  child: Container(
+                    width: 82,
+                    height: 82,
+                    decoration: BoxDecoration(
+                      color: BrikolikColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                      border: Border.all(color: BrikolikColors.border),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.add_a_photo_outlined,
+                          color: BrikolikColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Ajouter'.tr(),
+                          style: const TextStyle(
+                            fontFamily: 'Nunito',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: BrikolikColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );
@@ -825,5 +1013,15 @@ class _UrgencyOption {
   final String label;
   final IconData icon;
   final Color color;
+}
+
+class _LocalUploadPhoto {
+  const _LocalUploadPhoto({
+    required this.id,
+    required this.bytes,
+  });
+
+  final String id;
+  final Uint8List bytes;
 }
 
