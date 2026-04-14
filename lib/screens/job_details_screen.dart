@@ -67,7 +67,7 @@ class JobDetailsScreen extends StatelessWidget {
           bottomNavigationBar: isOwner 
               ? null 
               : isAcceptedWorker 
-                  ? _buildAcceptedBottomBar(context)
+                  ? _buildAcceptedBottomBar(context, jobData)
                   : jobStatus == 'inprogress'
                       ? null // Job already taken, hide offer button for other workers
                       : _buildBottomBar(context, jobId),
@@ -105,30 +105,72 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAcceptedBottomBar(BuildContext context) {
+  void _goToContact(
+    BuildContext context, {
+    required String contactUserId,
+    required String contactName,
+    required String contactRole,
+    required String preferredAction,
+  }) {
+    Navigator.pushNamed(
+      context,
+      '/chat',
+      arguments: <String, dynamic>{
+        'contactUserId': contactUserId,
+        'contactName': contactName,
+        'contactRole': contactRole,
+        'preferredAction': preferredAction,
+      },
+    );
+  }
+
+  Widget _buildAcceptedBottomBar(
+    BuildContext context,
+    Map<String, dynamic> jobData,
+  ) {
+    final customerId = (jobData['customerId'] as String? ?? '').trim();
+    final customerName =
+        (jobData['customerName'] as String? ?? 'Client').trim();
+
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
         border: const Border(top: BorderSide(color: BrikolikColors.border, width: 1)),
       ),
-      child: GestureDetector(
-        onTap: () => Navigator.pushNamed(context, '/chat'),
-        child: Container(
-          height: 52,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF43A047), Color(0xFF66BB6A)]),
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
+      child: Row(
+        children: [
+          Expanded(
+            child: BrikolikButton(
+              label: 'WhatsApp',
+              icon: Icons.chat_bubble_rounded,
+              height: 52,
+              onPressed: () => _goToContact(
+                context,
+                contactUserId: customerId,
+                contactName: customerName,
+                contactRole: 'customer',
+                preferredAction: 'whatsapp',
+              ),
+            ),
           ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.chat_rounded, color: Colors.white, size: 20),
-              SizedBox(width: 8),
-              Text('Contacter le client'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white)),
-            ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: BrikolikButton(
+              label: 'Appeler',
+              icon: Icons.call_rounded,
+              height: 52,
+              outlined: true,
+              onPressed: () => _goToContact(
+                context,
+                contactUserId: customerId,
+                contactName: customerName,
+                contactRole: 'customer',
+                preferredAction: 'call',
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -328,7 +370,8 @@ class JobDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildClientCard(BuildContext context, Map<String, dynamic> jobData) {
-    final name = jobData['customerName'] ?? 'Client';
+    final name = (jobData['customerName'] as String? ?? 'Client').trim();
+    final customerId = (jobData['customerId'] as String? ?? '').trim();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -371,7 +414,7 @@ class JobDetailsScreen extends StatelessWidget {
                             borderRadius:
                                 BorderRadius.circular(BrikolikRadius.full),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.shield_outlined,
@@ -393,25 +436,32 @@ class JobDetailsScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () => Navigator.pushNamed(context, '/chat'),
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: BrikolikColors.brandGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: BrikolikColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+              Column(
+                children: [
+                  _ContactCircleButton(
+                    icon: Icons.chat_bubble_rounded,
+                    backgroundColor: const Color(0xFF25D366),
+                    onTap: () => _goToContact(
+                      context,
+                      contactUserId: customerId,
+                      contactName: name,
+                      contactRole: 'customer',
+                      preferredAction: 'whatsapp',
+                    ),
                   ),
-                  child: const Icon(Icons.chat_bubble_outline_rounded,
-                      size: 18, color: Colors.white),
-                ),
+                  const SizedBox(height: 8),
+                  _ContactCircleButton(
+                    icon: Icons.call_rounded,
+                    backgroundColor: BrikolikColors.primary,
+                    onTap: () => _goToContact(
+                      context,
+                      contactUserId: customerId,
+                      contactName: name,
+                      contactRole: 'customer',
+                      preferredAction: 'call',
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -452,6 +502,20 @@ class JobDetailsScreen extends StatelessWidget {
                      isPro: true,
                      isAccepted: isAccepted,
                      onAccept: isAccepted ? null : () => _acceptOffer(context, jobId, doc.id, offer['workerId'] ?? '', offer['workerName'] ?? 'Artisan'),
+                     onContactWhatsApp: () => _goToContact(
+                       context,
+                       contactUserId: (offer['workerId'] as String? ?? '').trim(),
+                       contactName: (offer['workerName'] as String? ?? 'Artisan').trim(),
+                       contactRole: 'worker',
+                       preferredAction: 'whatsapp',
+                     ),
+                     onContactCall: () => _goToContact(
+                       context,
+                       contactUserId: (offer['workerId'] as String? ?? '').trim(),
+                       contactName: (offer['workerName'] as String? ?? 'Artisan').trim(),
+                       contactRole: 'worker',
+                       preferredAction: 'call',
+                     ),
                    ),
                  );
               }).toList(),
@@ -536,7 +600,7 @@ class JobDetailsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.send_rounded,
@@ -769,6 +833,8 @@ class _OfferCard extends StatelessWidget {
   final bool isPro;
   final bool isAccepted;
   final VoidCallback? onAccept;
+  final VoidCallback onContactWhatsApp;
+  final VoidCallback onContactCall;
 
   const _OfferCard({
     required this.name,
@@ -777,6 +843,8 @@ class _OfferCard extends StatelessWidget {
     required this.price,
     required this.message,
     required this.isPro,
+    required this.onContactWhatsApp,
+    required this.onContactCall,
     this.isAccepted = false,
     this.onAccept,
   });
@@ -822,7 +890,7 @@ class _OfferCard extends StatelessWidget {
                 color: BrikolikColors.successLight,
                 borderRadius: BorderRadius.circular(BrikolikRadius.sm),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle_rounded, size: 16, color: BrikolikColors.success),
@@ -899,21 +967,7 @@ class _OfferCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          if (isAccepted)
-            Row(
-              children: [
-                Expanded(
-                  child: BrikolikButton(
-                    label: 'Contacter',
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/chat'),
-                    outlined: false,
-                    height: 40,
-                  ),
-                ),
-              ],
-            )
-          else
+          if (!isAccepted) ...[
             Row(
               children: [
                 Expanded(
@@ -923,12 +977,12 @@ class _OfferCard extends StatelessWidget {
                       height: 40,
                       decoration: BoxDecoration(
                         gradient: BrikolikColors.brandGradient,
-                        borderRadius:
-                            BorderRadius.circular(BrikolikRadius.md),
+                        borderRadius: BorderRadius.circular(BrikolikRadius.md),
                       ),
                       child: Center(
-                        child: Text('Accepter'.tr(),
-                          style: TextStyle(
+                        child: Text(
+                          'Accepter'.tr(),
+                          style: const TextStyle(
                             fontFamily: 'Nunito',
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
@@ -939,19 +993,69 @@ class _OfferCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: BrikolikButton(
-                    label: 'Contacter',
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/chat'),
-                    outlined: true,
-                    height: 40,
-                  ),
-                ),
               ],
             ),
+            const SizedBox(height: 8),
+          ],
+          Row(
+            children: [
+              Expanded(
+                child: BrikolikButton(
+                  label: 'WhatsApp',
+                  icon: Icons.chat_bubble_rounded,
+                  onPressed: onContactWhatsApp,
+                  outlined: !isAccepted,
+                  height: 40,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: BrikolikButton(
+                  label: 'Appeler',
+                  icon: Icons.call_rounded,
+                  onPressed: onContactCall,
+                  outlined: true,
+                  height: 40,
+                ),
+              ),
+            ],
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContactCircleButton extends StatelessWidget {
+  const _ContactCircleButton({
+    required this.icon,
+    required this.backgroundColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color backgroundColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: backgroundColor.withValues(alpha: 0.28),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 18, color: Colors.white),
       ),
     );
   }

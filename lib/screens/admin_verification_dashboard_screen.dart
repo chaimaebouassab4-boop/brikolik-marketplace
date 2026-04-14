@@ -85,7 +85,7 @@ class _AdminVerificationDashboardScreenState
             controller: reasonCtrl,
             minLines: 2,
             maxLines: 4,
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Raison du refus (optionnel)'.tr(),
             ),
           ),
