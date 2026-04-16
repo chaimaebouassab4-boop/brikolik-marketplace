@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -122,7 +122,7 @@ class _JobListScreenState extends State<JobListScreen> {
                   SizedBox(width: 8),
                   Text('Poster un service'.tr(),
                     style: TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: Colors.white,
@@ -146,7 +146,7 @@ class _JobListScreenState extends State<JobListScreen> {
         controller: _searchCtrl,
         onChanged: (_) => setState(() {}),
         style: const TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: BrikolikColors.textPrimary,
@@ -402,7 +402,7 @@ class JobCard extends StatelessWidget {
                               Text(
                                 job['category'],
                                 style: const TextStyle(
-                                  fontFamily: 'Nunito',
+                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: BrikolikColors.secondary,
@@ -448,7 +448,7 @@ class JobCard extends StatelessWidget {
                           child: Text(
                             job['budget'],
                             style: const TextStyle(
-                              fontFamily: 'Nunito',
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -499,7 +499,7 @@ class JobCard extends StatelessWidget {
                         child: Text(
                           '${job['offers']} offre${job['offers'] > 1 ? 's' : ''}',
                           style: const TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: BrikolikColors.accent,

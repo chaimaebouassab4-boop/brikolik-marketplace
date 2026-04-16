@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -198,13 +198,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                     children: [
                                       Text('Email'.tr(),
                                           style: TextStyle(
-                                            fontFamily: 'Nunito',
+                                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                             fontSize: 11,
                                             color: BrikolikColors.textSecondary,
                                           )),
                                       Text(_email!,
                                           style: const TextStyle(
-                                            fontFamily: 'Nunito',
+                                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: BrikolikColors.textPrimary,
@@ -241,7 +241,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                             'Votre profil aide les artisans a mieux comprendre vos besoins.'
                                 .tr(),
                             style: TextStyle(
-                              fontFamily: 'Nunito',
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: BrikolikColors.primary,
@@ -292,7 +292,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                   SizedBox(width: 8),
                                   Text('Enregistrer et continuer'.tr(),
                                     style: TextStyle(
-                                      fontFamily: 'Nunito',
+                                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,

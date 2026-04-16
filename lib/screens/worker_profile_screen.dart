@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -225,7 +225,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
             onPressed: _isSaving ? null : _saveProfile,
             child: Text('Terminer'.tr(),
               style: TextStyle(
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 fontWeight: FontWeight.w700,
                 color:
                     _isSaving ? BrikolikColors.textHint : BrikolikColors.accent,
@@ -371,7 +371,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                                     selectedColor: BrikolikColors.primaryLight,
                                     checkmarkColor: BrikolikColors.primary,
                                     labelStyle: TextStyle(
-                                      fontFamily: 'Nunito',
+                                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                       fontWeight: FontWeight.w700,
                                       color: _services.contains(service)
                                           ? BrikolikColors.primary
@@ -393,7 +393,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                                 'Selectionnez au moins un service pour recevoir des missions.'
                                     .tr(),
                                 style: TextStyle(
-                                  fontFamily: 'Nunito',
+                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: BrikolikColors.warning,
@@ -491,7 +491,7 @@ class _ProfileHero extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -501,7 +501,7 @@ class _ProfileHero extends StatelessWidget {
                     Text(
                       city,
                       style: TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.86),
@@ -515,7 +515,7 @@ class _ProfileHero extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.78),
@@ -627,7 +627,7 @@ class _ReadOnlyField extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: BrikolikColors.textSecondary,
@@ -639,7 +639,7 @@ class _ReadOnlyField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: BrikolikColors.textPrimary,
@@ -721,7 +721,7 @@ class _VerificationRow extends StatelessWidget {
           child: Text(
             verified ? 'Verifie' : 'En attente',
             style: TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: verified

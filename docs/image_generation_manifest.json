@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "goal": "Generate professional demonstrative images for the home page and service categories, designed for a modern mobile startup app UI.",
+  "style_requirements": [
+    "Realistic and premium",
+    "Bright natural lighting",
+    "Clean modern homes and apartments",
+    "Trustworthy and professional feeling",
+    "Consistent visual style across all images",
+    "Mobile app quality",
+    "Elegant, clean, polished",
+    "Moroccan / North African context where relevant",
+    "No text, no logos, no watermark, no UI elements"
+  ],
+  "assets": [
+    {
+      "path": "assets/images/hero_handyman.png",
+      "size": "1920x1200",
+      "prompt": "Photorealistic premium scene of a trustworthy Moroccan home-service professional standing in a bright modern apartment living room, tool bag and tablet in hand, subtle smile, clean organized background, natural daylight from large windows, elegant interior styling, realistic textures, mobile app hero quality, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_plumbing.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium plumbing service in a clean modern Moroccan apartment kitchen, professional plumber repairing sink pipe under bright natural daylight, stainless fixtures, tidy counter, trustworthy and professional mood, elegant polished composition, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_electrical.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium electrical maintenance in a modern North African home interior, certified electrician safely installing a wall light fixture, bright natural daylight, clean walls and refined decor, professional and reliable atmosphere, realistic materials and lighting, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_cleaning.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium home cleaning scene in a bright contemporary apartment, professional cleaner in neat uniform tidying a modern living room, spotless surfaces, natural daylight, elegant and fresh environment, trustworthy service feeling, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_painting.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium painting service in a modern apartment hallway, professional painter applying smooth neutral paint on a wall with protective floor covering, bright natural lighting, clean upscale interior, polished and professional composition, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_gardening.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium gardening service on a modern Moroccan terrace garden, professional gardener trimming healthy plants in a clean urban home setting, bright natural sunlight, elegant planters and textures, trustworthy and polished mood, no text, no logo, no watermark, no UI elements."
+    },
+    {
+      "path": "assets/images/service_carpentry.png",
+      "size": "1024x1024",
+      "prompt": "Photorealistic premium carpentry service in a modern home workspace, professional carpenter adjusting a custom wooden cabinet with precision tools, bright natural daylight, clean interior and high-end wood finishes, reliable professional atmosphere, no text, no logo, no watermark, no UI elements."
+    }
+  ]
+}

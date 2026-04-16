@@ -56,7 +56,7 @@ class VerificationGate extends StatelessWidget {
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFamily: 'Nunito',
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                   color: BrikolikColors.textPrimary,
@@ -67,7 +67,7 @@ class VerificationGate extends StatelessWidget {
                 message,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontFamily: 'Nunito',
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: BrikolikColors.textSecondary,
@@ -86,7 +86,7 @@ class VerificationGate extends StatelessWidget {
                   child: const Text(
                     'Demande deja envoyee a l admin',
                     style: TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: BrikolikColors.warning,

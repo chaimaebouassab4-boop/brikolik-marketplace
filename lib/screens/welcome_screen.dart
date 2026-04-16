@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../theme/app_theme.dart';
@@ -8,12 +8,12 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const List<_HomeCategory> _categories = [
-    _HomeCategory('Plomberie', Icons.water_drop_outlined),
-    _HomeCategory('Electricite', Icons.bolt_outlined),
-    _HomeCategory('Nettoyage', Icons.cleaning_services_outlined),
-    _HomeCategory('Peinture', Icons.format_paint_outlined),
-    _HomeCategory('Jardinage', Icons.grass_outlined),
-    _HomeCategory('Menuiserie', Icons.carpenter_outlined),
+    _HomeCategory('Plomberie',   Icons.water_drop_outlined,      'assets/images/service_plumbing.png'),
+    _HomeCategory('Electricite', Icons.bolt_outlined,            'assets/images/service_electrical.png'),
+    _HomeCategory('Nettoyage',   Icons.cleaning_services_outlined,'assets/images/service_cleaning.png'),
+    _HomeCategory('Peinture',    Icons.format_paint_outlined,    'assets/images/service_painting.png'),
+    _HomeCategory('Jardinage',   Icons.grass_outlined,           'assets/images/service_gardening.png'),
+    _HomeCategory('Menuiserie',  Icons.carpenter_outlined,       'assets/images/service_carpentry.png'),
   ];
 
   static const List<_WorkerPreview> _workers = [
@@ -241,7 +241,7 @@ class _HeroSection extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'lib/assets/deuxherobriko.png',
+              'assets/images/hero_handyman.png',
               fit: BoxFit.cover,
               cacheWidth: cacheWidth,
             ),
@@ -279,7 +279,7 @@ class _HeroSection extends StatelessWidget {
                         SizedBox(width: 6),
                         Text('Artisans verifies au Maroc'.tr(),
                           style: TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -291,7 +291,7 @@ class _HeroSection extends StatelessWidget {
                   const Spacer(),
                   Text('Reparez, entretenez, avancez.'.tr(),
                     style: TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 30,
                       height: 1.1,
                       fontWeight: FontWeight.w800,
@@ -303,7 +303,7 @@ class _HeroSection extends StatelessWidget {
                     'Publiez votre besoin et recevez des offres fiables en quelques minutes.'
                         .tr(),
                     style: TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 14,
                       height: 1.5,
                       fontWeight: FontWeight.w600,
@@ -346,7 +346,7 @@ class _SearchCard extends StatelessWidget {
               Expanded(
                 child: Text('Chercher un service ou un artisan'.tr(),
                   style: TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: BrikolikColors.textSecondary,
@@ -407,6 +407,7 @@ class _CategoryGrid extends StatelessWidget {
                 child: _ServiceTile(
                   item: categories[i],
                   accent: _accents[i % _accents.length],
+                  imagePath: categories[i].imagePath,
                   onTap: () => onCategoryTap(categories[i]),
                 ),
               ),
@@ -421,87 +422,102 @@ class _ServiceTile extends StatelessWidget {
   const _ServiceTile({
     required this.item,
     required this.accent,
+    required this.imagePath,
     required this.onTap,
   });
 
   final _HomeCategory item;
   final Color accent;
+  final String imagePath;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: BrikolikColors.surface,
+    return ClipRRect(
       borderRadius: BorderRadius.circular(BrikolikRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(BrikolikRadius.md),
-        onTap: onTap,
-        child: Ink(
-          height: 112,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(BrikolikRadius.md),
-            border: Border.all(color: BrikolikColors.border),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                accent.withValues(alpha: 0.09),
-                BrikolikColors.surface,
-              ],
-            ),
-          ),
-          child: Stack(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: Container(
-                  width: 42,
-                  height: 42,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          onTap: onTap,
+          child: SizedBox(
+            height: 130,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Real photo background
+                Image.asset(
+                  imagePath,
+                  fit: BoxFit.cover,
+                ),
+                // Dark tinted gradient overlay for readability
+                DecoratedBox(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: 0.12),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        accent.withValues(alpha: 0.45),
+                        const Color(0xFF0D1B2A).withValues(alpha: 0.82),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(BrikolikRadius.sm),
-                    ),
-                    child: Icon(item.icon, size: 18, color: accent),
-                  ),
-                  Row(
+                // Content
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: Text(
-                          item.label.tr(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: BrikolikColors.textPrimary,
+                      // Icon badge
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(BrikolikRadius.sm),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.30),
                           ),
                         ),
+                        child: Icon(item.icon, size: 17, color: Colors.white),
                       ),
-                      Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 16,
-                        color: accent,
+                      // Label row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.label.tr(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 4,
+                                    color: Colors.black45,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 15,
+                            color: Colors.white70,
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -547,7 +563,7 @@ class _WorkerCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Nunito',
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: BrikolikColors.textPrimary,
@@ -559,7 +575,7 @@ class _WorkerCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontFamily: 'Nunito',
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: BrikolikColors.textSecondary,
@@ -592,7 +608,7 @@ class _WorkerCard extends StatelessWidget {
                   ),
                   child: Text('${worker.jobs} missions terminees',
                     style: const TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: BrikolikColors.primary,
@@ -643,7 +659,7 @@ class _JobCard extends StatelessWidget {
                     child: Text(
                       data.category.tr(),
                       style: const TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: BrikolikColors.primary,
@@ -687,7 +703,7 @@ class _JobCard extends StatelessWidget {
                     child: Text(
                       data.budget,
                       style: const TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -742,7 +758,7 @@ class _Metric extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: BrikolikColors.textPrimary,
@@ -796,7 +812,7 @@ class _SectionTitle extends StatelessWidget {
             child: Text(
               actionLabel!.tr(),
               style: const TextStyle(
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: BrikolikColors.accent,
@@ -851,10 +867,11 @@ class _EntranceState extends State<_Entrance> {
 }
 
 class _HomeCategory {
-  const _HomeCategory(this.label, this.icon);
+  const _HomeCategory(this.label, this.icon, this.imagePath);
 
   final String label;
   final IconData icon;
+  final String imagePath;
 }
 
 class _WorkerPreview {

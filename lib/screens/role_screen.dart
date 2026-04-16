@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -176,7 +176,7 @@ class _RoleScreenState extends State<RoleScreen> {
                                             children: [
                                               Text('common.continue'.tr(),
                                                 style: TextStyle(
-                                                  fontFamily: 'Nunito',
+                                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w700,
                                                   color: _selectedRole != null
@@ -236,7 +236,7 @@ class _RoleScreenState extends State<RoleScreen> {
         const SizedBox(height: 18),
         Text('choose_role'.tr(),
           style: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 26,
             fontWeight: FontWeight.w800,
             color: Colors.white,
@@ -330,7 +330,7 @@ class _RoleCard extends StatelessWidget {
                             child: Text(
                               feature,
                               style: const TextStyle(
-                                fontFamily: 'Nunito',
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: BrikolikColors.textSecondary,

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
@@ -117,7 +117,7 @@ class _RatingScreenState extends State<RatingScreen> {
                 SizedBox(width: 8),
                 Text('Mission terminee'.tr(),
                   style: TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color: BrikolikColors.success,
@@ -201,7 +201,7 @@ class _RatingScreenState extends State<RatingScreen> {
                 labels[_rating],
                 key: ValueKey(_rating),
                 style: TextStyle(
-                  fontFamily: 'Nunito',
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: colors[_rating],
@@ -279,7 +279,7 @@ class _RatingScreenState extends State<RatingScreen> {
                 ),
                 child: Text('optionnel'.tr(),
                   style: TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                     color: BrikolikColors.muted,
@@ -337,7 +337,7 @@ class _RatingScreenState extends State<RatingScreen> {
                         SizedBox(width: 8),
                         Text('Publier mon avis'.tr(),
                           style: TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
@@ -354,7 +354,7 @@ class _RatingScreenState extends State<RatingScreen> {
               Navigator.pushReplacementNamed(context, '/jobs'),
           child: Text('Passer pour l instant'.tr(),
             style: TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               color: BrikolikColors.muted,
               fontWeight: FontWeight.w600,
             ),
@@ -427,7 +427,7 @@ class _RatingScreenState extends State<RatingScreen> {
                   child: Center(
                     child: Text('Retour a l accueil'.tr(),
                       style: TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                         color: Colors.white,

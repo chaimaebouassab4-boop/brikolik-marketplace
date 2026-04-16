@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -119,7 +119,7 @@ class JobDetailsScreen extends StatelessWidget {
           Text(
             '${jobData['customerName'] ?? 'Le client'} a accepte votre offre.\nVous pouvez maintenant le contacter pour organiser la mission.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Nunito', fontSize: 14, color: BrikolikColors.textSecondary, height: 1.5),
+            style: const TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 14, color: BrikolikColors.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -603,7 +603,7 @@ class JobDetailsScreen extends StatelessWidget {
                   child: Text(
                     cat,
                     style: const TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: BrikolikColors.primary,
@@ -849,7 +849,7 @@ class JobDetailsScreen extends StatelessWidget {
                               SizedBox(width: 3),
                               Text('Verifie'.tr(),
                                 style: TextStyle(
-                                  fontFamily: 'Nunito',
+                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: BrikolikColors.success,
@@ -907,7 +907,7 @@ class JobDetailsScreen extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) return const CircularProgressIndicator(color: BrikolikColors.primary);
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-               return const Text("Vous n'avez pas encore recu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito'));
+               return const Text("Vous n'avez pas encore recu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito', fontFamilyFallback: ['Cairo']));
             }
             return Column(
               children: snapshot.data!.docs.map((doc) {
@@ -1025,7 +1025,7 @@ class JobDetailsScreen extends StatelessWidget {
                     SizedBox(width: 8),
                     Text('Faire une offre'.tr(),
                       style: TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         color: Colors.white,
@@ -1158,7 +1158,7 @@ class JobDetailsScreen extends StatelessWidget {
                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: BrikolikColors.primary, strokeWidth: 2))
                          : const Text(
                               "Envoyer l'offre",
-                              style: TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
+                              style: TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
                            ),
                     ),
                   ),
@@ -1205,7 +1205,7 @@ class _InfoTile extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: BrikolikColors.textHint,
@@ -1215,7 +1215,7 @@ class _InfoTile extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               fontSize: 13,
               fontWeight: FontWeight.w800,
               color: BrikolikColors.textPrimary,
@@ -1312,7 +1312,7 @@ class _OfferCard extends StatelessWidget {
                 children: [
                   Icon(Icons.check_circle_rounded, size: 16, color: BrikolikColors.success),
                   SizedBox(width: 6),
-                  Text('Offre acceptee'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
+                  Text('Offre acceptee'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
                 ],
               ),
             ),
@@ -1342,7 +1342,7 @@ class _OfferCard extends StatelessWidget {
                             child: const Text(
                               'PRO',
                               style: TextStyle(
-                                fontFamily: 'Nunito',
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -1367,7 +1367,7 @@ class _OfferCard extends StatelessWidget {
                 child: Text(
                   price,
                   style: TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isAccepted ? BrikolikColors.success : BrikolikColors.primary,
@@ -1400,7 +1400,7 @@ class _OfferCard extends StatelessWidget {
                         child: Text(
                           'Accepter'.tr(),
                           style: const TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                             color: Colors.white,

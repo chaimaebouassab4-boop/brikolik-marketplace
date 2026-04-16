@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -159,7 +159,7 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Text(
           'Contact rapide'.tr(),
           style: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 16,
             fontWeight: FontWeight.w800,
             color: BrikolikColors.textPrimary,
@@ -171,7 +171,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Text(
               'Terminer'.tr(),
               style: const TextStyle(
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 color: BrikolikColors.accent,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
@@ -224,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Text(
                           contact.initials,
                           style: const TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
@@ -239,7 +239,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             Text(
                               contact.name,
                               style: const TextStyle(
-                                fontFamily: 'Nunito',
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -249,7 +249,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             Text(
                               '${_roleLabel(contact.role)} • ${contact.city.isEmpty ? 'Maroc' : contact.city}',
                               style: TextStyle(
-                                fontFamily: 'Nunito',
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white.withValues(alpha: 0.85),
@@ -281,7 +281,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ? 'Numero non disponible'.tr()
                               : contact.phone,
                           style: TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: contact.phone.isEmpty
@@ -377,7 +377,7 @@ class _ActionCard extends StatelessWidget {
                     Text(
                       title,
                       style: const TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
@@ -387,7 +387,7 @@ class _ActionCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.9),

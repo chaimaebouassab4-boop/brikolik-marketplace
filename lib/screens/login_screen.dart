@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../theme/app_theme.dart';
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen>
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontFamily: 'Nunito',
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -199,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           (_isLogin ? 'Bon retour' : 'Creer un compte').tr(),
           style: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 28,
             fontWeight: FontWeight.w800,
             color: Colors.white,
@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen>
               ? 'Connectez-vous pour acceder aux services'.tr()
               : 'Rejoignez la plateforme Brikolik'.tr(),
           style: TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.white.withValues(alpha: 0.8),
@@ -303,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                         child: Text('Mot de passe oublie ?'.tr(),
                           style: TextStyle(
-                            fontFamily: 'Nunito',
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: BrikolikColors.accent,
@@ -415,12 +415,12 @@ class _LoginScreenState extends State<LoginScreen>
         labelColor: Colors.white,
         unselectedLabelColor: BrikolikColors.textSecondary,
         labelStyle: const TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 14,
           fontWeight: FontWeight.w700,
         ),
         unselectedLabelStyle: const TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -486,7 +486,7 @@ class _GradientButton extends StatelessWidget {
               : Text(
                   label.tr(),
                   style: const TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -531,7 +531,7 @@ class _SocialButton extends StatelessWidget {
             Text(
               label.tr(),
               style: const TextStyle(
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: BrikolikColors.textPrimary,

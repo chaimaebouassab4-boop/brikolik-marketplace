@@ -161,7 +161,7 @@ class BrikolikInput extends StatelessWidget {
       maxLines: maxLines,
       enabled: enabled,
       style: const TextStyle(
-        fontFamily: 'Nunito',
+        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
         fontSize: 15,
         fontWeight: FontWeight.w600,
         color: BrikolikColors.textPrimary,
@@ -208,7 +208,7 @@ class SectionHeader extends StatelessWidget {
               actionLabel!.tr(),
               style: const TextStyle(
                 color: BrikolikColors.accent,
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -260,7 +260,7 @@ class StatusBadge extends StatelessWidget {
       child: Text(
         label.tr(),
         style: TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: color,
@@ -313,7 +313,7 @@ class BrikolikAvatar extends StatelessWidget {
               child: Text(
                 _initials,
                 style: TextStyle(
-                  fontFamily: 'Nunito',
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                   fontSize: size * 0.36,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -347,7 +347,7 @@ class StarRating extends StatelessWidget {
         Text(
           rating.toStringAsFixed(1),
           style: TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: starSize,
             fontWeight: FontWeight.w700,
             color: BrikolikColors.textPrimary,
@@ -358,7 +358,7 @@ class StarRating extends StatelessWidget {
           Text(
             '($reviewCount)',
             style: TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               fontSize: starSize - 1,
               fontWeight: FontWeight.w500,
               color: BrikolikColors.textSecondary,
@@ -448,7 +448,7 @@ class CategoryChip extends StatelessWidget {
             Text(
               label.tr(),
               style: TextStyle(
-                fontFamily: 'Nunito',
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: selected ? Colors.white : BrikolikColors.textPrimary,
@@ -855,7 +855,7 @@ class _LocaleToggleButton extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 12,
           fontWeight: FontWeight.w800,
           color: transparent ? Colors.white : foreground,

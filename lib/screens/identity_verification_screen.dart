@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -246,7 +246,7 @@ class _VerificationHero extends StatelessWidget {
                   ),
                   child: Text('Validation admin'.tr(),
                     style: TextStyle(
-                      fontFamily: 'Nunito',
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -257,7 +257,7 @@ class _VerificationHero extends StatelessWidget {
                 Text(
                   title.tr(),
                   style: const TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
@@ -267,7 +267,7 @@ class _VerificationHero extends StatelessWidget {
                 Text(
                   subtitle.tr(),
                   style: TextStyle(
-                    fontFamily: 'Nunito',
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.white.withValues(alpha: 0.86),

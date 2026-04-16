@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,23 +31,20 @@ class _PostJobScreenState extends State<PostJobScreen> {
   ];
 
   static const List<_UrgencyOption> _urgencyOptions = [
-    _UrgencyOption(
-        'Urgent (24h)', Icons.flash_on_rounded, BrikolikColors.error),
-    _UrgencyOption(
-        'Cette semaine', Icons.today_rounded, BrikolikColors.warning),
-    _UrgencyOption(
-        'Ce mois', Icons.calendar_month_outlined, BrikolikColors.primary),
+    _UrgencyOption('Urgent (24h)', Icons.flash_on_rounded, BrikolikColors.error),
+    _UrgencyOption('Cette semaine', Icons.today_rounded, BrikolikColors.warning),
+    _UrgencyOption('Ce mois', Icons.calendar_month_outlined, BrikolikColors.primary),
     _UrgencyOption('Flexible', Icons.schedule_rounded, BrikolikColors.success),
   ];
 
   static const List<String> _steps = ['Categorie', 'Details', 'Budget'];
 
   final GlobalKey<FormState> _detailsFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _budgetFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _budgetFormKey  = GlobalKey<FormState>();
 
-  final TextEditingController _titleCtrl = TextEditingController();
-  final TextEditingController _descCtrl = TextEditingController();
-  final TextEditingController _locationCtrl = TextEditingController();
+  final TextEditingController _titleCtrl     = TextEditingController();
+  final TextEditingController _descCtrl      = TextEditingController();
+  final TextEditingController _locationCtrl  = TextEditingController();
   final TextEditingController _budgetMinCtrl = TextEditingController();
   final TextEditingController _budgetMaxCtrl = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -55,13 +52,15 @@ class _PostJobScreenState extends State<PostJobScreen> {
   static const int _maxProblemPhotos = 4;
   final List<_LocalUploadPhoto> _problemPhotos = <_LocalUploadPhoto>[];
 
-  int _currentStep = 0;
-  bool _isAccessLoading = true;
-  bool _isSubmitting = false;
-  bool _isVerified = false;
-  bool _verificationRequested = false;
+  int    _currentStep          = 0;
+  bool   _isAccessLoading      = true;
+  bool   _isSubmitting         = false;
+  bool   _isVerified           = false;
+  bool   _verificationRequested = false;
   String? _selectedCategory;
   String? _selectedUrgency;
+
+  // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -79,38 +78,133 @@ class _PostJobScreenState extends State<PostJobScreen> {
     super.dispose();
   }
 
+  // ─── Auth / access ───────────────────────────────────────────────────────────
+
   Future<void> _loadAccessStatus() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      if (mounted) {
-        setState(() => _isAccessLoading = false);
-      }
+      if (mounted) setState(() => _isAccessLoading = false);
       return;
     }
-
     try {
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final data = userDoc.data() ?? const <String, dynamic>{};
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get();
+      final data = doc.data() ?? const <String, dynamic>{};
       if (!mounted) return;
       setState(() {
-        _isVerified = data['isVerified'] == true;
+        _isVerified            = data['isVerified']           == true;
         _verificationRequested = data['verificationRequested'] == true;
       });
     } catch (_) {
-      // Leave default values and keep the feature locked if user data cannot be read.
+      // Keep defaults — VerificationGate will be shown.
     } finally {
-      if (mounted) {
-        setState(() => _isAccessLoading = false);
-      }
+      if (mounted) setState(() => _isAccessLoading = false);
     }
   }
 
+  // ─── Dialogs ─────────────────────────────────────────────────────────────────
+
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _showErrorDialog({required String title, required String message}) {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                color: BrikolikColors.error, size: 22),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(title,
+                  style: const TextStyle(
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ),
+        content: Text(message,
+            style: const TextStyle(
+                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: BrikolikColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Fermer',
+                style: TextStyle(
+                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                    fontWeight: FontWeight.w700,
+                    color: BrikolikColors.primary)),
+          ),
+        ],
+      ),
     );
   }
+
+  Future<void> _showSuccessDialog() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: BrikolikColors.brandGradient,
+              ),
+              child: const Icon(Icons.check_rounded,
+                  color: Colors.white, size: 32),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Demande publiee !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: BrikolikColors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Votre demande est maintenant visible par les artisans de votre region.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: BrikolikColors.textSecondary),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: BrikolikButton(
+                label: 'Voir les demandes',
+                icon: Icons.arrow_forward_rounded,
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Photos ──────────────────────────────────────────────────────────────────
 
   Future<void> _pickProblemPhotos() async {
     final remainingSlots = _maxProblemPhotos - _problemPhotos.length;
@@ -119,28 +213,22 @@ class _PostJobScreenState extends State<PostJobScreen> {
       return;
     }
 
-    final picked = await _picker.pickMultiImage(
-      imageQuality: 80,
-      maxWidth: 1800,
-    );
+    final picked =
+        await _picker.pickMultiImage(imageQuality: 80, maxWidth: 1800);
     if (picked.isEmpty) return;
 
     final limited = picked.take(remainingSlots).toList();
     final localPhotos = <_LocalUploadPhoto>[];
     for (final photo in limited) {
       final bytes = await photo.readAsBytes();
-      localPhotos.add(
-        _LocalUploadPhoto(
-          id: '${DateTime.now().millisecondsSinceEpoch}-${photo.name}',
-          bytes: bytes,
-        ),
-      );
+      localPhotos.add(_LocalUploadPhoto(
+        id: '${DateTime.now().millisecondsSinceEpoch}-${photo.name}',
+        bytes: bytes,
+      ));
     }
 
     if (!mounted) return;
-    setState(() {
-      _problemPhotos.addAll(localPhotos);
-    });
+    setState(() => _problemPhotos.addAll(localPhotos));
 
     if (picked.length > remainingSlots) {
       _showMessage('Limite de 4 photos maximum.'.tr());
@@ -148,9 +236,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   }
 
   void _removeProblemPhoto(String photoId) {
-    setState(() {
-      _problemPhotos.removeWhere((photo) => photo.id == photoId);
-    });
+    setState(() => _problemPhotos.removeWhere((p) => p.id == photoId));
   }
 
   Future<List<String>> _uploadProblemPhotos({
@@ -162,24 +248,26 @@ class _PostJobScreenState extends State<PostJobScreen> {
     final urls = <String>[];
     for (var i = 0; i < _problemPhotos.length; i++) {
       final photo = _problemPhotos[i];
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ts  = DateTime.now().millisecondsSinceEpoch;
       final ref = FirebaseStorage.instance
           .ref()
-          .child('jobs/$jobId/problem_photos/${timestamp}_$i.jpg');
-
-      final metadata = SettableMetadata(
-        contentType: 'image/jpeg',
-        customMetadata: <String, String>{
-          'uploadedBy': customerId,
-          'type': 'problem',
-        },
+          .child('jobs/$jobId/problem_photos/${ts}_$i.jpg');
+      await ref.putData(
+        photo.bytes,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: <String, String>{
+            'uploadedBy': customerId,
+            'type': 'problem',
+          },
+        ),
       );
-
-      await ref.putData(photo.bytes, metadata);
       urls.add(await ref.getDownloadURL());
     }
     return urls;
   }
+
+  // ─── Navigation / validation ─────────────────────────────────────────────────
 
   bool _validateCurrentStep() {
     if (_currentStep == 0) {
@@ -209,7 +297,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
       _showMessage('Le budget maximum doit etre superieur au minimum.');
       return false;
     }
-
     return true;
   }
 
@@ -230,64 +317,80 @@ class _PostJobScreenState extends State<PostJobScreen> {
     setState(() => _currentStep -= 1);
   }
 
+  // ─── Submission ───────────────────────────────────────────────────────────────
+
   Future<void> _submitJob() async {
     if (!_validateCurrentStep()) return;
 
-    if (!_isVerified) {
-      _showMessage('Verification admin requise avant de poster une mission.');
-      return;
-    }
-
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      _showMessage('Veuillez vous authentifier.');
+      _showErrorDialog(
+        title: 'Connexion requise',
+        message: 'Veuillez vous connecter avant de publier une demande.',
+      );
       return;
     }
 
     setState(() => _isSubmitting = true);
 
     try {
-      final userDoc =
-          await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      final userName = userDoc.data()?['fullName'] ?? 'Client';
-      final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
-      final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
-      final jobRef = FirebaseFirestore.instance.collection('jobs').doc();
-      final problemPhotoUrls = await _uploadProblemPhotos(
-        jobId: jobRef.id,
-        customerId: uid,
+      await _doSubmit(uid).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw Exception(
+          'La requete a pris trop de temps. Verifiez votre connexion et reessayez.',
+        ),
       );
 
-      await jobRef.set({
-        'title': _titleCtrl.text.trim(),
-        'description': _descCtrl.text.trim(),
-        'category': _selectedCategory,
-        'location': _locationCtrl.text.trim(),
-        'urgency': _selectedUrgency,
-        'budgetMin': budgetMin,
-        'budgetMax': budgetMax,
-        'budget': '$budgetMin-$budgetMax MAD',
-        'customerId': uid,
-        'customerName': userName,
-        'status': 'open',
-        'createdAt': FieldValue.serverTimestamp(),
-        'offersCount': 0,
-        'rating': 0.0,
-        'problemPhotoUrls': problemPhotoUrls,
-        'problemPhotosCount': problemPhotoUrls.length,
-      });
-
+      if (!mounted) return;
+      await _showSuccessDialog();
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/jobs');
     } catch (e) {
-      if (!mounted) return;
-      _showMessage('Erreur: $e');
+      _showErrorDialog(
+        title: 'Erreur de publication',
+        message: e.toString().replaceFirst('Exception: ', ''),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
+
+  Future<void> _doSubmit(String uid) async {
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+    final userName  = doc.data()?['fullName'] ?? 'Client';
+    final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
+    final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
+    final jobRef    = FirebaseFirestore.instance.collection('jobs').doc();
+
+    final photoUrls = await _uploadProblemPhotos(
+      jobId: jobRef.id,
+      customerId: uid,
+    );
+
+    await jobRef.set({
+      'title':              _titleCtrl.text.trim(),
+      'description':        _descCtrl.text.trim(),
+      'category':           _selectedCategory,
+      'location':           _locationCtrl.text.trim(),
+      'urgency':            _selectedUrgency,
+      'budgetMin':          budgetMin,
+      'budgetMax':          budgetMax,
+      'budget':             'MAD $budgetMin - $budgetMax',
+      'customerId':         uid,
+      'customerName':       userName,
+      'status':             'open',
+      'createdAt':          FieldValue.serverTimestamp(),
+      'offersCount':        0,
+      'rating':             0.0,
+      'problemPhotoUrls':   photoUrls,
+      'problemPhotosCount': photoUrls.length,
+    });
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -310,7 +413,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         body: VerificationGate(
           title: 'Verification necessaire',
           message:
-              'Votre compte doit etre valide par un administrateur avant de pouvoir poster une mission.',
+              'Votre compte doit etre valide par un administrateur avant '
+              'de pouvoir poster une mission.',
           verificationRequested: _verificationRequested,
         ),
       );
@@ -328,12 +432,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 240),
-              switchInCurve: Curves.easeOut,
+              switchInCurve:  Curves.easeOut,
               switchOutCurve: Curves.easeIn,
               transitionBuilder: (child, animation) {
                 final slide = Tween<Offset>(
                   begin: const Offset(0.02, 0),
-                  end: Offset.zero,
+                  end:   Offset.zero,
                 ).animate(animation);
                 return FadeTransition(
                   opacity: animation,
@@ -348,10 +452,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
           ),
           _BottomActions(
-            isLast: _currentStep == _steps.length - 1,
+            isLast:       _currentStep == _steps.length - 1,
             isSubmitting: _isSubmitting,
-            onBack: _goToPreviousStep,
-            onNext: _goToNextStep,
+            onBack:       _goToPreviousStep,
+            onNext:       _goToNextStep,
           ),
         ],
       ),
@@ -360,14 +464,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   Widget _buildStepContent() {
     switch (_currentStep) {
-      case 0:
-        return _buildCategoryStep();
-      case 1:
-        return _buildDetailsStep();
-      default:
-        return _buildBudgetStep();
+      case 0:  return _buildCategoryStep();
+      case 1:  return _buildDetailsStep();
+      default: return _buildBudgetStep();
     }
   }
+
+  // ─── Step 1 ── Category ───────────────────────────────────────────────────────
 
   Widget _buildCategoryStep() {
     return Column(
@@ -376,7 +479,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         Text('Quel service cherchez-vous ?'.tr(),
             style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 8),
-        Text('Choisissez une categorie pour recevoir des offres plus precises.'.tr(),
+        Text(
+          'Choisissez une categorie pour recevoir des offres plus precises.'.tr(),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
@@ -385,13 +489,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
+            crossAxisCount:  2,
             crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
+            mainAxisSpacing:  12,
             childAspectRatio: 1.35,
           ),
-          itemBuilder: (context, index) {
-            final item = _categories[index];
+          itemBuilder: (ctx, index) {
+            final item     = _categories[index];
             final selected = _selectedCategory == item.label;
 
             return Material(
@@ -406,8 +510,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     borderRadius: BorderRadius.circular(BrikolikRadius.lg),
                     gradient: selected ? BrikolikColors.brandGradient : null,
                     border: Border.all(
-                      color:
-                          selected ? Colors.transparent : BrikolikColors.border,
+                      color: selected
+                          ? Colors.transparent
+                          : BrikolikColors.border,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -431,25 +536,22 @@ class _PostJobScreenState extends State<PostJobScreen> {
                               : BrikolikColors.primaryLight,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
-                          item.icon,
-                          color:
-                              selected ? Colors.white : BrikolikColors.primary,
-                        ),
+                        child: Icon(item.icon,
+                            color: selected
+                                ? Colors.white
+                                : BrikolikColors.primary),
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        item.label,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Nunito',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: selected
-                              ? Colors.white
-                              : BrikolikColors.textPrimary,
-                        ),
-                      ),
+                      Text(item.label,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                            fontSize:    14,
+                            fontWeight:  FontWeight.w700,
+                            color: selected
+                                ? Colors.white
+                                : BrikolikColors.textPrimary,
+                          )),
                     ],
                   ),
                 ),
@@ -460,6 +562,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
       ],
     );
   }
+
+  // ─── Step 2 ── Details ────────────────────────────────────────────────────────
 
   Widget _buildDetailsStep() {
     return Form(
@@ -472,8 +576,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           Text(
-            'Plus votre demande est claire, plus les offres seront pertinentes.'
-                .tr(),
+            'Plus votre demande est claire, plus les offres seront pertinentes.'.tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -560,20 +663,18 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             color: option.color.withValues(alpha: 0.14),
                             shape: BoxShape.circle,
                           ),
-                          child:
-                              Icon(option.icon, size: 18, color: option.color),
+                          child: Icon(option.icon,
+                              size: 18, color: option.color),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            option.label,
-                            style: const TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: BrikolikColors.textPrimary,
-                            ),
-                          ),
+                          child: Text(option.label,
+                              style: const TextStyle(
+                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                                fontSize:   14,
+                                fontWeight: FontWeight.w700,
+                                color: BrikolikColors.textPrimary,
+                              )),
                         ),
                         if (selected)
                           Icon(Icons.check_circle_rounded, color: option.color),
@@ -603,10 +704,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Photos du probleme (optionnel)'.tr(),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text('Photos du probleme (optionnel)'.tr(),
+              style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
             'Ajoutez jusqu a 4 photos pour mieux expliquer le probleme.'.tr(),
@@ -621,13 +720,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
-                      child: Image.memory(
-                        photo.bytes,
-                        width: 82,
-                        height: 82,
-                        fit: BoxFit.cover,
-                      ),
+                      borderRadius:
+                          BorderRadius.circular(BrikolikRadius.md),
+                      child: Image.memory(photo.bytes,
+                          width: 82, height: 82, fit: BoxFit.cover),
                     ),
                     Positioned(
                       top: 4,
@@ -641,11 +737,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             color: Colors.black.withValues(alpha: 0.55),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 14,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.close,
+                              size: 14, color: Colors.white),
                         ),
                       ),
                     ),
@@ -659,27 +752,23 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     height: 82,
                     decoration: BoxDecoration(
                       color: BrikolikColors.surfaceVariant,
-                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                      borderRadius:
+                          BorderRadius.circular(BrikolikRadius.md),
                       border: Border.all(color: BrikolikColors.border),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.add_a_photo_outlined,
-                          color: BrikolikColors.primary,
-                          size: 20,
-                        ),
+                        const Icon(Icons.add_a_photo_outlined,
+                            color: BrikolikColors.primary, size: 20),
                         const SizedBox(height: 4),
-                        Text(
-                          'Ajouter'.tr(),
-                          style: const TextStyle(
-                            fontFamily: 'Nunito',
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: BrikolikColors.primary,
-                          ),
-                        ),
+                        Text('Ajouter'.tr(),
+                            style: const TextStyle(
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                              fontSize:   11,
+                              fontWeight: FontWeight.w700,
+                              color: BrikolikColors.primary,
+                            )),
                       ],
                     ),
                   ),
@@ -691,7 +780,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
     );
   }
 
+  // ─── Step 3 ── Budget ─────────────────────────────────────────────────────────
+
   Widget _buildBudgetStep() {
+    final minTxt = _budgetMinCtrl.text.trim();
+    final maxTxt = _budgetMaxCtrl.text.trim();
+
     return Form(
       key: _budgetFormKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -701,7 +795,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
           Text('Definissez votre budget'.tr(),
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
-          Text('Un budget realiste vous aide a recevoir des offres rapidement.'.tr(),
+          Text(
+            'Un budget realiste vous aide a recevoir des offres rapidement.'.tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -723,9 +818,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     onChanged: (_) => setState(() {}),
                     validator: (value) {
                       final parsed = int.tryParse((value ?? '').trim());
-                      if (parsed == null || parsed <= 0) {
-                        return 'Min invalide';
-                      }
+                      if (parsed == null || parsed <= 0) return 'Min invalide';
                       return null;
                     },
                   ),
@@ -744,9 +837,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     onChanged: (_) => setState(() {}),
                     validator: (value) {
                       final parsed = int.tryParse((value ?? '').trim());
-                      if (parsed == null || parsed <= 0) {
-                        return 'Max invalide';
-                      }
+                      if (parsed == null || parsed <= 0) return 'Max invalide';
                       return null;
                     },
                   ),
@@ -764,16 +855,16 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.tips_and_updates_outlined,
+                const Icon(Icons.tips_and_updates_outlined,
                     color: BrikolikColors.primary),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Astuce: donnez une fourchette pour garder de la flexibilite avec les artisans.'
                         .tr(),
-                    style: TextStyle(
-                      fontFamily: 'Nunito',
-                      fontSize: 13,
+                    style: const TextStyle(
+                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                      fontSize:   13,
                       fontWeight: FontWeight.w600,
                       color: BrikolikColors.textSecondary,
                     ),
@@ -788,20 +879,23 @@ class _PostJobScreenState extends State<PostJobScreen> {
           const SizedBox(height: 12),
           _SummaryCard(
             category: _selectedCategory ?? '-',
-            title:
-                _titleCtrl.text.trim().isEmpty ? '-' : _titleCtrl.text.trim(),
+            title:    _titleCtrl.text.trim().isEmpty
+                ? '-'
+                : _titleCtrl.text.trim(),
             location: _locationCtrl.text.trim().isEmpty
                 ? '-'
                 : _locationCtrl.text.trim(),
-            urgency: _selectedUrgency ?? '-',
-            budget:
-                '${_budgetMinCtrl.text.trim().isEmpty ? '-' : _budgetMinCtrl.text.trim()} - ${_budgetMaxCtrl.text.trim().isEmpty ? '-' : _budgetMaxCtrl.text.trim()} MAD',
+            urgency:  _selectedUrgency ?? '-',
+            budget:   '${minTxt.isEmpty ? '-' : minTxt} - '
+                      '${maxTxt.isEmpty ? '-' : maxTxt} MAD',
           ),
         ],
       ),
     );
   }
 }
+
+// ─── Progress header ──────────────────────────────────────────────────────────
 
 class _ProgressHeader extends StatelessWidget {
   const _ProgressHeader({required this.currentStep, required this.steps});
@@ -819,9 +913,8 @@ class _ProgressHeader extends StatelessWidget {
       ),
       child: Row(
         children: List.generate(steps.length, (index) {
-          final isDone = index < currentStep;
+          final isDone   = index < currentStep;
           final isActive = index == currentStep;
-
           return Expanded(
             child: Row(
               children: [
@@ -843,14 +936,13 @@ class _ProgressHeader extends StatelessWidget {
                             color: Colors.white, size: 16)
                         : Text('${index + 1}',
                             style: TextStyle(
-                              fontFamily: 'Nunito',
-                              fontSize: 12,
+                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                              fontSize:   12,
                               fontWeight: FontWeight.w800,
                               color: isActive
                                   ? Colors.white
                                   : BrikolikColors.textHint,
-                            ),
-                          ),
+                            )),
                   ),
                 ),
                 if (index < steps.length - 1)
@@ -871,6 +963,8 @@ class _ProgressHeader extends StatelessWidget {
     );
   }
 }
+
+// ─── Bottom action bar ────────────────────────────────────────────────────────
 
 class _BottomActions extends StatelessWidget {
   const _BottomActions({
@@ -893,7 +987,8 @@ class _BottomActions extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
         decoration: BoxDecoration(
           color: BrikolikColors.surface,
-          border: const Border(top: BorderSide(color: BrikolikColors.border)),
+          border:
+              const Border(top: BorderSide(color: BrikolikColors.border)),
           boxShadow: [
             BoxShadow(
               color: BrikolikColors.primary.withValues(alpha: 0.07),
@@ -907,8 +1002,8 @@ class _BottomActions extends StatelessWidget {
             SizedBox(
               width: 108,
               child: BrikolikButton(
-                label: 'Retour',
-                outlined: true,
+                label:     'Retour',
+                outlined:  true,
                 onPressed: isSubmitting ? null : onBack,
               ),
             ),
@@ -916,8 +1011,9 @@ class _BottomActions extends StatelessWidget {
             Expanded(
               child: BrikolikButton(
                 label: isLast ? 'Publier ma demande' : 'Continuer',
-                icon:
-                    isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                icon:  isLast
+                    ? Icons.check_rounded
+                    : Icons.arrow_forward_rounded,
                 isLoading: isSubmitting,
                 onPressed: isSubmitting ? null : onNext,
               ),
@@ -928,6 +1024,8 @@ class _BottomActions extends StatelessWidget {
     );
   }
 }
+
+// ─── Summary card ─────────────────────────────────────────────────────────────
 
 class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
@@ -957,13 +1055,13 @@ class _SummaryCard extends StatelessWidget {
         children: [
           _SummaryRow(label: 'Categorie', value: category),
           const Divider(height: 20),
-          _SummaryRow(label: 'Titre', value: title),
+          _SummaryRow(label: 'Titre',     value: title),
           const Divider(height: 20),
-          _SummaryRow(label: 'Lieu', value: location),
+          _SummaryRow(label: 'Lieu',      value: location),
           const Divider(height: 20),
-          _SummaryRow(label: 'Urgence', value: urgency),
+          _SummaryRow(label: 'Urgence',   value: urgency),
           const Divider(height: 20),
-          _SummaryRow(label: 'Budget', value: budget),
+          _SummaryRow(label: 'Budget',    value: budget),
         ],
       ),
     );
@@ -1000,28 +1098,23 @@ class _SummaryRow extends StatelessWidget {
   }
 }
 
+// ─── Data models ──────────────────────────────────────────────────────────────
+
 class _JobCategory {
   const _JobCategory(this.label, this.icon);
-
-  final String label;
+  final String   label;
   final IconData icon;
 }
 
 class _UrgencyOption {
   const _UrgencyOption(this.label, this.icon, this.color);
-
-  final String label;
+  final String   label;
   final IconData icon;
-  final Color color;
+  final Color    color;
 }
 
 class _LocalUploadPhoto {
-  const _LocalUploadPhoto({
-    required this.id,
-    required this.bytes,
-  });
-
-  final String id;
+  const _LocalUploadPhoto({required this.id, required this.bytes});
+  final String    id;
   final Uint8List bytes;
 }
-

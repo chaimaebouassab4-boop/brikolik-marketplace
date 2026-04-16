@@ -91,7 +91,7 @@ class AppTheme {
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
-      fontFamily: 'Nunito',
+      fontFamily: 'Nunito', fontFamilyFallback: const ['Cairo'],
       scaffoldBackgroundColor: BrikolikColors.background,
       colorScheme: const ColorScheme.light(
         primary: BrikolikColors.primary,
@@ -113,7 +113,7 @@ class AppTheme {
         shadowColor: Color(0x18000000),
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: BrikolikColors.textPrimary,
@@ -133,7 +133,7 @@ class AppTheme {
           elevation: 0,
           shadowColor: Colors.transparent,
           textStyle: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 16,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.2,
@@ -151,7 +151,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(BrikolikRadius.md),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -163,7 +163,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: BrikolikColors.accent,
           textStyle: const TextStyle(
-            fontFamily: 'Nunito',
+            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -203,17 +203,17 @@ class AppTheme {
         ),
         hintStyle: const TextStyle(
           color: BrikolikColors.textHint,
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 15,
         ),
         labelStyle: const TextStyle(
           color: BrikolikColors.textSecondary,
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 14,
         ),
         floatingLabelStyle: const TextStyle(
           color: BrikolikColors.primary,
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -235,7 +235,7 @@ class AppTheme {
         backgroundColor: BrikolikColors.surfaceVariant,
         selectedColor: BrikolikColors.primaryLight,
         labelStyle: const TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -254,12 +254,12 @@ class AppTheme {
         elevation: 8,
         type: BottomNavigationBarType.fixed,
         selectedLabelStyle: TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 11,
           fontWeight: FontWeight.w700,
         ),
         unselectedLabelStyle: TextStyle(
-          fontFamily: 'Nunito',
+          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
           fontSize: 11,
           fontWeight: FontWeight.w500,
         ),
@@ -274,20 +274,20 @@ class AppTheme {
 
       // ── Text Theme ───────────────────────────────
       textTheme: const TextTheme(
-        displayLarge:  TextStyle(fontFamily: 'Nunito', fontSize: 32, fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary),
-        displayMedium: TextStyle(fontFamily: 'Nunito', fontSize: 28, fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary),
-        headlineLarge: TextStyle(fontFamily: 'Nunito', fontSize: 24, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
-        headlineMedium:TextStyle(fontFamily: 'Nunito', fontSize: 20, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
-        headlineSmall: TextStyle(fontFamily: 'Nunito', fontSize: 18, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
-        titleLarge:    TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
-        titleMedium:   TextStyle(fontFamily: 'Nunito', fontSize: 15, fontWeight: FontWeight.w600, color: BrikolikColors.textPrimary),
-        titleSmall:    TextStyle(fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w600, color: BrikolikColors.textPrimary),
-        bodyLarge:     TextStyle(fontFamily: 'Nunito', fontSize: 16, fontWeight: FontWeight.w400, color: BrikolikColors.textPrimary),
-        bodyMedium:    TextStyle(fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w400, color: BrikolikColors.textSecondary),
-        bodySmall:     TextStyle(fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w400, color: BrikolikColors.textHint),
-        labelLarge:    TextStyle(fontFamily: 'Nunito', fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3),
-        labelMedium:   TextStyle(fontFamily: 'Nunito', fontSize: 12, fontWeight: FontWeight.w600),
-        labelSmall:    TextStyle(fontFamily: 'Nunito', fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+        displayLarge:  TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 32, fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary),
+        displayMedium: TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 28, fontWeight: FontWeight.w800, color: BrikolikColors.textPrimary),
+        headlineLarge: TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 24, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
+        headlineMedium:TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 20, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
+        headlineSmall: TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 18, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
+        titleLarge:    TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 16, fontWeight: FontWeight.w700, color: BrikolikColors.textPrimary),
+        titleMedium:   TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 15, fontWeight: FontWeight.w600, color: BrikolikColors.textPrimary),
+        titleSmall:    TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 14, fontWeight: FontWeight.w600, color: BrikolikColors.textPrimary),
+        bodyLarge:     TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 16, fontWeight: FontWeight.w400, color: BrikolikColors.textPrimary),
+        bodyMedium:    TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 14, fontWeight: FontWeight.w400, color: BrikolikColors.textSecondary),
+        bodySmall:     TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 12, fontWeight: FontWeight.w400, color: BrikolikColors.textHint),
+        labelLarge:    TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3),
+        labelMedium:   TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 12, fontWeight: FontWeight.w600),
+        labelSmall:    TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
       ),
     );
   }

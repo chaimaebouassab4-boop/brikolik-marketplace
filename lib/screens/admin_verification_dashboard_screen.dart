@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -360,7 +360,7 @@ class _AdminVerificationDashboardScreenState
                                 child: Text(
                                   _statusLabel(status).tr(),
                                   style: TextStyle(
-                                    fontFamily: 'Nunito',
+                                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
                                     fontWeight: FontWeight.w800,
                                     fontSize: 11,
                                     color: statusColor,
@@ -504,7 +504,7 @@ class _MetaChip extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Nunito',
+              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: BrikolikColors.textSecondary,
