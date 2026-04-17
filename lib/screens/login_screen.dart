@@ -76,6 +76,34 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Future<void> _handleForgotPassword() async {
+    if (_isLoading) return;
+
+    // Avoid dialogs here: on web they can trigger framework assertions when the
+    // widget tree changes while the dialog is tearing down.
+    final normalized = _emailCtrl.text.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      _showSnack('Entrez votre email puis cliquez sur Mot de passe oublie ?');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: normalized);
+      _showSnack(
+        'Email de reinitialisation envoye. Verifiez votre boite mail.',
+      );
+    } on FirebaseAuthException catch (e) {
+      _showSnack(_friendlyAuthMessage(e));
+    } catch (e) {
+      _showSnack('Erreur: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   Future<void> _handleGoogleSignIn() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
@@ -293,8 +321,8 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
+                        child: TextButton(
+                        onPressed: _handleForgotPassword,
                         style: TextButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 0, vertical: 4),
@@ -374,6 +402,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   String _friendlyAuthMessage(FirebaseAuthException e) {
     switch (e.code) {
+      case 'missing-email':
+        return 'Email requis.';
       case 'email-already-in-use':
         return 'Cet email est deja utilise.';
       case 'invalid-email':
@@ -381,6 +411,7 @@ class _LoginScreenState extends State<LoginScreen>
       case 'weak-password':
         return 'Mot de passe trop faible (minimum 6 caracteres).';
       case 'user-not-found':
+        return 'Aucun compte trouve pour cet email.';
       case 'wrong-password':
       case 'invalid-credential':
         return 'Identifiants invalides.';
