@@ -55,7 +55,7 @@ class _IdentityVerificationScreenState
     if (!mounted) return;
 
     if (role == 'admin') {
-      Navigator.pushReplacementNamed(context, '/admin-verifications');
+      Navigator.pushReplacementNamed(context, '/admin');
     } else if (role == 'customer') {
       Navigator.pushReplacementNamed(context, '/customer-profile');
     } else if (role == 'worker') {

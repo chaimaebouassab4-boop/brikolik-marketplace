@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -703,7 +704,10 @@ class BrikolikBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final locale = context.locale;
-    String routeForIndex(int index) {
+
+    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+
+    String routeForCanonicalIndex(int index) {
       switch (index) {
         case 0:
           return '/';
@@ -718,8 +722,18 @@ class BrikolikBottomNav extends StatelessWidget {
       }
     }
 
-    void handleNavigation(int index) {
-      final route = routeForIndex(index);
+    // Canonical tabs: 0=Home, 1=Jobs, 2=Chat, 3=Profile.
+    // Hide Chat when user has no account (not authenticated).
+    final canonicalTabs = <int>[0, 1, if (isLoggedIn) 2, 3];
+
+    int toVisibleIndex(int canonical) {
+      final visible = canonicalTabs.indexOf(canonical);
+      return visible == -1 ? 0 : visible;
+    }
+
+    void handleNavigation(int visibleIndex) {
+      final canonicalIndex = canonicalTabs[visibleIndex];
+      final route = routeForCanonicalIndex(canonicalIndex);
       final currentRoute = ModalRoute.of(context)?.settings.name;
       if (currentRoute == route) return;
 
@@ -747,12 +761,13 @@ class BrikolikBottomNav extends StatelessWidget {
         child: BottomNavigationBar(
           key: ValueKey<String>('brikolik-bottom-nav-${locale.languageCode}'),
           type: BottomNavigationBarType.fixed,
-          currentIndex: currentIndex,
+          currentIndex: toVisibleIndex(currentIndex),
           selectedItemColor: BrikolikColors.primary,
           unselectedItemColor: BrikolikColors.textSecondary,
           onTap: (i) {
+            final canonicalIndex = canonicalTabs[i];
             if (onTap != null) {
-              onTap!(i);
+              onTap!(canonicalIndex);
               return;
             }
             handleNavigation(i);
@@ -770,11 +785,12 @@ class BrikolikBottomNav extends StatelessWidget {
               activeIcon: const Icon(Icons.work_rounded),
               label: 'Missions'.tr(),
             ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.chat_bubble_outline_rounded),
-              activeIcon: const Icon(Icons.chat_bubble_rounded),
-              label: 'Messages'.tr(),
-            ),
+            if (isLoggedIn)
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                activeIcon: const Icon(Icons.chat_bubble_rounded),
+                label: 'Messages'.tr(),
+              ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline_rounded),
               activeIcon: const Icon(Icons.person_rounded),

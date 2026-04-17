@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     final role = profile?['role'] as String?;
     if (role == 'admin') {
-      Navigator.pushReplacementNamed(context, '/admin-verifications');
+      Navigator.pushReplacementNamed(context, '/admin');
       return;
     }
 

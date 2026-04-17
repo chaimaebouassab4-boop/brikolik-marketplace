@@ -8,6 +8,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/identity_verification_screen.dart';
 import 'screens/admin_verification_dashboard_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/role_screen.dart';
 import 'screens/customer_profile_screen.dart';
 import 'screens/worker_profile_screen.dart';
@@ -53,6 +54,7 @@ class BrikolikApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/identity-verification': (context) =>
             const IdentityVerificationScreen(),
+        '/admin': (context) => const AdminDashboardScreen(),
         '/admin-verifications': (context) =>
             const AdminVerificationDashboardScreen(),
         '/role': (context) => const RoleScreen(),

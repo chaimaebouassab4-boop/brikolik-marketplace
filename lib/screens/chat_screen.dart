@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/widgets.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -145,6 +147,48 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: BrikolikColors.background,
+        appBar: AppBar(
+          backgroundColor: BrikolikColors.surface,
+          foregroundColor: BrikolikColors.textPrimary,
+          elevation: 0,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(color: BrikolikColors.border, height: 1),
+          ),
+          leadingWidth: 48,
+          title: Text(
+            'Messages'.tr(),
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontFamilyFallback: ['Cairo'],
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: BrikolikColors.textPrimary,
+            ),
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: EmptyState(
+            icon: Icons.lock_person_outlined,
+            title: 'Connexion requise',
+            subtitle:
+                'Creez un compte ou connectez-vous pour acceder aux messages.',
+            actionLabel: 'Se connecter',
+            onAction: () => Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/login',
+              (_) => false,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: BrikolikColors.background,
       appBar: AppBar(
