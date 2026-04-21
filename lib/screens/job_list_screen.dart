@@ -76,13 +76,16 @@ class _JobListScreenState extends State<JobListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: BrikolikColors.background,
-      appBar: const BrikolikAppBar(
+      appBar: BrikolikAppBar(
         title: 'Missions',
         showBackButton: false,
         useBrandBackground: false,
         actions: [
           SizedBox(width: 8),
-          Icon(Icons.notifications_outlined),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () => Navigator.pushNamed(context, '/notifications'),
+          ),
           SizedBox(width: 12),
         ],
       ),
@@ -120,9 +123,11 @@ class _JobListScreenState extends State<JobListScreen> {
                 children: [
                   Icon(Icons.add_rounded, color: Colors.white, size: 20),
                   SizedBox(width: 8),
-                  Text('Poster un service'.tr(),
+                  Text(
+                    'Poster un service'.tr(),
                     style: TextStyle(
-                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                      fontFamily: 'Nunito',
+                      fontFamilyFallback: ['Cairo'],
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                       color: Colors.white,
@@ -146,7 +151,8 @@ class _JobListScreenState extends State<JobListScreen> {
         controller: _searchCtrl,
         onChanged: (_) => setState(() {}),
         style: const TextStyle(
-          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+          fontFamily: 'Nunito',
+          fontFamilyFallback: ['Cairo'],
           fontSize: 15,
           fontWeight: FontWeight.w600,
           color: BrikolikColors.textPrimary,
@@ -259,7 +265,20 @@ class _JobListScreenState extends State<JobListScreen> {
           if (query.isEmpty) return true;
           final title = (doc.data()['title'] as String?)?.toLowerCase() ?? '';
           return title.contains(query);
-        }).toList();
+        }).toList()
+          ..sort((a, b) {
+            final aData = a.data();
+            final bData = b.data();
+            final aUrgent = _isUrgentActive(aData);
+            final bUrgent = _isUrgentActive(bData);
+            if (aUrgent != bUrgent) {
+              return bUrgent ? 1 : -1;
+            }
+            return _compareTimestampDesc(
+              aData['createdAt'],
+              bData['createdAt'],
+            );
+          });
 
         if (filteredDocs.isEmpty) {
           return const EmptyState(
@@ -295,6 +314,7 @@ class _JobListScreenState extends State<JobListScreen> {
             final jobMap = {
               'status': data['status'] ?? 'open',
               'offers': data['offersCount'] ?? 0,
+              'isUrgentActive': _isUrgentActive(data),
               'icon': _iconForCategory(category),
               'category': category,
               'time': timeStr,
@@ -343,6 +363,24 @@ class _JobListScreenState extends State<JobListScreen> {
         return Icons.work_outline_rounded;
     }
   }
+
+  bool _isUrgentActive(Map<String, dynamic> data) {
+    if (data['isUrgent'] != true) return false;
+    final paymentStatus = (data['urgentPaymentStatus'] as String?)?.trim();
+    final urgentStatus = (data['urgentStatus'] as String?)?.trim();
+    if (paymentStatus != 'paid' || urgentStatus != 'active') return false;
+    final expiresAt = data['urgentExpiresAt'];
+    if (expiresAt is Timestamp) {
+      return expiresAt.toDate().isAfter(DateTime.now());
+    }
+    return true;
+  }
+
+  int _compareTimestampDesc(dynamic a, dynamic b) {
+    final aMs = a is Timestamp ? a.millisecondsSinceEpoch : 0;
+    final bMs = b is Timestamp ? b.millisecondsSinceEpoch : 0;
+    return bMs.compareTo(aMs);
+  }
 }
 
 class JobCard extends StatelessWidget {
@@ -355,6 +393,7 @@ class JobCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOpen = job['status'] == 'open';
     final hasOffers = (job['offers'] as int) > 0;
+    final isUrgent = job['isUrgentActive'] == true;
 
     return Material(
       color: BrikolikColors.surface,
@@ -365,10 +404,15 @@ class JobCard extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(BrikolikRadius.lg),
-            border: Border.all(color: BrikolikColors.border, width: 1),
+            border: Border.all(
+              color: isUrgent ? BrikolikColors.error : BrikolikColors.border,
+              width: isUrgent ? 1.4 : 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: BrikolikColors.primary.withValues(alpha: 0.05),
+                color:
+                    (isUrgent ? BrikolikColors.error : BrikolikColors.primary)
+                        .withValues(alpha: 0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -399,22 +443,73 @@ class JobCard extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                job['category'],
-                                style: const TextStyle(
-                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: BrikolikColors.secondary,
-                                  letterSpacing: 0.5,
-                                ),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(
+                                    job['category'],
+                                    style: const TextStyle(
+                                      fontFamily: 'Nunito',
+                                      fontFamilyFallback: ['Cairo'],
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: BrikolikColors.secondary,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                  if (isUrgent)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: BrikolikColors.error,
+                                        borderRadius: BorderRadius.circular(
+                                          BrikolikRadius.full,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Urgent',
+                                        style: TextStyle(
+                                          fontFamily: 'Nunito',
+                                          fontFamilyFallback: ['Cairo'],
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              Text(job['time'],
-                                  style: Theme.of(context).textTheme.bodySmall),
+                              Text(
+                                job['time'],
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
                             ],
                           ),
                         ),
-                        isOpen ? StatusBadge.open() : StatusBadge.inProgress(),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isUrgent) ...[
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  color: BrikolikColors.error,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            isOpen
+                                ? StatusBadge.open()
+                                : StatusBadge.inProgress(),
+                          ],
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -448,7 +543,8 @@ class JobCard extends StatelessWidget {
                           child: Text(
                             job['budget'],
                             style: const TextStyle(
-                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                              fontFamily: 'Nunito',
+                              fontFamilyFallback: ['Cairo'],
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -499,7 +595,8 @@ class JobCard extends StatelessWidget {
                         child: Text(
                           '${job['offers']} offre${job['offers'] > 1 ? 's' : ''}',
                           style: const TextStyle(
-                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                            fontFamily: 'Nunito',
+                            fontFamilyFallback: ['Cairo'],
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: BrikolikColors.accent,
@@ -507,7 +604,8 @@ class JobCard extends StatelessWidget {
                         ),
                       )
                     else
-                      Text('Aucune offre'.tr(),
+                      Text(
+                        'Aucune offre'.tr(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: BrikolikColors.textHint,
                             ),
@@ -534,4 +632,3 @@ class _CategoryOption {
   final IconData icon;
   final List<String> values;
 }
-

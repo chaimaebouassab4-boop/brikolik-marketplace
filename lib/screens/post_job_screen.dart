@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 import '../widgets/verification_gate.dart';
@@ -19,6 +20,9 @@ class PostJobScreen extends StatefulWidget {
 }
 
 class _PostJobScreenState extends State<PostJobScreen> {
+  static const double _urgentBoostPriceMad = 29;
+  static const int _urgentBoostHours = 72;
+
   static const List<_JobCategory> _categories = [
     _JobCategory('Plomberie', Icons.water_drop_outlined),
     _JobCategory('Electricite', Icons.bolt_outlined),
@@ -31,32 +35,37 @@ class _PostJobScreenState extends State<PostJobScreen> {
   ];
 
   static const List<_UrgencyOption> _urgencyOptions = [
-    _UrgencyOption('Urgent (24h)', Icons.flash_on_rounded, BrikolikColors.error),
-    _UrgencyOption('Cette semaine', Icons.today_rounded, BrikolikColors.warning),
-    _UrgencyOption('Ce mois', Icons.calendar_month_outlined, BrikolikColors.primary),
+    _UrgencyOption(
+        'Urgent (24h)', Icons.flash_on_rounded, BrikolikColors.error),
+    _UrgencyOption(
+        'Cette semaine', Icons.today_rounded, BrikolikColors.warning),
+    _UrgencyOption(
+        'Ce mois', Icons.calendar_month_outlined, BrikolikColors.primary),
     _UrgencyOption('Flexible', Icons.schedule_rounded, BrikolikColors.success),
   ];
 
   static const List<String> _steps = ['Categorie', 'Details', 'Budget'];
 
   final GlobalKey<FormState> _detailsFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _budgetFormKey  = GlobalKey<FormState>();
+  final GlobalKey<FormState> _budgetFormKey = GlobalKey<FormState>();
 
-  final TextEditingController _titleCtrl     = TextEditingController();
-  final TextEditingController _descCtrl      = TextEditingController();
-  final TextEditingController _locationCtrl  = TextEditingController();
+  final TextEditingController _titleCtrl = TextEditingController();
+  final TextEditingController _descCtrl = TextEditingController();
+  final TextEditingController _locationCtrl = TextEditingController();
   final TextEditingController _budgetMinCtrl = TextEditingController();
   final TextEditingController _budgetMaxCtrl = TextEditingController();
   final ImagePicker _picker = ImagePicker();
 
-  static const int _maxProblemPhotos = 4;
+  static const int _maxProblemPhotos = 5;
   final List<_LocalUploadPhoto> _problemPhotos = <_LocalUploadPhoto>[];
 
-  int    _currentStep          = 0;
-  bool   _isAccessLoading      = true;
-  bool   _isSubmitting         = false;
-  bool   _isVerified           = false;
-  bool   _verificationRequested = false;
+  int _currentStep = 0;
+  bool _isAccessLoading = true;
+  bool _isSubmitting = false;
+  bool _isVerified = false;
+  bool _verificationRequested = false;
+  bool _wantsUrgentBoost = false;
+  bool _urgentPaymentConfirmed = false;
   String? _selectedCategory;
   String? _selectedUrgency;
 
@@ -87,14 +96,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
       return;
     }
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final data = doc.data() ?? const <String, dynamic>{};
       if (!mounted) return;
       setState(() {
-        _isVerified            = data['isVerified']           == true;
+        _isVerified = data['isVerified'] == true;
         _verificationRequested = data['verificationRequested'] == true;
       });
     } catch (_) {
@@ -124,7 +131,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
             Expanded(
               child: Text(title,
                   style: const TextStyle(
-                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                      fontFamily: 'Nunito',
+                      fontFamilyFallback: ['Cairo'],
                       fontSize: 16,
                       fontWeight: FontWeight.w800)),
             ),
@@ -132,7 +140,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         ),
         content: Text(message,
             style: const TextStyle(
-                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                fontFamily: 'Nunito',
+                fontFamilyFallback: ['Cairo'],
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: BrikolikColors.textSecondary)),
@@ -141,7 +150,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Fermer',
                 style: TextStyle(
-                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                    fontFamily: 'Nunito',
+                    fontFamilyFallback: ['Cairo'],
                     fontWeight: FontWeight.w700,
                     color: BrikolikColors.primary)),
           ),
@@ -174,17 +184,21 @@ class _PostJobScreenState extends State<PostJobScreen> {
               'Demande publiee !',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                  fontFamily: 'Nunito',
+                  fontFamilyFallback: ['Cairo'],
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: BrikolikColors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Votre demande est maintenant visible par les artisans de votre region.',
+            Text(
+              _urgentPaymentConfirmed
+                  ? 'Votre demande est prioritaire dans le feed avec le badge Urgent.'
+                  : 'Votre demande est maintenant visible par les artisans de votre region.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+              style: const TextStyle(
+                  fontFamily: 'Nunito',
+                  fontFamilyFallback: ['Cairo'],
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: BrikolikColors.textSecondary),
@@ -209,7 +223,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   Future<void> _pickProblemPhotos() async {
     final remainingSlots = _maxProblemPhotos - _problemPhotos.length;
     if (remainingSlots <= 0) {
-      _showMessage('Limite de 4 photos maximum.'.tr());
+      _showMessage('Limite de 5 photos maximum.'.tr());
       return;
     }
 
@@ -231,7 +245,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
     setState(() => _problemPhotos.addAll(localPhotos));
 
     if (picked.length > remainingSlots) {
-      _showMessage('Limite de 4 photos maximum.'.tr());
+      _showMessage('Limite de 5 photos maximum.'.tr());
     }
   }
 
@@ -248,7 +262,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
     final urls = <String>[];
     for (var i = 0; i < _problemPhotos.length; i++) {
       final photo = _problemPhotos[i];
-      final ts  = DateTime.now().millisecondsSinceEpoch;
+      final ts = DateTime.now().millisecondsSinceEpoch;
       final ref = FirebaseStorage.instance
           .ref()
           .child('jobs/$jobId/problem_photos/${ts}_$i.jpg');
@@ -295,6 +309,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
     final max = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
     if (max < min) {
       _showMessage('Le budget maximum doit etre superieur au minimum.');
+      return false;
+    }
+    if (_wantsUrgentBoost && !_urgentPaymentConfirmed) {
+      _showMessage(
+        'Confirmez le paiement urgent ou desactivez le boost pour publier normalement.',
+      );
       return false;
     }
     return true;
@@ -356,14 +376,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
   }
 
   Future<void> _doSubmit(String uid) async {
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-    final userName  = doc.data()?['fullName'] ?? 'Client';
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userName = doc.data()?['fullName'] ?? 'Client';
     final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
     final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
-    final jobRef    = FirebaseFirestore.instance.collection('jobs').doc();
+    final jobRef = FirebaseFirestore.instance.collection('jobs').doc();
+    final urgentActive = _wantsUrgentBoost && _urgentPaymentConfirmed;
+    final now = DateTime.now();
 
     final photoUrls = await _uploadProblemPhotos(
       jobId: jobRef.id,
@@ -371,23 +391,49 @@ class _PostJobScreenState extends State<PostJobScreen> {
     );
 
     await jobRef.set({
-      'title':              _titleCtrl.text.trim(),
-      'description':        _descCtrl.text.trim(),
-      'category':           _selectedCategory,
-      'location':           _locationCtrl.text.trim(),
-      'urgency':            _selectedUrgency,
-      'budgetMin':          budgetMin,
-      'budgetMax':          budgetMax,
-      'budget':             'MAD $budgetMin - $budgetMax',
-      'customerId':         uid,
-      'customerName':       userName,
-      'status':             'open',
-      'createdAt':          FieldValue.serverTimestamp(),
-      'offersCount':        0,
-      'rating':             0.0,
-      'problemPhotoUrls':   photoUrls,
+      'title': _titleCtrl.text.trim(),
+      'description': _descCtrl.text.trim(),
+      'category': _selectedCategory,
+      'location': _locationCtrl.text.trim(),
+      'urgency': _selectedUrgency,
+      'budgetMin': budgetMin,
+      'budgetMax': budgetMax,
+      'budget': 'MAD $budgetMin - $budgetMax',
+      'customerId': uid,
+      'customerName': userName,
+      'status': 'open',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      'offersCount': 0,
+      'rating': 0.0,
+      'isUrgent': urgentActive,
+      'urgentRequested': _wantsUrgentBoost,
+      'urgentStatus': urgentActive ? 'active' : 'none',
+      'urgentPaymentStatus': _wantsUrgentBoost
+          ? (_urgentPaymentConfirmed ? 'paid' : 'pending')
+          : 'none',
+      'urgentPrice': _wantsUrgentBoost ? _urgentBoostPriceMad : 0.0,
+      if (urgentActive) 'urgentActivatedAt': Timestamp.fromDate(now),
+      if (urgentActive)
+        'urgentExpiresAt': Timestamp.fromDate(
+          now.add(const Duration(hours: _urgentBoostHours)),
+        ),
+      if (urgentActive) 'urgentPaymentReference': 'demo-urgent-${jobRef.id}',
+      'problemPhotoUrls': photoUrls,
       'problemPhotosCount': photoUrls.length,
     });
+
+    if (urgentActive) {
+      try {
+        await NotificationService.notifyUrgentActivated(
+          userId: uid,
+          jobId: jobRef.id,
+          jobTitle: _titleCtrl.text.trim(),
+        );
+      } catch (e) {
+        debugPrint('=== URGENT NOTIFICATION ERROR: $e');
+      }
+    }
   }
 
   // ─── Build ────────────────────────────────────────────────────────────────────
@@ -412,8 +458,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         ),
         body: VerificationGate(
           title: 'Verification necessaire',
-          message:
-              'Votre compte doit etre valide par un administrateur avant '
+          message: 'Votre compte doit etre valide par un administrateur avant '
               'de pouvoir poster une mission.',
           verificationRequested: _verificationRequested,
         ),
@@ -432,12 +477,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 240),
-              switchInCurve:  Curves.easeOut,
+              switchInCurve: Curves.easeOut,
               switchOutCurve: Curves.easeIn,
               transitionBuilder: (child, animation) {
                 final slide = Tween<Offset>(
                   begin: const Offset(0.02, 0),
-                  end:   Offset.zero,
+                  end: Offset.zero,
                 ).animate(animation);
                 return FadeTransition(
                   opacity: animation,
@@ -452,10 +497,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
           ),
           _BottomActions(
-            isLast:       _currentStep == _steps.length - 1,
+            isLast: _currentStep == _steps.length - 1,
             isSubmitting: _isSubmitting,
-            onBack:       _goToPreviousStep,
-            onNext:       _goToNextStep,
+            onBack: _goToPreviousStep,
+            onNext: _goToNextStep,
           ),
         ],
       ),
@@ -464,9 +509,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
   Widget _buildStepContent() {
     switch (_currentStep) {
-      case 0:  return _buildCategoryStep();
-      case 1:  return _buildDetailsStep();
-      default: return _buildBudgetStep();
+      case 0:
+        return _buildCategoryStep();
+      case 1:
+        return _buildDetailsStep();
+      default:
+        return _buildBudgetStep();
     }
   }
 
@@ -480,7 +528,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
             style: Theme.of(context).textTheme.headlineLarge),
         const SizedBox(height: 8),
         Text(
-          'Choisissez une categorie pour recevoir des offres plus precises.'.tr(),
+          'Choisissez une categorie pour recevoir des offres plus precises.'
+              .tr(),
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: 20),
@@ -489,13 +538,13 @@ class _PostJobScreenState extends State<PostJobScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount:  2,
+            crossAxisCount: 2,
             crossAxisSpacing: 12,
-            mainAxisSpacing:  12,
+            mainAxisSpacing: 12,
             childAspectRatio: 1.35,
           ),
           itemBuilder: (ctx, index) {
-            final item     = _categories[index];
+            final item = _categories[index];
             final selected = _selectedCategory == item.label;
 
             return Material(
@@ -510,9 +559,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     borderRadius: BorderRadius.circular(BrikolikRadius.lg),
                     gradient: selected ? BrikolikColors.brandGradient : null,
                     border: Border.all(
-                      color: selected
-                          ? Colors.transparent
-                          : BrikolikColors.border,
+                      color:
+                          selected ? Colors.transparent : BrikolikColors.border,
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -545,9 +593,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       Text(item.label,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                            fontSize:    14,
-                            fontWeight:  FontWeight.w700,
+                            fontFamily: 'Nunito',
+                            fontFamilyFallback: ['Cairo'],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
                             color: selected
                                 ? Colors.white
                                 : BrikolikColors.textPrimary,
@@ -576,7 +625,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           Text(
-            'Plus votre demande est claire, plus les offres seront pertinentes.'.tr(),
+            'Plus votre demande est claire, plus les offres seront pertinentes.'
+                .tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -663,15 +713,16 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             color: option.color.withValues(alpha: 0.14),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(option.icon,
-                              size: 18, color: option.color),
+                          child:
+                              Icon(option.icon, size: 18, color: option.color),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(option.label,
                               style: const TextStyle(
-                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                                fontSize:   14,
+                                fontFamily: 'Nunito',
+                                fontFamilyFallback: ['Cairo'],
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: BrikolikColors.textPrimary,
                               )),
@@ -708,7 +759,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
               style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 6),
           Text(
-            'Ajoutez jusqu a 4 photos pour mieux expliquer le probleme.'.tr(),
+            'Ajoutez jusqu a 5 photos pour mieux expliquer le probleme.'.tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -720,8 +771,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 Stack(
                   children: [
                     ClipRRect(
-                      borderRadius:
-                          BorderRadius.circular(BrikolikRadius.md),
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
                       child: Image.memory(photo.bytes,
                           width: 82, height: 82, fit: BoxFit.cover),
                     ),
@@ -752,8 +802,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     height: 82,
                     decoration: BoxDecoration(
                       color: BrikolikColors.surfaceVariant,
-                      borderRadius:
-                          BorderRadius.circular(BrikolikRadius.md),
+                      borderRadius: BorderRadius.circular(BrikolikRadius.md),
                       border: Border.all(color: BrikolikColors.border),
                     ),
                     child: Column(
@@ -764,8 +813,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                         const SizedBox(height: 4),
                         Text('Ajouter'.tr(),
                             style: const TextStyle(
-                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                              fontSize:   11,
+                              fontFamily: 'Nunito',
+                              fontFamilyFallback: ['Cairo'],
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: BrikolikColors.primary,
                             )),
@@ -796,7 +846,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
               style: Theme.of(context).textTheme.headlineLarge),
           const SizedBox(height: 8),
           Text(
-            'Un budget realiste vous aide a recevoir des offres rapidement.'.tr(),
+            'Un budget realiste vous aide a recevoir des offres rapidement.'
+                .tr(),
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 20),
@@ -863,8 +914,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     'Astuce: donnez une fourchette pour garder de la flexibilite avec les artisans.'
                         .tr(),
                     style: const TextStyle(
-                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                      fontSize:   13,
+                      fontFamily: 'Nunito',
+                      fontFamilyFallback: ['Cairo'],
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: BrikolikColors.textSecondary,
                     ),
@@ -874,21 +926,173 @@ class _PostJobScreenState extends State<PostJobScreen> {
             ),
           ),
           const SizedBox(height: 22),
+          _buildUrgentBoostCard(),
+          const SizedBox(height: 22),
           Text('Recapitulatif'.tr(),
               style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
           _SummaryCard(
             category: _selectedCategory ?? '-',
-            title:    _titleCtrl.text.trim().isEmpty
-                ? '-'
-                : _titleCtrl.text.trim(),
+            title:
+                _titleCtrl.text.trim().isEmpty ? '-' : _titleCtrl.text.trim(),
             location: _locationCtrl.text.trim().isEmpty
                 ? '-'
                 : _locationCtrl.text.trim(),
-            urgency:  _selectedUrgency ?? '-',
-            budget:   '${minTxt.isEmpty ? '-' : minTxt} - '
-                      '${maxTxt.isEmpty ? '-' : maxTxt} MAD',
+            urgency: _selectedUrgency ?? '-',
+            urgentBoost: _wantsUrgentBoost
+                ? (_urgentPaymentConfirmed
+                    ? 'Urgent active (${_urgentBoostPriceMad.toStringAsFixed(0)} MAD)'
+                    : 'Urgent non payee')
+                : 'Non',
+            budget: '${minTxt.isEmpty ? '-' : minTxt} - '
+                '${maxTxt.isEmpty ? '-' : maxTxt} MAD',
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUrgentBoostCard() {
+    final borderColor = _urgentPaymentConfirmed
+        ? BrikolikColors.error
+        : (_wantsUrgentBoost ? BrikolikColors.accent : BrikolikColors.border);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: BrikolikColors.surface,
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(
+          color: borderColor,
+          width: _wantsUrgentBoost ? 1.4 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: BrikolikColors.errorLight,
+                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department_outlined,
+                  color: BrikolikColors.error,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Booster en urgent',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Annonce prioritaire pendant $_urgentBoostHours h, affichee avant les annonces normales avec un badge rouge.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _wantsUrgentBoost,
+                activeColor: BrikolikColors.error,
+                onChanged: (value) {
+                  setState(() {
+                    _wantsUrgentBoost = value;
+                    if (!value) _urgentPaymentConfirmed = false;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _UrgentInfoPill(
+                label: '${_urgentBoostPriceMad.toStringAsFixed(0)} MAD',
+                color: BrikolikColors.error,
+                bgColor: BrikolikColors.errorLight,
+              ),
+              const _UrgentInfoPill(
+                label: 'Priorite feed',
+                color: BrikolikColors.primary,
+                bgColor: BrikolikColors.primaryLight,
+              ),
+              const _UrgentInfoPill(
+                label: 'Badge rouge Urgent',
+                color: BrikolikColors.accent,
+                bgColor: BrikolikColors.accentLight,
+              ),
+            ],
+          ),
+          if (_wantsUrgentBoost) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: BrikolikColors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BrikolikRadius.md),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _urgentPaymentConfirmed
+                        ? 'Paiement urgent confirme. La mission sera publiee avec priorite.'
+                        : 'Paiement urgent requis pour activer la priorite.',
+                    style: const TextStyle(
+                      fontFamily: 'Nunito',
+                      fontFamilyFallback: ['Cairo'],
+                      fontWeight: FontWeight.w700,
+                      color: BrikolikColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        setState(
+                          () => _urgentPaymentConfirmed =
+                              !_urgentPaymentConfirmed,
+                        );
+                      },
+                      icon: Icon(
+                        _urgentPaymentConfirmed
+                            ? Icons.check_circle_outline
+                            : Icons.payments_outlined,
+                      ),
+                      label: Text(
+                        _urgentPaymentConfirmed
+                            ? 'Paiement confirme'
+                            : 'Payer maintenant',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: BrikolikColors.error,
+                        minimumSize: const Size(0, 44),
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -913,7 +1117,7 @@ class _ProgressHeader extends StatelessWidget {
       ),
       child: Row(
         children: List.generate(steps.length, (index) {
-          final isDone   = index < currentStep;
+          final isDone = index < currentStep;
           final isActive = index == currentStep;
           return Expanded(
             child: Row(
@@ -936,8 +1140,9 @@ class _ProgressHeader extends StatelessWidget {
                             color: Colors.white, size: 16)
                         : Text('${index + 1}',
                             style: TextStyle(
-                              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
-                              fontSize:   12,
+                              fontFamily: 'Nunito',
+                              fontFamilyFallback: ['Cairo'],
+                              fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: isActive
                                   ? Colors.white
@@ -987,8 +1192,7 @@ class _BottomActions extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
         decoration: BoxDecoration(
           color: BrikolikColors.surface,
-          border:
-              const Border(top: BorderSide(color: BrikolikColors.border)),
+          border: const Border(top: BorderSide(color: BrikolikColors.border)),
           boxShadow: [
             BoxShadow(
               color: BrikolikColors.primary.withValues(alpha: 0.07),
@@ -1002,8 +1206,8 @@ class _BottomActions extends StatelessWidget {
             SizedBox(
               width: 108,
               child: BrikolikButton(
-                label:     'Retour',
-                outlined:  true,
+                label: 'Retour',
+                outlined: true,
                 onPressed: isSubmitting ? null : onBack,
               ),
             ),
@@ -1011,9 +1215,8 @@ class _BottomActions extends StatelessWidget {
             Expanded(
               child: BrikolikButton(
                 label: isLast ? 'Publier ma demande' : 'Continuer',
-                icon:  isLast
-                    ? Icons.check_rounded
-                    : Icons.arrow_forward_rounded,
+                icon:
+                    isLast ? Icons.check_rounded : Icons.arrow_forward_rounded,
                 isLoading: isSubmitting,
                 onPressed: isSubmitting ? null : onNext,
               ),
@@ -1033,6 +1236,7 @@ class _SummaryCard extends StatelessWidget {
     required this.title,
     required this.location,
     required this.urgency,
+    required this.urgentBoost,
     required this.budget,
   });
 
@@ -1040,6 +1244,7 @@ class _SummaryCard extends StatelessWidget {
   final String title;
   final String location;
   final String urgency;
+  final String urgentBoost;
   final String budget;
 
   @override
@@ -1055,13 +1260,15 @@ class _SummaryCard extends StatelessWidget {
         children: [
           _SummaryRow(label: 'Categorie', value: category),
           const Divider(height: 20),
-          _SummaryRow(label: 'Titre',     value: title),
+          _SummaryRow(label: 'Titre', value: title),
           const Divider(height: 20),
-          _SummaryRow(label: 'Lieu',      value: location),
+          _SummaryRow(label: 'Lieu', value: location),
           const Divider(height: 20),
-          _SummaryRow(label: 'Urgence',   value: urgency),
+          _SummaryRow(label: 'Urgence', value: urgency),
           const Divider(height: 20),
-          _SummaryRow(label: 'Budget',    value: budget),
+          _SummaryRow(label: 'Boost urgent', value: urgentBoost),
+          const Divider(height: 20),
+          _SummaryRow(label: 'Budget', value: budget),
         ],
       ),
     );
@@ -1102,19 +1309,52 @@ class _SummaryRow extends StatelessWidget {
 
 class _JobCategory {
   const _JobCategory(this.label, this.icon);
-  final String   label;
+  final String label;
   final IconData icon;
 }
 
 class _UrgencyOption {
   const _UrgencyOption(this.label, this.icon, this.color);
-  final String   label;
+  final String label;
   final IconData icon;
-  final Color    color;
+  final Color color;
 }
 
 class _LocalUploadPhoto {
   const _LocalUploadPhoto({required this.id, required this.bytes});
-  final String    id;
+  final String id;
   final Uint8List bytes;
+}
+
+class _UrgentInfoPill extends StatelessWidget {
+  const _UrgentInfoPill({
+    required this.label,
+    required this.color,
+    required this.bgColor,
+  });
+
+  final String label;
+  final Color color;
+  final Color bgColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(BrikolikRadius.full),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Nunito',
+          fontFamilyFallback: const ['Cairo'],
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: color,
+        ),
+      ),
+    );
+  }
 }

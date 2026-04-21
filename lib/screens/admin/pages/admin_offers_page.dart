@@ -49,7 +49,8 @@ class _AdminOffersPageState extends State<AdminOffersPage> {
               if (snapshot.hasError) {
                 return AdminCard(
                   child: Text(
-                    'Erreur offres: ${snapshot.error}\n\nAstuce: activez collectionGroup et regles Firestore si besoin.',
+                    'Erreur offres: ${snapshot.error}\n\nLa page Offres utilise une requete collectionGroup. '
+                    'Si tu viens juste de corriger les regles Firestore, publie-les puis recharge cette page.',
                   ),
                 );
               }

@@ -55,6 +55,9 @@ service cloud.firestore {
         'city',
         'services',
         'photoUrl',
+        'portfolioPhotoUrls',
+        'portfolioPhotosCount',
+        'portfolioUpdatedAt',
         'updatedAt',
         'role'
       ];
@@ -135,11 +138,71 @@ service cloud.firestore {
       }
     }
 
+    // Requis pour les requetes collectionGroup('offers') du dashboard admin.
+    // Sans cette regle recursive, Firestore peut refuser les lectures des
+    // sous-collections offers meme si /jobs/{jobId}/offers/{offerId} existe.
+    match /{path=**}/offers/{offerId} {
+      allow read: if isSignedIn();
+      allow create: if isVerifiedUser();
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && (
+            resource.data.workerId == request.auth.uid
+            || resource.data.customerId == request.auth.uid
+          )
+        );
+      allow delete: if isAdmin()
+        || (isSignedIn() && resource.data.workerId == request.auth.uid);
+    }
+
     // Queue d'envoi d'emails (via l'extension Firebase Trigger Email)
     match /mail/{mailId} {
       allow create: if isSignedIn()
         && request.resource.data.keys().hasAll(['to', 'message']);
       allow read, update, delete: if isAdmin();
+    }
+
+    // Avis apres mission: le client peut noter l'artisan une fois la mission finie.
+    match /ratings/{ratingId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource.data.customerId == request.auth.uid
+        && request.resource.data.keys().hasAll([
+          'jobId',
+          'customerId',
+          'workerId',
+          'quality',
+          'punctuality',
+          'communication',
+          'average',
+          'createdAt'
+        ]);
+      allow delete: if isAdmin();
+    }
+
+    // Notifications in-app: nouvelle offre, mission acceptee, urgent active.
+    match /notifications/{notificationId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId is string
+        && request.resource.data.keys().hasAll([
+          'userId',
+          'type',
+          'title',
+          'body',
+          'isRead',
+          'createdAt'
+        ]);
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update: if isAdmin()
+        || (
+          isSignedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['isRead'])
+        );
+      allow delete: if isAdmin();
     }
 
     // Liste blanche des emails admin (doc id = email en minuscule)

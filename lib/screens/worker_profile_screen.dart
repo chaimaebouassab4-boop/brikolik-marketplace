@@ -1,10 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
+import '../widgets/contact_actions.dart';
 import '../widgets/verification_gate.dart';
 
 class WorkerProfileScreen extends StatefulWidget {
@@ -15,6 +20,7 @@ class WorkerProfileScreen extends StatefulWidget {
 }
 
 class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
+  static const int _maxPortfolioPhotos = 8;
   static const List<String> _suggestedServices = [
     'Plomberie',
     'Electricite',
@@ -36,6 +42,11 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   final TextEditingController _customServiceCtrl = TextEditingController();
 
   final List<String> _services = <String>[];
+  final List<String> _portfolioPhotoUrls = <String>[];
+  final List<String> _originalPortfolioPhotoUrls = <String>[];
+  final List<_LocalPortfolioPhoto> _newPortfolioPhotos =
+      <_LocalPortfolioPhoto>[];
+  final ImagePicker _picker = ImagePicker();
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -91,6 +102,15 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       _services
         ..clear()
         ..addAll(savedServices);
+
+      final savedPortfolio =
+          List<String>.from(data['portfolioPhotoUrls'] ?? const <String>[]);
+      _portfolioPhotoUrls
+        ..clear()
+        ..addAll(savedPortfolio);
+      _originalPortfolioPhotoUrls
+        ..clear()
+        ..addAll(savedPortfolio);
     } catch (e) {
       debugPrint('Erreur chargement profil artisan: $e');
     } finally {
@@ -105,6 +125,14 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         backgroundColor: color,
       ),
     );
+  }
+
+  String? _validatePhone(String? value) {
+    final phone = (value ?? '').trim();
+    if (phone.isEmpty) return 'Le telephone est obligatoire';
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 9) return 'Numero de telephone invalide';
+    return null;
   }
 
   void _addCustomService() {
@@ -136,6 +164,82 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     });
   }
 
+  Future<void> _pickPortfolioPhotos() async {
+    final remaining =
+        _maxPortfolioPhotos - _portfolioPhotoUrls.length - _newPortfolioPhotos.length;
+    if (remaining <= 0) {
+      _showMessage('Limite de 8 photos portfolio maximum.');
+      return;
+    }
+
+    final picked = await _picker.pickMultiImage(
+      imageQuality: 80,
+      maxWidth: 1800,
+    );
+    if (picked.isEmpty) return;
+
+    final limited = picked.take(remaining).toList();
+    final files = <_LocalPortfolioPhoto>[];
+    for (final item in limited) {
+      final bytes = await item.readAsBytes();
+      files.add(
+        _LocalPortfolioPhoto(
+          id: '${DateTime.now().millisecondsSinceEpoch}-${item.name}',
+          bytes: bytes,
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _newPortfolioPhotos.addAll(files));
+
+    if (picked.length > remaining) {
+      _showMessage('Limite de 8 photos portfolio maximum.');
+    }
+  }
+
+  void _removeSavedPortfolioPhoto(String url) {
+    setState(() => _portfolioPhotoUrls.remove(url));
+  }
+
+  void _removeNewPortfolioPhoto(String id) {
+    setState(() => _newPortfolioPhotos.removeWhere((photo) => photo.id == id));
+  }
+
+  Future<List<String>> _uploadPortfolioPhotos(String uid) async {
+    if (_newPortfolioPhotos.isEmpty) return <String>[];
+
+    final urls = <String>[];
+    for (var i = 0; i < _newPortfolioPhotos.length; i++) {
+      final photo = _newPortfolioPhotos[i];
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('users/$uid/portfolio/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+
+      await ref.putData(
+        photo.bytes,
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: const <String, String>{
+            'type': 'portfolio',
+          },
+        ),
+      );
+      urls.add(await ref.getDownloadURL());
+    }
+    return urls;
+  }
+
+  Future<void> _deletePortfolioUrls(List<String> urls) async {
+    for (final url in urls) {
+      try {
+        await FirebaseStorage.instance.refFromURL(url).delete();
+      } catch (e) {
+        debugPrint('Suppression portfolio ignoree: $e');
+      }
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (_isSaving) return;
 
@@ -163,6 +267,15 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     setState(() => _isSaving = true);
 
     try {
+      final removedPortfolioUrls = _originalPortfolioPhotoUrls
+          .where((url) => !_portfolioPhotoUrls.contains(url))
+          .toList();
+      final uploadedPortfolioUrls = await _uploadPortfolioPhotos(uid);
+      final mergedPortfolioUrls = <String>[
+        ..._portfolioPhotoUrls,
+        ...uploadedPortfolioUrls,
+      ];
+
       await _db.collection('users').doc(uid).set(
         {
           'fullName': _nameCtrl.text.trim(),
@@ -170,10 +283,23 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
           'bio': _bioCtrl.text.trim(),
           'city': _cityCtrl.text.trim(),
           'services': _services,
+          'portfolioPhotoUrls': mergedPortfolioUrls,
+          'portfolioPhotosCount': mergedPortfolioUrls.length,
+          'portfolioUpdatedAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
+
+      await _deletePortfolioUrls(removedPortfolioUrls);
+
+      _portfolioPhotoUrls
+        ..clear()
+        ..addAll(mergedPortfolioUrls);
+      _originalPortfolioPhotoUrls
+        ..clear()
+        ..addAll(mergedPortfolioUrls);
+      _newPortfolioPhotos.clear();
 
       if (!mounted) return;
       _showMessage('Profil artisan enregistre avec succes.',
@@ -273,15 +399,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                           const SizedBox(height: 12),
                           BrikolikInput(
                             hint: '+212 6XX XXX XXX',
-                            label: 'Telephone',
+                            label: 'Telephone obligatoire',
                             controller: _phoneCtrl,
                             keyboardType: TextInputType.phone,
                             prefixIcon: Icons.phone_outlined,
+                            onChanged: (_) => setState(() {}),
                             validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Le telephone est obligatoire';
-                              }
-                              return null;
+                              return _validatePhone(value);
                             },
                           ),
                           const SizedBox(height: 12),
@@ -307,6 +431,13 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                           ],
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    ContactActions(
+                      phone: _phoneCtrl.text,
+                      title: 'Contact artisan',
+                      subtitle:
+                          'Ajoutez votre numero pour activer WhatsApp et appel.',
                     ),
                     const SizedBox(height: 14),
                     _SectionCard(
@@ -401,6 +532,21 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
                               ),
                             ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _SectionCard(
+                      icon: Icons.photo_library_outlined,
+                      title: 'Galerie portfolio',
+                      subtitle:
+                          'Ajoutez vos realisations, avant/apres et photos de chantiers.',
+                      child: _PortfolioGalleryCard(
+                        maxPhotos: _maxPortfolioPhotos,
+                        savedUrls: _portfolioPhotoUrls,
+                        localPhotos: _newPortfolioPhotos,
+                        onAddPhotos: _pickPortfolioPhotos,
+                        onRemoveSaved: _removeSavedPortfolioPhoto,
+                        onRemoveLocal: _removeNewPortfolioPhoto,
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -656,6 +802,182 @@ class _ReadOnlyField extends StatelessWidget {
   }
 }
 
+class _PortfolioGalleryCard extends StatelessWidget {
+  const _PortfolioGalleryCard({
+    required this.maxPhotos,
+    required this.savedUrls,
+    required this.localPhotos,
+    required this.onAddPhotos,
+    required this.onRemoveSaved,
+    required this.onRemoveLocal,
+  });
+
+  final int maxPhotos;
+  final List<String> savedUrls;
+  final List<_LocalPortfolioPhoto> localPhotos;
+  final VoidCallback onAddPhotos;
+  final void Function(String url) onRemoveSaved;
+  final void Function(String id) onRemoveLocal;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = savedUrls.length + localPhotos.length;
+    final canAddMore = total < maxPhotos;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: BrikolikColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          ),
+          child: Text(
+            'Ajoutez jusqu a $maxPhotos photos. Elles seront sauvegardees dans Firebase Storage et les URLs seront liees a votre document utilisateur.',
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontFamilyFallback: ['Cairo'],
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: BrikolikColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final url in savedUrls)
+              _PortfolioTile.network(
+                url: url,
+                onRemove: () => onRemoveSaved(url),
+              ),
+            for (final photo in localPhotos)
+              _PortfolioTile.memory(
+                bytes: photo.bytes,
+                onRemove: () => onRemoveLocal(photo.id),
+              ),
+            if (canAddMore)
+              GestureDetector(
+                onTap: onAddPhotos,
+                child: Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    color: BrikolikColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                    border: Border.all(color: BrikolikColors.border),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(
+                        Icons.add_photo_alternate_outlined,
+                        color: BrikolikColors.primary,
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        'Ajouter',
+                        style: TextStyle(
+                          fontFamily: 'Nunito',
+                          fontFamilyFallback: ['Cairo'],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: BrikolikColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+        if (total == 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              'Ajoutez quelques photos pour renforcer la confiance et augmenter vos conversions.'
+                  .tr(),
+              style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontFamilyFallback: ['Cairo'],
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: BrikolikColors.warning,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _PortfolioTile extends StatelessWidget {
+  const _PortfolioTile.network({
+    required this.url,
+    required this.onRemove,
+  })  : bytes = null,
+        isNetwork = true;
+
+  const _PortfolioTile.memory({
+    required this.bytes,
+    required this.onRemove,
+  })  : url = null,
+        isNetwork = false;
+
+  final String? url;
+  final Uint8List? bytes;
+  final VoidCallback onRemove;
+  final bool isNetwork;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(BrikolikRadius.md),
+          child: isNetwork
+              ? Image.network(
+                  url!,
+                  width: 92,
+                  height: 92,
+                  fit: BoxFit.cover,
+                )
+              : Image.memory(
+                  bytes!,
+                  width: 92,
+                  height: 92,
+                  fit: BoxFit.cover,
+                ),
+        ),
+        Positioned(
+          top: 5,
+          right: 5,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.55),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close,
+                size: 14,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _VerificationCard extends StatelessWidget {
   const _VerificationCard();
 
@@ -733,5 +1055,15 @@ class _VerificationRow extends StatelessWidget {
       ],
     );
   }
+}
+
+class _LocalPortfolioPhoto {
+  const _LocalPortfolioPhoto({
+    required this.id,
+    required this.bytes,
+  });
+
+  final String id;
+  final Uint8List bytes;
 }
 

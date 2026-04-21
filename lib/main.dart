@@ -17,6 +17,7 @@ import 'screens/job_list_screen.dart';
 import 'screens/job_details_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/rating_screen.dart';
+import 'screens/notifications_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +66,7 @@ class BrikolikApp extends StatelessWidget {
         '/job-details': (context) => const JobDetailsScreen(),
         '/chat': (context) => const ChatScreen(),
         '/rating': (context) => const RatingScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
       onUnknownRoute: (_) => MaterialPageRoute<void>(
         builder: (_) => const HomeScreen(),

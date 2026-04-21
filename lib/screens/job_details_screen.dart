@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
 
@@ -24,13 +25,18 @@ class JobDetailsScreen extends StatelessWidget {
     }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('jobs').doc(jobId).snapshots(),
+      stream:
+          FirebaseFirestore.instance.collection('jobs').doc(jobId).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator(color: BrikolikColors.primary)));
+          return const Scaffold(
+              body: Center(
+                  child: CircularProgressIndicator(
+                      color: BrikolikColors.primary)));
         }
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-          return Scaffold(body: Center(child: Text('Mission introuvable'.tr())));
+          return Scaffold(
+              body: Center(child: Text('Mission introuvable'.tr())));
         }
 
         final jobData = snapshot.data!.data() as Map<String, dynamic>;
@@ -57,27 +63,36 @@ class JobDetailsScreen extends StatelessWidget {
                       _buildInfoGrid(context, jobData),
                       const SizedBox(height: 24),
                       _buildDescription(context, jobData),
-                      if (_extractStringList(jobData['problemPhotoUrls']).isNotEmpty) ...[
+                      if (_extractStringList(jobData['problemPhotoUrls'])
+                          .isNotEmpty) ...[
                         const SizedBox(height: 24),
                         _buildPhotoGallerySection(
                           context,
                           title: 'Photos du probleme',
-                          photoUrls: _extractStringList(jobData['problemPhotoUrls']),
+                          photoUrls:
+                              _extractStringList(jobData['problemPhotoUrls']),
                         ),
                       ],
-                      if (_extractStringList(jobData['completionPhotoUrls']).isNotEmpty) ...[
+                      if (_extractStringList(jobData['completionPhotoUrls'])
+                          .isNotEmpty) ...[
                         const SizedBox(height: 24),
                         _buildPhotoGallerySection(
                           context,
                           title: 'Photos de realisation',
-                          photoUrls: _extractStringList(jobData['completionPhotoUrls']),
+                          photoUrls: _extractStringList(
+                              jobData['completionPhotoUrls']),
                         ),
                       ],
                       const SizedBox(height: 24),
                       _buildClientCard(context, jobData),
                       const SizedBox(height: 24),
+                      if (isOwner && jobStatus == 'done') ...[
+                        _buildRatingCallout(context, jobId, jobData),
+                        const SizedBox(height: 24),
+                      ],
                       if (isOwner) _buildOffersSection(context, jobId),
-                      if (isAcceptedWorker) _buildAcceptedBanner(context, jobData),
+                      if (isAcceptedWorker)
+                        _buildAcceptedBanner(context, jobData),
                       const SizedBox(height: 100),
                     ],
                   ),
@@ -85,9 +100,9 @@ class JobDetailsScreen extends StatelessWidget {
               ),
             ],
           ),
-          bottomNavigationBar: isOwner 
-              ? null 
-              : isAcceptedWorker 
+          bottomNavigationBar: isOwner
+              ? null
+              : isAcceptedWorker
                   ? _buildAcceptedBottomBar(context, jobId, jobData)
                   : jobStatus == 'inprogress'
                       ? null // Job already taken, hide offer button for other workers
@@ -97,7 +112,8 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAcceptedBanner(BuildContext context, Map<String, dynamic> jobData) {
+  Widget _buildAcceptedBanner(
+      BuildContext context, Map<String, dynamic> jobData) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -110,16 +126,26 @@ class JobDetailsScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.celebration_rounded, size: 40, color: BrikolikColors.success),
+          const Icon(Icons.celebration_rounded,
+              size: 40, color: BrikolikColors.success),
           const SizedBox(height: 10),
-          Text('Felicitations !'.tr(),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: BrikolikColors.success),
+          Text(
+            'Felicitations !'.tr(),
+            style: Theme.of(context)
+                .textTheme
+                .headlineSmall
+                ?.copyWith(color: BrikolikColors.success),
           ),
           const SizedBox(height: 6),
           Text(
             '${jobData['customerName'] ?? 'Le client'} a accepte votre offre.\nVous pouvez maintenant le contacter pour organiser la mission.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 14, color: BrikolikColors.textSecondary, height: 1.5),
+            style: const TextStyle(
+                fontFamily: 'Nunito',
+                fontFamilyFallback: ['Cairo'],
+                fontSize: 14,
+                color: BrikolikColors.textSecondary,
+                height: 1.5),
           ),
         ],
       ),
@@ -130,7 +156,8 @@ class JobDetailsScreen extends StatelessWidget {
     final id = userId.trim();
     if (id.isEmpty) return null;
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(id).get();
       final data = doc.data();
       if (data == null) return null;
       final phone = (data['phone']?.toString() ?? '').trim();
@@ -254,9 +281,8 @@ class JobDetailsScreen extends StatelessWidget {
 
     final urls = <String>[];
     for (var i = 0; i < photos.length; i++) {
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('jobs/$jobId/completion_photos/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+      final ref = FirebaseStorage.instance.ref().child(
+          'jobs/$jobId/completion_photos/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
 
       final metadata = SettableMetadata(
         contentType: 'image/jpeg',
@@ -316,7 +342,8 @@ class JobDetailsScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Preuves de realisation'.tr(),
-                          style: Theme.of(sheetContext).textTheme.headlineMedium,
+                          style:
+                              Theme.of(sheetContext).textTheme.headlineMedium,
                         ),
                       ),
                       IconButton(
@@ -327,7 +354,8 @@ class JobDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Ajoutez 1 a 4 photos du travail termine (before/after).'.tr(),
+                    'Ajoutez 1 a 4 photos du travail termine (before/after).'
+                        .tr(),
                     style: Theme.of(sheetContext).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 14),
@@ -339,7 +367,8 @@ class JobDetailsScreen extends StatelessWidget {
                         Stack(
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                              borderRadius:
+                                  BorderRadius.circular(BrikolikRadius.md),
                               child: Image.memory(
                                 photo.bytes,
                                 width: 82,
@@ -353,7 +382,8 @@ class JobDetailsScreen extends StatelessWidget {
                               child: GestureDetector(
                                 onTap: () {
                                   setSheetState(() {
-                                    selectedPhotos.removeWhere((p) => p.id == photo.id);
+                                    selectedPhotos
+                                        .removeWhere((p) => p.id == photo.id);
                                   });
                                 },
                                 child: Container(
@@ -377,7 +407,8 @@ class JobDetailsScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () async {
                             final remaining = 4 - selectedPhotos.length;
-                            final newPhotos = await _pickLocalPhotos(maxCount: remaining);
+                            final newPhotos =
+                                await _pickLocalPhotos(maxCount: remaining);
                             if (newPhotos.isEmpty) return;
                             setSheetState(() {
                               selectedPhotos.addAll(newPhotos);
@@ -388,7 +419,8 @@ class JobDetailsScreen extends StatelessWidget {
                             height: 82,
                             decoration: BoxDecoration(
                               color: BrikolikColors.surfaceVariant,
-                              borderRadius: BorderRadius.circular(BrikolikRadius.md),
+                              borderRadius:
+                                  BorderRadius.circular(BrikolikRadius.md),
                               border: Border.all(color: BrikolikColors.border),
                             ),
                             child: const Icon(
@@ -401,7 +433,9 @@ class JobDetailsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   BrikolikButton(
-                    label: alreadyDone ? 'Mettre a jour les preuves' : 'Terminer la mission',
+                    label: alreadyDone
+                        ? 'Mettre a jour les preuves'
+                        : 'Terminer la mission',
                     icon: Icons.task_alt_rounded,
                     isLoading: isSaving,
                     onPressed: isSaving
@@ -409,7 +443,8 @@ class JobDetailsScreen extends StatelessWidget {
                         : () async {
                             setSheetState(() => isSaving = true);
                             try {
-                              final completionPhotoUrls = await _uploadCompletionPhotos(
+                              final completionPhotoUrls =
+                                  await _uploadCompletionPhotos(
                                 jobId: jobId,
                                 workerId: workerId,
                                 photos: selectedPhotos,
@@ -421,7 +456,8 @@ class JobDetailsScreen extends StatelessWidget {
                                   .update({
                                 'status': 'done',
                                 'completionPhotoUrls': completionPhotoUrls,
-                                'completionPhotosCount': completionPhotoUrls.length,
+                                'completionPhotosCount':
+                                    completionPhotoUrls.length,
                                 'completedAt': FieldValue.serverTimestamp(),
                                 'completedBy': workerId,
                               });
@@ -430,7 +466,8 @@ class JobDetailsScreen extends StatelessWidget {
                                 Navigator.pop(sheetContext);
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text('Mission terminee avec succes.'.tr()),
+                                    content: Text(
+                                        'Mission terminee avec succes.'.tr()),
                                     backgroundColor: BrikolikColors.success,
                                   ),
                                 );
@@ -471,7 +508,8 @@ class JobDetailsScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
       decoration: BoxDecoration(
         color: BrikolikColors.surface,
-        border: const Border(top: BorderSide(color: BrikolikColors.border, width: 1)),
+        border: const Border(
+            top: BorderSide(color: BrikolikColors.border, width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -507,7 +545,9 @@ class JobDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           BrikolikButton(
-            label: alreadyDone ? 'Mettre a jour les preuves' : 'Terminer la mission',
+            label: alreadyDone
+                ? 'Mettre a jour les preuves'
+                : 'Terminer la mission',
             icon: Icons.photo_camera_back_rounded,
             onPressed: () => _showCompletionProofSheet(
               context,
@@ -520,16 +560,24 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSliverAppBar(BuildContext context, Map<String, dynamic> jobData) {
+  Widget _buildSliverAppBar(
+      BuildContext context, Map<String, dynamic> jobData) {
     final cat = jobData['category'] as String? ?? 'Autre';
     IconData icon = Icons.work_outline;
-    if (cat == 'Plomberie') icon = Icons.water_drop_outlined;
-    else if (cat == 'Electricite' || cat == 'Électricite') icon = Icons.bolt_outlined;
-    else if (cat == 'Nettoyage') icon = Icons.cleaning_services_outlined;
-    else if (cat == 'Peinture') icon = Icons.format_paint_outlined;
-    else if (cat == 'Jardinage') icon = Icons.grass_outlined;
-    else if (cat == 'Menuiserie') icon = Icons.carpenter_outlined;
-    else if (cat == 'Maconnerie' || cat == 'Maçonnerie') icon = Icons.construction_outlined;
+    if (cat == 'Plomberie')
+      icon = Icons.water_drop_outlined;
+    else if (cat == 'Electricite' || cat == 'Électricite')
+      icon = Icons.bolt_outlined;
+    else if (cat == 'Nettoyage')
+      icon = Icons.cleaning_services_outlined;
+    else if (cat == 'Peinture')
+      icon = Icons.format_paint_outlined;
+    else if (cat == 'Jardinage')
+      icon = Icons.grass_outlined;
+    else if (cat == 'Menuiserie')
+      icon = Icons.carpenter_outlined;
+    else if (cat == 'Maconnerie' || cat == 'Maçonnerie')
+      icon = Icons.construction_outlined;
 
     return SliverAppBar(
       expandedHeight: 200,
@@ -591,19 +639,18 @@ class JobDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                   decoration: BoxDecoration(
                     color: BrikolikColors.primaryLight,
-                    borderRadius:
-                        BorderRadius.circular(BrikolikRadius.full),
-                    border: Border.all(
-                        color: BrikolikColors.border, width: 1),
+                    borderRadius: BorderRadius.circular(BrikolikRadius.full),
+                    border: Border.all(color: BrikolikColors.border, width: 1),
                   ),
                   child: Text(
                     cat,
                     style: const TextStyle(
-                      fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                      fontFamily: 'Nunito',
+                      fontFamilyFallback: ['Cairo'],
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: BrikolikColors.primary,
@@ -622,16 +669,30 @@ class JobDetailsScreen extends StatelessWidget {
   Widget _buildStatusRow(BuildContext context, Map<String, dynamic> jobData) {
     String timeStr = "A l'instant";
     final createdAt = jobData['createdAt'] as Timestamp?;
+    final isUrgent = _isUrgentActive(jobData);
     if (createdAt != null) {
       final diff = DateTime.now().difference(createdAt.toDate());
-      if (diff.inMinutes < 60) timeStr = 'Il y a ${diff.inMinutes} min';
-      else if (diff.inHours < 24) timeStr = 'Il y a ${diff.inHours} h';
-      else timeStr = 'Il y a ${diff.inDays} j';
+      if (diff.inMinutes < 60)
+        timeStr = 'Il y a ${diff.inMinutes} min';
+      else if (diff.inHours < 24)
+        timeStr = 'Il y a ${diff.inHours} h';
+      else
+        timeStr = 'Il y a ${diff.inDays} j';
     }
 
     return Row(
       children: [
-        jobData['status'] == 'open' ? StatusBadge.open() : StatusBadge.inProgress(),
+        if (isUrgent) ...[
+          const StatusBadge(
+            label: 'Urgent',
+            color: Colors.white,
+            bgColor: BrikolikColors.error,
+          ),
+          const SizedBox(width: 8),
+        ],
+        jobData['status'] == 'open'
+            ? StatusBadge.open()
+            : StatusBadge.inProgress(),
         const SizedBox(width: 8),
         const Icon(Icons.access_time_rounded,
             size: 14, color: BrikolikColors.muted),
@@ -641,9 +702,23 @@ class JobDetailsScreen extends StatelessWidget {
         const Icon(Icons.visibility_outlined,
             size: 14, color: BrikolikColors.muted),
         const SizedBox(width: 4),
-        Text('${jobData['offersCount'] ?? 0} offres', style: Theme.of(context).textTheme.bodySmall),
+        Text('${jobData['offersCount'] ?? 0} offres',
+            style: Theme.of(context).textTheme.bodySmall),
       ],
     );
+  }
+
+  bool _isUrgentActive(Map<String, dynamic> jobData) {
+    if (jobData['isUrgent'] != true) return false;
+    final paymentStatus =
+        (jobData['urgentPaymentStatus'] as String?)?.trim() ?? '';
+    final urgentStatus = (jobData['urgentStatus'] as String?)?.trim() ?? '';
+    if (paymentStatus != 'paid' || urgentStatus != 'active') return false;
+    final expiresAt = jobData['urgentExpiresAt'];
+    if (expiresAt is Timestamp) {
+      return expiresAt.toDate().isAfter(DateTime.now());
+    }
+    return true;
   }
 
   Widget _buildTitle(BuildContext context, Map<String, dynamic> jobData) {
@@ -692,7 +767,8 @@ class JobDetailsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Description'.tr(), style: Theme.of(context).textTheme.headlineSmall),
+        Text('Description'.tr(),
+            style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 10),
         Container(
           width: double.infinity,
@@ -826,12 +902,13 @@ class JobDetailsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(name, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        StarRating(rating: (jobData['rating'] ?? 5.0).toDouble(), reviewCount: 0),
+                        StarRating(
+                            rating: (jobData['rating'] ?? 5.0).toDouble(),
+                            reviewCount: 0),
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -847,9 +924,11 @@ class JobDetailsScreen extends StatelessWidget {
                               Icon(Icons.shield_outlined,
                                   size: 11, color: BrikolikColors.success),
                               SizedBox(width: 3),
-                              Text('Verifie'.tr(),
+                              Text(
+                                'Verifie'.tr(),
                                 style: TextStyle(
-                                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                                  fontFamily: 'Nunito',
+                                  fontFamilyFallback: ['Cairo'],
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
                                   color: BrikolikColors.success,
@@ -892,6 +971,77 @@ class JobDetailsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildRatingCallout(
+    BuildContext context,
+    String jobId,
+    Map<String, dynamic> jobData,
+  ) {
+    final ratingSubmitted = jobData['ratingSubmitted'] == true;
+    final workerName =
+        (jobData['acceptedWorkerName'] as String? ?? 'cet artisan').trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: ratingSubmitted
+            ? BrikolikColors.successLight
+            : BrikolikColors.primaryLight,
+        borderRadius: BorderRadius.circular(BrikolikRadius.lg),
+        border: Border.all(
+          color: ratingSubmitted
+              ? BrikolikColors.success.withValues(alpha: 0.25)
+              : BrikolikColors.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                ratingSubmitted
+                    ? Icons.verified_rounded
+                    : Icons.star_rate_rounded,
+                color: ratingSubmitted
+                    ? BrikolikColors.success
+                    : BrikolikColors.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  ratingSubmitted
+                      ? 'Avis deja envoye'
+                      : 'Notez la mission terminee',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            ratingSubmitted
+                ? 'Merci, votre evaluation aide Brikolik a garder les meilleurs artisans.'
+                : 'Donnez une note a $workerName sur la qualite, la ponctualite et la communication.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          if (!ratingSubmitted) ...[
+            const SizedBox(height: 14),
+            BrikolikButton(
+              label: 'Noter cet artisan',
+              icon: Icons.rate_review_rounded,
+              onPressed: () => Navigator.pushNamed(
+                context,
+                '/rating',
+                arguments: {'jobId': jobId},
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildOffersSection(BuildContext context, String jobId) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,48 +1053,77 @@ class JobDetailsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('jobs').doc(jobId).collection('offers').orderBy('createdAt', descending: true).snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) return const CircularProgressIndicator(color: BrikolikColors.primary);
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-               return const Text("Vous n'avez pas encore recu d'offre pour l'instant.", style: TextStyle(color: BrikolikColors.textHint, fontFamily: 'Nunito', fontFamilyFallback: ['Cairo']));
-            }
-            return Column(
-              children: snapshot.data!.docs.map((doc) {
-                 final offer = doc.data() as Map<String, dynamic>;
-                 final isAccepted = offer['status'] == 'accepted';
-                 return Padding(
-                   padding: const EdgeInsets.only(bottom: 10),
-                   child: _OfferCard(
-                     name: offer['workerName'] ?? 'Artisan',
-                     rating: 4.8,
-                     reviews: 12,
-                     price: offer['price'] ?? '...',
-                     message: offer['message'] ?? '',
-                     isPro: true,
-                     isAccepted: isAccepted,
-                     onAccept: isAccepted ? null : () => _acceptOffer(context, jobId, doc.id, offer['workerId'] ?? '', offer['workerName'] ?? 'Artisan'),
-                     onContactWhatsApp: () => _openWhatsApp(
-                       context,
-                       contactUserId: (offer['workerId'] as String? ?? '').trim(),
-                       contactName: (offer['workerName'] as String? ?? 'Artisan').trim(),
-                     ),
-                     onContactCall: () => _openCall(
-                       context,
-                       contactUserId: (offer['workerId'] as String? ?? '').trim(),
-                     ),
-                   ),
-                 );
-              }).toList(),
-            );
-          }
-        ),
+            stream: FirebaseFirestore.instance
+                .collection('jobs')
+                .doc(jobId)
+                .collection('offers')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting)
+                return const CircularProgressIndicator(
+                    color: BrikolikColors.primary);
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Text(
+                    "Vous n'avez pas encore recu d'offre pour l'instant.",
+                    style: TextStyle(
+                        color: BrikolikColors.textHint,
+                        fontFamily: 'Nunito',
+                        fontFamilyFallback: ['Cairo']));
+              }
+              return Column(
+                children: snapshot.data!.docs.map((doc) {
+                  final offer = doc.data() as Map<String, dynamic>;
+                  final isAccepted = offer['status'] == 'accepted';
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _OfferCard(
+                      name: offer['workerName'] ?? 'Artisan',
+                      rating: 4.8,
+                      reviews: 12,
+                      price: offer['price'] ?? '...',
+                      message: offer['message'] ?? '',
+                      isPro: true,
+                      isAccepted: isAccepted,
+                      onAccept: isAccepted
+                          ? null
+                          : () => _acceptOffer(
+                              context,
+                              jobId,
+                              doc.id,
+                              offer['workerId'] ?? '',
+                              offer['workerName'] ?? 'Artisan'),
+                      onContactWhatsApp: () => _openWhatsApp(
+                        context,
+                        contactUserId:
+                            (offer['workerId'] as String? ?? '').trim(),
+                        contactName:
+                            (offer['workerName'] as String? ?? 'Artisan')
+                                .trim(),
+                      ),
+                      onContactCall: () => _openCall(
+                        context,
+                        contactUserId:
+                            (offer['workerId'] as String? ?? '').trim(),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            }),
       ],
     );
   }
 
-  void _acceptOffer(BuildContext context, String jobId, String offerId, String workerId, String workerName) async {
+  void _acceptOffer(BuildContext context, String jobId, String offerId,
+      String workerId, String workerName) async {
     try {
+      final jobDoc =
+          await FirebaseFirestore.instance.collection('jobs').doc(jobId).get();
+      final jobData = jobDoc.data() ?? <String, dynamic>{};
+      final customerName =
+          (jobData['customerName'] as String? ?? 'Le client').trim();
+
       // 1. Update job status to 'inprogress' and save accepted worker
       await FirebaseFirestore.instance.collection('jobs').doc(jobId).update({
         'status': 'inprogress',
@@ -955,9 +1134,21 @@ class JobDetailsScreen extends StatelessWidget {
 
       // 2. Mark the offer as accepted
       await FirebaseFirestore.instance
-          .collection('jobs').doc(jobId)
-          .collection('offers').doc(offerId)
+          .collection('jobs')
+          .doc(jobId)
+          .collection('offers')
+          .doc(offerId)
           .update({'status': 'accepted'});
+
+      try {
+        await NotificationService.notifyMissionAccepted(
+          workerId: workerId,
+          jobId: jobId,
+          customerName: customerName,
+        );
+      } catch (e) {
+        debugPrint('=== NOTIFICATION ACCEPT ERROR: $e');
+      }
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1006,12 +1197,10 @@ class JobDetailsScreen extends StatelessWidget {
                 height: 52,
                 decoration: BoxDecoration(
                   gradient: BrikolikColors.brandGradient,
-                  borderRadius:
-                      BorderRadius.circular(BrikolikRadius.md),
+                  borderRadius: BorderRadius.circular(BrikolikRadius.md),
                   boxShadow: [
                     BoxShadow(
-                      color:
-                          BrikolikColors.accent.withValues(alpha: 0.28),
+                      color: BrikolikColors.accent.withValues(alpha: 0.28),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -1020,12 +1209,13 @@ class JobDetailsScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.send_rounded,
-                        color: Colors.white, size: 18),
+                    Icon(Icons.send_rounded, color: Colors.white, size: 18),
                     SizedBox(width: 8),
-                    Text('Faire une offre'.tr(),
+                    Text(
+                      'Faire une offre'.tr(),
                       style: TextStyle(
-                        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                        fontFamily: 'Nunito',
+                        fontFamilyFallback: ['Cairo'],
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                         color: Colors.white,
@@ -1042,8 +1232,7 @@ class JobDetailsScreen extends StatelessWidget {
             width: 52,
             decoration: BoxDecoration(
               color: BrikolikColors.surfaceVariant,
-              borderRadius:
-                  BorderRadius.circular(BrikolikRadius.md),
+              borderRadius: BorderRadius.circular(BrikolikRadius.md),
               border: Border.all(color: BrikolikColors.border),
             ),
             child: IconButton(
@@ -1070,11 +1259,14 @@ class JobDetailsScreen extends StatelessWidget {
         builder: (ctx, setState) => Container(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
           ),
           decoration: const BoxDecoration(
             color: BrikolikColors.background,
-            borderRadius: BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20), topRight: Radius.circular(20)),
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -1084,82 +1276,138 @@ class JobDetailsScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Faire une offre", style: Theme.of(ctx).textTheme.headlineMedium),
-                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                    Text("Faire une offre",
+                        style: Theme.of(ctx).textTheme.headlineMedium),
+                    IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx)),
                   ],
                 ),
                 const SizedBox(height: 16),
-                BrikolikInput(hint: "Ex: 250 MAD", label: "Votre tarif", controller: offerCtrl),
+                BrikolikInput(
+                    hint: "Ex: 250 MAD",
+                    label: "Votre tarif",
+                    controller: offerCtrl),
                 const SizedBox(height: 10),
-                BrikolikInput(hint: "Pourquoi vous choisir ?", label: "Message", controller: messageCtrl, maxLines: 3),
+                BrikolikInput(
+                    hint: "Pourquoi vous choisir ?",
+                    label: "Message",
+                    controller: messageCtrl,
+                    maxLines: 3),
                 const SizedBox(height: 20),
                 GestureDetector(
-                  onTap: isSubmitting ? null : () async {
-                    if (offerCtrl.text.isEmpty) return;
-                    setState(() => isSubmitting = true);
-                    try {
-                      final workerId = FirebaseAuth.instance.currentUser?.uid;
-                      debugPrint('=== OFFER: workerId=$workerId, jobId=$jobId');
-                      if (workerId == null) {
-                        Navigator.pop(ctx);
-                        return;
-                      }
-                      
-                      final workerDoc = await FirebaseFirestore.instance.collection('users').doc(workerId).get();
-                      final wName = workerDoc.data()?['fullName'] ?? 'Artisan';
-                      debugPrint('=== OFFER: workerName=$wName');
-                      
-                      await FirebaseFirestore.instance.collection('jobs').doc(jobId).collection('offers').add({
-                         'workerId': workerId,
-                         'workerName': wName,
-                         'price': offerCtrl.text,
-                         'message': messageCtrl.text,
-                         'createdAt': FieldValue.serverTimestamp(),
-                      });
-                      debugPrint('=== OFFER: offer saved!');
-                      
-                      await FirebaseFirestore.instance.collection('jobs').doc(jobId).update({
-                         'offersCount': FieldValue.increment(1)
-                      });
-                      debugPrint('=== OFFER: offersCount incremented!');
-                      
-                      if (ctx.mounted) {
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Offre envoyee avec succes !'.tr()),
-                            backgroundColor: BrikolikColors.success,
-                          ),
-                        );
-                      }
-                    } catch(e) {
-                      debugPrint('=== OFFER ERROR: $e');
-                      setState(() => isSubmitting = false);
-                      if (ctx.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Erreur: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  },
+                  onTap: isSubmitting
+                      ? null
+                      : () async {
+                          if (offerCtrl.text.isEmpty) return;
+                          setState(() => isSubmitting = true);
+                          try {
+                            final workerId =
+                                FirebaseAuth.instance.currentUser?.uid;
+                            debugPrint(
+                                '=== OFFER: workerId=$workerId, jobId=$jobId');
+                            if (workerId == null) {
+                              Navigator.pop(ctx);
+                              return;
+                            }
+
+                            final workerDoc = await FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(workerId)
+                                .get();
+                            final wName =
+                                workerDoc.data()?['fullName'] ?? 'Artisan';
+                            debugPrint('=== OFFER: workerName=$wName');
+                            final jobDoc = await FirebaseFirestore.instance
+                                .collection('jobs')
+                                .doc(jobId)
+                                .get();
+                            final jobData =
+                                jobDoc.data() ?? <String, dynamic>{};
+                            final customerId =
+                                (jobData['customerId'] as String? ?? '').trim();
+
+                            await FirebaseFirestore.instance
+                                .collection('jobs')
+                                .doc(jobId)
+                                .collection('offers')
+                                .add({
+                              'workerId': workerId,
+                              'workerName': wName,
+                              'customerId': customerId,
+                              'price': offerCtrl.text,
+                              'message': messageCtrl.text,
+                              'createdAt': FieldValue.serverTimestamp(),
+                            });
+                            debugPrint('=== OFFER: offer saved!');
+
+                            await FirebaseFirestore.instance
+                                .collection('jobs')
+                                .doc(jobId)
+                                .update(
+                                    {'offersCount': FieldValue.increment(1)});
+                            debugPrint('=== OFFER: offersCount incremented!');
+                            try {
+                              await NotificationService.notifyNewOffer(
+                                customerId: customerId,
+                                jobId: jobId,
+                                workerName: wName,
+                                price: offerCtrl.text,
+                              );
+                            } catch (e) {
+                              debugPrint('=== NOTIFICATION OFFER ERROR: $e');
+                            }
+
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content:
+                                      Text('Offre envoyee avec succes !'.tr()),
+                                  backgroundColor: BrikolikColors.success,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint('=== OFFER ERROR: $e');
+                            setState(() => isSubmitting = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Erreur: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
                   child: Container(
                     height: 52,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: isSubmitting ? null : BrikolikColors.brandGradient,
-                      color: isSubmitting ? BrikolikColors.surfaceVariant : null,
+                      gradient:
+                          isSubmitting ? null : BrikolikColors.brandGradient,
+                      color:
+                          isSubmitting ? BrikolikColors.surfaceVariant : null,
                       borderRadius: BorderRadius.circular(BrikolikRadius.md),
                     ),
                     child: Center(
-                      child: isSubmitting 
-                         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: BrikolikColors.primary, strokeWidth: 2))
-                         : const Text(
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: BrikolikColors.primary,
+                                  strokeWidth: 2))
+                          : const Text(
                               "Envoyer l'offre",
-                              style: TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontWeight: FontWeight.w700, fontSize: 16, color: Colors.white),
-                           ),
+                              style: TextStyle(
+                                  fontFamily: 'Nunito',
+                                  fontFamilyFallback: ['Cairo'],
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: Colors.white),
+                            ),
                     ),
                   ),
                 ),
@@ -1205,7 +1453,8 @@ class _InfoTile extends StatelessWidget {
           Text(
             label,
             style: const TextStyle(
-              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+              fontFamily: 'Nunito',
+              fontFamilyFallback: ['Cairo'],
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: BrikolikColors.textHint,
@@ -1215,7 +1464,8 @@ class _InfoTile extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+              fontFamily: 'Nunito',
+              fontFamilyFallback: ['Cairo'],
               fontSize: 13,
               fontWeight: FontWeight.w800,
               color: BrikolikColors.textPrimary,
@@ -1274,7 +1524,9 @@ class _OfferCard extends StatelessWidget {
         color: BrikolikColors.surface,
         borderRadius: BorderRadius.circular(BrikolikRadius.lg),
         border: Border.all(
-          color: isAccepted ? BrikolikColors.success : (isPro ? BrikolikColors.primary : BrikolikColors.border),
+          color: isAccepted
+              ? BrikolikColors.success
+              : (isPro ? BrikolikColors.primary : BrikolikColors.border),
           width: isAccepted ? 2 : (isPro ? 1.5 : 1),
         ),
         boxShadow: isAccepted
@@ -1310,9 +1562,16 @@ class _OfferCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle_rounded, size: 16, color: BrikolikColors.success),
+                  Icon(Icons.check_circle_rounded,
+                      size: 16, color: BrikolikColors.success),
                   SizedBox(width: 6),
-                  Text('Offre acceptee'.tr(), style: const TextStyle(fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'], fontSize: 13, fontWeight: FontWeight.w700, color: BrikolikColors.success)),
+                  Text('Offre acceptee'.tr(),
+                      style: const TextStyle(
+                          fontFamily: 'Nunito',
+                          fontFamilyFallback: ['Cairo'],
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: BrikolikColors.success)),
                 ],
               ),
             ),
@@ -1327,8 +1586,7 @@ class _OfferCard extends StatelessWidget {
                     Row(
                       children: [
                         Text(name,
-                            style:
-                                Theme.of(context).textTheme.titleSmall),
+                            style: Theme.of(context).textTheme.titleSmall),
                         if (isPro) ...[
                           const SizedBox(width: 6),
                           Container(
@@ -1336,13 +1594,14 @@ class _OfferCard extends StatelessWidget {
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               gradient: BrikolikColors.brandGradient,
-                              borderRadius: BorderRadius.circular(
-                                  BrikolikRadius.full),
+                              borderRadius:
+                                  BorderRadius.circular(BrikolikRadius.full),
                             ),
                             child: const Text(
                               'PRO',
                               style: TextStyle(
-                                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                                fontFamily: 'Nunito',
+                                fontFamilyFallback: ['Cairo'],
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.white,
@@ -1357,20 +1616,24 @@ class _OfferCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: isAccepted ? BrikolikColors.successLight : BrikolikColors.primaryLight,
-                  borderRadius:
-                      BorderRadius.circular(BrikolikRadius.sm),
+                  color: isAccepted
+                      ? BrikolikColors.successLight
+                      : BrikolikColors.primaryLight,
+                  borderRadius: BorderRadius.circular(BrikolikRadius.sm),
                 ),
                 child: Text(
                   price,
                   style: TextStyle(
-                    fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                    fontFamily: 'Nunito',
+                    fontFamilyFallback: ['Cairo'],
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
-                    color: isAccepted ? BrikolikColors.success : BrikolikColors.primary,
+                    color: isAccepted
+                        ? BrikolikColors.success
+                        : BrikolikColors.primary,
                   ),
                 ),
               ),
@@ -1400,7 +1663,8 @@ class _OfferCard extends StatelessWidget {
                         child: Text(
                           'Accepter'.tr(),
                           style: const TextStyle(
-                            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                            fontFamily: 'Nunito',
+                            fontFamilyFallback: ['Cairo'],
                             fontWeight: FontWeight.w700,
                             fontSize: 14,
                             color: Colors.white,
@@ -1487,4 +1751,3 @@ class _LocalUploadPhoto {
   final String id;
   final Uint8List bytes;
 }
-

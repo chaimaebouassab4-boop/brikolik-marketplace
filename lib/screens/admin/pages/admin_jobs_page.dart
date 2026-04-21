@@ -21,7 +21,7 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
       children: [
         AdminPageHeader(
           title: 'Missions',
-          subtitle: 'Missions en cours et terminees (jobs acceptes).',
+          subtitle: 'Suivi des missions en cours, terminees et des revenus lies.',
           trailing: DropdownButton<String>(
             value: _status,
             items: _filters
@@ -37,83 +37,221 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
         Expanded(
           child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             stream: FirebaseFirestore.instance.collection('jobs').snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+            builder: (context, jobsSnapshot) {
+              if (jobsSnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
                   child:
                       CircularProgressIndicator(color: BrikolikColors.primary),
                 );
               }
-              if (snapshot.hasError) {
-                return AdminCard(child: Text('Erreur: ${snapshot.error}'));
+              if (jobsSnapshot.hasError) {
+                return AdminCard(
+                  child: Text('Erreur missions: ${jobsSnapshot.error}'),
+                );
               }
 
-              final rows = (snapshot.data?.docs ?? const []).map((d) {
-                final data = d.data();
-                return <String, dynamic>{...data, 'id': d.id};
-              }).where((j) {
-                final status = (j['status'] as String?)?.trim() ?? 'open';
-                final accepted = (j['acceptedWorkerId'] as String?)?.trim();
-                final isMission = accepted != null && accepted.isNotEmpty;
-                if (!isMission) return false;
-                if (_status == 'all') return true;
-                return status == _status;
-              }).toList();
-
-              rows.sort((a, b) => _compareTsDesc(a['acceptedAt'], b['acceptedAt']));
-
-              return AdminCard(
-                padding: const EdgeInsets.all(0),
-                child: SingleChildScrollView(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: DataTable(
-                      headingRowColor: const WidgetStatePropertyAll(
-                        BrikolikColors.surfaceVariant,
+              return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collectionGroup('offers')
+                    .where('status', isEqualTo: 'accepted')
+                    .snapshots(),
+                builder: (context, offersSnapshot) {
+                  if (offersSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: BrikolikColors.primary,
                       ),
-                      columns: const [
-                        DataColumn(label: Text('Titre')),
-                        DataColumn(label: Text('Artisan')),
-                        DataColumn(label: Text('Statut')),
-                        DataColumn(label: Text('Acceptee le')),
-                        DataColumn(label: Text('Actions')),
-                      ],
-                      rows: rows.map((j) {
-                        final id = (j['id'] as String?) ?? '';
-                        final title = (j['title'] as String?)?.trim();
-                        final worker = (j['acceptedWorkerName'] as String?)?.trim();
-                        final status = (j['status'] as String?)?.trim() ?? 'inprogress';
-                        final acceptedAt = j['acceptedAt'] as Timestamp?;
+                    );
+                  }
+                  if (offersSnapshot.hasError) {
+                    return AdminCard(
+                      child: Text('Erreur revenus missions: ${offersSnapshot.error}'),
+                    );
+                  }
 
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(title?.isNotEmpty == true
-                                ? title!
-                                : 'Mission')),
-                            DataCell(Text(worker?.isNotEmpty == true ? worker! : '-')),
-                            DataCell(_statusPill(status)),
-                            DataCell(Text(_fmt(acceptedAt))),
-                            DataCell(
-                              TextButton(
-                                onPressed: () => Navigator.pushNamed(
-                                  context,
-                                  '/job-details',
-                                  arguments: id,
+                  final offerDocs = offersSnapshot.data?.docs ??
+                      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                  final acceptedOffersByJob = <String, Map<String, dynamic>>{};
+                  for (final doc in offerDocs) {
+                    final data = doc.data();
+                    final jobId = doc.reference.parent.parent?.id ?? '';
+                    if (jobId.isEmpty) continue;
+                    acceptedOffersByJob[jobId] = {
+                      ...data,
+                      'id': doc.id,
+                      'jobId': jobId,
+                    };
+                  }
+
+                  final jobDocs = jobsSnapshot.data?.docs ??
+                      <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+                  final missions = jobDocs.map((d) {
+                    final data = d.data();
+                    final acceptedOffer = acceptedOffersByJob[d.id];
+                    return <String, dynamic>{
+                      ...data,
+                      'id': d.id,
+                      'acceptedPrice': acceptedOffer?['price'] ??
+                          data['acceptedPrice'] ??
+                          data['budgetMax'] ??
+                          data['budget'],
+                    };
+                  }).where((job) {
+                    final status = (job['status'] as String?)?.trim() ?? 'open';
+                    final accepted = (job['acceptedWorkerId'] as String?)?.trim();
+                    final isMission = accepted != null && accepted.isNotEmpty;
+                    if (!isMission) return false;
+                    if (_status == 'all') return true;
+                    return status == _status;
+                  }).toList();
+
+                  missions.sort(
+                    (a, b) => _compareTsDesc(
+                      a['acceptedAt'] ?? a['updatedAt'],
+                      b['acceptedAt'] ?? b['updatedAt'],
+                    ),
+                  );
+
+                  final totalRevenue = missions.fold<double>(
+                    0.0,
+                    (sum, job) => sum + _moneyValue(job['acceptedPrice']),
+                  );
+                  final completed = missions.where((job) {
+                    return (job['status'] as String?)?.trim() == 'done';
+                  }).length;
+                  final inProgress = missions.where((job) {
+                    return (job['status'] as String?)?.trim() == 'inprogress';
+                  }).length;
+                  final avgRevenue = missions.isEmpty
+                      ? 0.0
+                      : totalRevenue / missions.length.toDouble();
+
+                  return Column(
+                    children: [
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          _summaryCard(
+                            'Missions filtrees',
+                            '${missions.length}',
+                            Icons.work_outline_rounded,
+                            BrikolikColors.primaryLight,
+                          ),
+                          _summaryCard(
+                            'En cours',
+                            '$inProgress',
+                            Icons.pending_actions_outlined,
+                            BrikolikColors.warningLight,
+                          ),
+                          _summaryCard(
+                            'Terminees',
+                            '$completed',
+                            Icons.task_alt_outlined,
+                            BrikolikColors.successLight,
+                          ),
+                          _summaryCard(
+                            'Revenus',
+                            _money(totalRevenue),
+                            Icons.payments_outlined,
+                            BrikolikColors.secondaryLight,
+                          ),
+                          _summaryCard(
+                            'Moyenne / mission',
+                            _money(avgRevenue),
+                            Icons.analytics_outlined,
+                            BrikolikColors.accentLight,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: AdminCard(
+                          padding: const EdgeInsets.all(0),
+                          child: SingleChildScrollView(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: DataTable(
+                                headingRowColor: const WidgetStatePropertyAll(
+                                  BrikolikColors.surfaceVariant,
                                 ),
-                                child: const Text('Voir demande'),
+                                columns: const [
+                                  DataColumn(label: Text('Titre')),
+                                  DataColumn(label: Text('Client')),
+                                  DataColumn(label: Text('Artisan')),
+                                  DataColumn(label: Text('Montant')),
+                                  DataColumn(label: Text('Statut')),
+                                  DataColumn(label: Text('Acceptee le')),
+                                  DataColumn(label: Text('Actions')),
+                                ],
+                                rows: missions.map((job) {
+                                  final id = (job['id'] as String?) ?? '';
+                                  final title = (job['title'] as String?)?.trim();
+                                  final customer =
+                                      (job['customerName'] as String?)?.trim();
+                                  final worker =
+                                      (job['acceptedWorkerName'] as String?)?.trim();
+                                  final status =
+                                      (job['status'] as String?)?.trim() ?? 'inprogress';
+                                  final acceptedAt = job['acceptedAt'] as Timestamp?;
+
+                                  return DataRow(
+                                    cells: [
+                                      DataCell(Text(
+                                        title?.isNotEmpty == true ? title! : 'Mission',
+                                      )),
+                                      DataCell(Text(
+                                        customer?.isNotEmpty == true ? customer! : '-',
+                                      )),
+                                      DataCell(Text(
+                                        worker?.isNotEmpty == true ? worker! : '-',
+                                      )),
+                                      DataCell(Text(_money(_moneyValue(job['acceptedPrice'])))),
+                                      DataCell(_statusPill(status)),
+                                      DataCell(Text(_fmt(acceptedAt))),
+                                      DataCell(
+                                        TextButton(
+                                          onPressed: () => Navigator.pushNamed(
+                                            context,
+                                            '/job-details',
+                                            arguments: id,
+                                          ),
+                                          child: const Text('Voir demande'),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
                               ),
                             ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  Widget _summaryCard(
+    String label,
+    String value,
+    IconData icon,
+    Color iconBg,
+  ) {
+    return SizedBox(
+      width: 210,
+      child: AdminKpiCard(
+        label: label,
+        value: value,
+        icon: icon,
+        iconBg: iconBg,
+      ),
     );
   }
 
@@ -158,5 +296,14 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
     final dd = d.day.toString().padLeft(2, '0');
     return '$dd/$mm/${d.year}';
   }
-}
 
+  static double _moneyValue(dynamic raw) {
+    if (raw is num) return raw.toDouble();
+    final text = (raw ?? '').toString().trim().replaceAll(',', '.');
+    if (text.isEmpty) return 0;
+    final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(text);
+    return double.tryParse(match?.group(1) ?? '') ?? 0;
+  }
+
+  static String _money(double amount) => '${amount.toStringAsFixed(0)} MAD';
+}

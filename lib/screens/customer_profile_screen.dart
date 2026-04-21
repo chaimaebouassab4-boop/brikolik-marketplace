@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../theme/widgets.dart';
+import '../widgets/contact_actions.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -13,6 +14,7 @@ class CustomerProfileScreen extends StatefulWidget {
 }
 
 class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _nameCtrl  = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _cityCtrl  = TextEditingController();
@@ -65,6 +67,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
   Future<void> _save() async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return;
+    final isValid = _formKey.currentState?.validate() ?? false;
+    if (!isValid) return;
 
     setState(() => _isSaving = true);
     try {
@@ -109,9 +113,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                   // Header illustration
                   _buildAvatarSection(),
                   const SizedBox(height: 32),
@@ -160,14 +167,22 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           label: 'Nom complet',
                           controller: _nameCtrl,
                           prefixIcon: Icons.badge_outlined,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Le nom est obligatoire';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 14),
                         BrikolikInput(
                           hint: '06 XX XX XX XX',
-                          label: 'Telephone',
+                          label: 'Telephone obligatoire',
                           controller: _phoneCtrl,
                           keyboardType: TextInputType.phone,
                           prefixIcon: Icons.phone_outlined,
+                          onChanged: (_) => setState(() {}),
+                          validator: _validatePhone,
                         ),
                         const SizedBox(height: 14),
                         BrikolikInput(
@@ -175,6 +190,12 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           label: 'Ville',
                           controller: _cityCtrl,
                           prefixIcon: Icons.location_city_outlined,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'La ville est obligatoire';
+                            }
+                            return null;
+                          },
                         ),
                         if (_email != null) ...[
                           const SizedBox(height: 14),
@@ -220,6 +241,13 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         ],
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  ContactActions(
+                    phone: _phoneCtrl.text,
+                    title: 'Contact client',
+                    subtitle:
+                        'Ajoutez votre numero pour activer WhatsApp et appel.',
                   ),
                   const SizedBox(height: 28),
 
@@ -304,10 +332,19 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                ],
+                  ],
+                ),
               ),
             ),
     );
+  }
+
+  String? _validatePhone(String? value) {
+    final phone = (value ?? '').trim();
+    if (phone.isEmpty) return 'Le telephone est obligatoire';
+    final digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 9) return 'Numero de telephone invalide';
+    return null;
   }
 
   // â”€â”€ Avatar section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
