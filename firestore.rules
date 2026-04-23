@@ -81,6 +81,20 @@ service cloud.firestore {
         && canEditWorkerFields;
     }
 
+    function ownerVerificationRequestIsSafe() {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.hasOnly([
+          'verificationRequested',
+          'verificationRequestedAt',
+          'isVerified',
+          'verificationStatus',
+          'updatedAt'
+        ])
+        && request.resource.data.verificationRequested == true
+        && request.resource.data.isVerified == false
+        && request.resource.data.verificationStatus == 'pending';
+    }
+
     match /users/{userId} {
       allow create: if isOwner(userId)
         && request.resource.data.uid == request.auth.uid
@@ -103,7 +117,14 @@ service cloud.firestore {
         );
 
       allow read: if isSignedIn();
-      allow update: if isAdmin() || (isOwner(userId) && ownerUpdateIsSafe());
+      allow update: if isAdmin()
+        || (
+          isOwner(userId)
+          && (
+            ownerUpdateIsSafe()
+            || ownerVerificationRequestIsSafe()
+          )
+        );
       allow delete: if isAdmin() || isOwner(userId);
     }
 

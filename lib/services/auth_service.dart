@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'notification_service.dart';
+
 class AuthServiceException implements Exception {
   final String code;
   final String message;
@@ -231,6 +233,7 @@ class AuthService {
     final userData = userSnapshot.data() ?? const <String, dynamic>{};
     final userEmail = (userData['email'] as String?)?.trim();
     final userName = (userData['fullName'] as String?)?.trim();
+    final userRole = (userData['role'] as String?)?.trim();
 
     await userRef.set({
       'isVerified': approved,
@@ -258,6 +261,16 @@ class AuthService {
             ? 'Bonjour $displayName, votre compte Brikolik est maintenant approuve.'
             : 'Bonjour $displayName, votre demande de verification a ete refusee. ${rejectionReason?.trim().isNotEmpty == true ? 'Raison: ${rejectionReason!.trim()}' : ''}',
       );
+    }
+
+    if (approved && userRole == 'worker') {
+      try {
+        await NotificationService.notifyWorkerProfileApproved(
+          workerId: userId,
+        );
+      } catch (e) {
+        debugPrint('Profile approval notification failed: $e');
+      }
     }
   }
 

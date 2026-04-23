@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'theme/app_theme.dart';
 import 'firebase_options.dart';
-import 'screens/welcome_screen.dart';
+import 'screens/home_marketplace_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/identity_verification_screen.dart';
 import 'screens/admin_verification_dashboard_screen.dart';
@@ -15,9 +15,9 @@ import 'screens/worker_profile_screen.dart';
 import 'screens/post_job_screen.dart';
 import 'screens/job_list_screen.dart';
 import 'screens/job_details_screen.dart';
-import 'screens/chat_screen.dart';
 import 'screens/rating_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/service_details_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,8 +50,8 @@ class BrikolikApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       locale: context.locale,
       routes: {
-        '/': (context) => const HomeScreen(),
-        '/welcome': (context) => const HomeScreen(),
+        '/': (context) => const HomeMarketplaceScreen(),
+        '/welcome': (context) => const HomeMarketplaceScreen(),
         '/login': (context) => const LoginScreen(),
         '/identity-verification': (context) =>
             const IdentityVerificationScreen(),
@@ -64,12 +64,12 @@ class BrikolikApp extends StatelessWidget {
         '/post-job': (context) => const PostJobScreen(),
         '/jobs': (context) => const JobListScreen(),
         '/job-details': (context) => const JobDetailsScreen(),
-        '/chat': (context) => const ChatScreen(),
+        '/service-details': (context) => const ServiceDetailsScreen(),
         '/rating': (context) => const RatingScreen(),
         '/notifications': (context) => const NotificationsScreen(),
       },
       onUnknownRoute: (_) => MaterialPageRoute<void>(
-        builder: (_) => const HomeScreen(),
+        builder: (_) => const HomeMarketplaceScreen(),
       ),
     );
   }

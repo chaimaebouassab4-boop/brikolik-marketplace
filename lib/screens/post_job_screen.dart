@@ -68,6 +68,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
   bool _urgentPaymentConfirmed = false;
   String? _selectedCategory;
   String? _selectedUrgency;
+  bool _prefillApplied = false;
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -75,6 +76,20 @@ class _PostJobScreenState extends State<PostJobScreen> {
   void initState() {
     super.initState();
     _loadAccessStatus();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_prefillApplied) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map) {
+      final dynamic prefillRaw = args['prefill'];
+      if (prefillRaw is Map) {
+        _applyPrefill(prefillRaw);
+      }
+    }
+    _prefillApplied = true;
   }
 
   @override
@@ -109,6 +124,41 @@ class _PostJobScreenState extends State<PostJobScreen> {
     } finally {
       if (mounted) setState(() => _isAccessLoading = false);
     }
+  }
+
+  void _applyPrefill(Map prefill) {
+    String? readString(String key) {
+      final value = prefill[key];
+      if (value is String && value.trim().isNotEmpty) {
+        return value.trim();
+      }
+      return null;
+    }
+
+    final title = readString('title');
+    final category = readString('category');
+    final description = readString('description');
+    final location = readString('location');
+
+    if (title != null && _titleCtrl.text.trim().isEmpty) {
+      _titleCtrl.text = title;
+    }
+    if (description != null && _descCtrl.text.trim().isEmpty) {
+      _descCtrl.text = description;
+    }
+    if (location != null && _locationCtrl.text.trim().isEmpty) {
+      _locationCtrl.text = location;
+    }
+    if (category != null &&
+        _categories.any((c) => c.label.toLowerCase() == category.toLowerCase())) {
+      _selectedCategory = _categories
+          .firstWhere((c) => c.label.toLowerCase() == category.toLowerCase())
+          .label;
+    }
+    if (_selectedCategory != null && _currentStep == 0) {
+      _currentStep = 1;
+    }
+    if (mounted) setState(() {});
   }
 
   // ─── Dialogs ─────────────────────────────────────────────────────────────────
@@ -379,6 +429,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
     final doc =
         await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final userName = doc.data()?['fullName'] ?? 'Client';
+    final userCity = (doc.data()?['city'] as String? ?? '').trim();
     final budgetMin = int.tryParse(_budgetMinCtrl.text.trim()) ?? 0;
     final budgetMax = int.tryParse(_budgetMaxCtrl.text.trim()) ?? 0;
     final jobRef = FirebaseFirestore.instance.collection('jobs').doc();
@@ -433,6 +484,18 @@ class _PostJobScreenState extends State<PostJobScreen> {
       } catch (e) {
         debugPrint('=== URGENT NOTIFICATION ERROR: $e');
       }
+    }
+
+    try {
+      await NotificationService.notifyNearbyRequestForWorkers(
+        jobId: jobRef.id,
+        customerId: uid,
+        jobTitle: _titleCtrl.text.trim(),
+        category: _selectedCategory ?? '',
+        city: userCity.isNotEmpty ? userCity : _locationCtrl.text.trim(),
+      );
+    } catch (e) {
+      debugPrint('=== NEARBY REQUEST NOTIFICATION ERROR: $e');
     }
   }
 

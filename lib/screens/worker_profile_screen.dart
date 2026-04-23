@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -21,6 +22,7 @@ class WorkerProfileScreen extends StatefulWidget {
 
 class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   static const int _maxPortfolioPhotos = 8;
+  static const Duration _saveTimeout = Duration(seconds: 35);
   static const List<String> _suggestedServices = [
     'Plomberie',
     'Electricite',
@@ -127,6 +129,26 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
     );
   }
 
+  Future<T> _withSaveTimeout<T>(Future<T> future, String action) {
+    return future.timeout(
+      _saveTimeout,
+      onTimeout: () => throw TimeoutException(action, _saveTimeout),
+    );
+  }
+
+  String _saveErrorMessage(Object error) {
+    if (error is TimeoutException) {
+      return 'Enregistrement trop long pendant: ${error.message}. Verifiez Firebase Storage et votre connexion.';
+    }
+    if (error is FirebaseException) {
+      if (error.plugin == 'firebase_storage') {
+        return 'Upload photo impossible: ${error.message ?? error.code}. Verifiez que Firebase Storage est active et que les regles sont deployees.';
+      }
+      return 'Erreur Firebase: ${error.message ?? error.code}';
+    }
+    return 'Erreur: $error';
+  }
+
   String? _validatePhone(String? value) {
     final phone = (value ?? '').trim();
     if (phone.isEmpty) return 'Le telephone est obligatoire';
@@ -165,8 +187,9 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   }
 
   Future<void> _pickPortfolioPhotos() async {
-    final remaining =
-        _maxPortfolioPhotos - _portfolioPhotoUrls.length - _newPortfolioPhotos.length;
+    final remaining = _maxPortfolioPhotos -
+        _portfolioPhotoUrls.length -
+        _newPortfolioPhotos.length;
     if (remaining <= 0) {
       _showMessage('Limite de 8 photos portfolio maximum.');
       return;
@@ -214,18 +237,28 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       final photo = _newPortfolioPhotos[i];
       final ref = FirebaseStorage.instance
           .ref()
-          .child('users/$uid/portfolio/${DateTime.now().millisecondsSinceEpoch}_$i.jpg');
+          .child(
+            'users/$uid/portfolio/${DateTime.now().millisecondsSinceEpoch}_$i.jpg',
+          );
 
-      await ref.putData(
-        photo.bytes,
-        SettableMetadata(
-          contentType: 'image/jpeg',
-          customMetadata: const <String, String>{
-            'type': 'portfolio',
-          },
+      await _withSaveTimeout(
+        ref.putData(
+          photo.bytes,
+          SettableMetadata(
+            contentType: 'image/jpeg',
+            customMetadata: const <String, String>{
+              'type': 'portfolio',
+            },
+          ),
+        ),
+        'upload photo portfolio',
+      );
+      urls.add(
+        await _withSaveTimeout(
+          ref.getDownloadURL(),
+          'recuperation URL photo',
         ),
       );
-      urls.add(await ref.getDownloadURL());
     }
     return urls;
   }
@@ -233,7 +266,10 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
   Future<void> _deletePortfolioUrls(List<String> urls) async {
     for (final url in urls) {
       try {
-        await FirebaseStorage.instance.refFromURL(url).delete();
+        await _withSaveTimeout(
+          FirebaseStorage.instance.refFromURL(url).delete(),
+          'suppression photo portfolio',
+        );
       } catch (e) {
         debugPrint('Suppression portfolio ignoree: $e');
       }
@@ -276,19 +312,22 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
         ...uploadedPortfolioUrls,
       ];
 
-      await _db.collection('users').doc(uid).set(
-        {
-          'fullName': _nameCtrl.text.trim(),
-          'phone': _phoneCtrl.text.trim(),
-          'bio': _bioCtrl.text.trim(),
-          'city': _cityCtrl.text.trim(),
-          'services': _services,
-          'portfolioPhotoUrls': mergedPortfolioUrls,
-          'portfolioPhotosCount': mergedPortfolioUrls.length,
-          'portfolioUpdatedAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true),
+      await _withSaveTimeout(
+        _db.collection('users').doc(uid).set(
+          {
+            'fullName': _nameCtrl.text.trim(),
+            'phone': _phoneCtrl.text.trim(),
+            'bio': _bioCtrl.text.trim(),
+            'city': _cityCtrl.text.trim(),
+            'services': _services,
+            'portfolioPhotoUrls': mergedPortfolioUrls,
+            'portfolioPhotosCount': mergedPortfolioUrls.length,
+            'portfolioUpdatedAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        ),
+        'sauvegarde profil',
       );
 
       await _deletePortfolioUrls(removedPortfolioUrls);
@@ -307,7 +346,7 @@ class _WorkerProfileScreenState extends State<WorkerProfileScreen> {
       Navigator.pushReplacementNamed(context, '/jobs');
     } catch (e) {
       if (!mounted) return;
-      _showMessage('Erreur: $e');
+      _showMessage(_saveErrorMessage(e));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }

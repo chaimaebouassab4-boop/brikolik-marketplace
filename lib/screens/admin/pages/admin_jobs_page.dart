@@ -21,7 +21,8 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
       children: [
         AdminPageHeader(
           title: 'Missions',
-          subtitle: 'Suivi des missions en cours, terminees et des revenus lies.',
+          subtitle:
+              'Suivi des missions en cours, terminees et des revenus lies.',
           trailing: DropdownButton<String>(
             value: _status,
             items: _filters
@@ -53,10 +54,10 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
               return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: FirebaseFirestore.instance
                     .collectionGroup('offers')
-                    .where('status', isEqualTo: 'accepted')
                     .snapshots(),
                 builder: (context, offersSnapshot) {
-                  if (offersSnapshot.connectionState == ConnectionState.waiting) {
+                  if (offersSnapshot.connectionState ==
+                      ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
                         color: BrikolikColors.primary,
@@ -65,7 +66,8 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
                   }
                   if (offersSnapshot.hasError) {
                     return AdminCard(
-                      child: Text('Erreur revenus missions: ${offersSnapshot.error}'),
+                      child: Text(
+                          'Erreur revenus missions: ${offersSnapshot.error}'),
                     );
                   }
 
@@ -74,6 +76,9 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
                   final acceptedOffersByJob = <String, Map<String, dynamic>>{};
                   for (final doc in offerDocs) {
                     final data = doc.data();
+                    if ((data['status'] as String?)?.trim() != 'accepted') {
+                      continue;
+                    }
                     final jobId = doc.reference.parent.parent?.id ?? '';
                     if (jobId.isEmpty) continue;
                     acceptedOffersByJob[jobId] = {
@@ -98,7 +103,8 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
                     };
                   }).where((job) {
                     final status = (job['status'] as String?)?.trim() ?? 'open';
-                    final accepted = (job['acceptedWorkerId'] as String?)?.trim();
+                    final accepted =
+                        (job['acceptedWorkerId'] as String?)?.trim();
                     final isMission = accepted != null && accepted.isNotEmpty;
                     if (!isMission) return false;
                     if (_status == 'all') return true;
@@ -186,27 +192,38 @@ class _AdminJobsPageState extends State<AdminJobsPage> {
                                 ],
                                 rows: missions.map((job) {
                                   final id = (job['id'] as String?) ?? '';
-                                  final title = (job['title'] as String?)?.trim();
+                                  final title =
+                                      (job['title'] as String?)?.trim();
                                   final customer =
                                       (job['customerName'] as String?)?.trim();
                                   final worker =
-                                      (job['acceptedWorkerName'] as String?)?.trim();
+                                      (job['acceptedWorkerName'] as String?)
+                                          ?.trim();
                                   final status =
-                                      (job['status'] as String?)?.trim() ?? 'inprogress';
-                                  final acceptedAt = job['acceptedAt'] as Timestamp?;
+                                      (job['status'] as String?)?.trim() ??
+                                          'inprogress';
+                                  final acceptedAt =
+                                      job['acceptedAt'] as Timestamp?;
 
                                   return DataRow(
                                     cells: [
                                       DataCell(Text(
-                                        title?.isNotEmpty == true ? title! : 'Mission',
+                                        title?.isNotEmpty == true
+                                            ? title!
+                                            : 'Mission',
                                       )),
                                       DataCell(Text(
-                                        customer?.isNotEmpty == true ? customer! : '-',
+                                        customer?.isNotEmpty == true
+                                            ? customer!
+                                            : '-',
                                       )),
                                       DataCell(Text(
-                                        worker?.isNotEmpty == true ? worker! : '-',
+                                        worker?.isNotEmpty == true
+                                            ? worker!
+                                            : '-',
                                       )),
-                                      DataCell(Text(_money(_moneyValue(job['acceptedPrice'])))),
+                                      DataCell(Text(_money(
+                                          _moneyValue(job['acceptedPrice'])))),
                                       DataCell(_statusPill(status)),
                                       DataCell(Text(_fmt(acceptedAt))),
                                       DataCell(

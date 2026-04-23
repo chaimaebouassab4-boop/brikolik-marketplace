@@ -162,7 +162,8 @@ class BrikolikInput extends StatelessWidget {
       maxLines: maxLines,
       enabled: enabled,
       style: const TextStyle(
-        fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+        fontFamily: 'Nunito',
+        fontFamilyFallback: ['Cairo'],
         fontSize: 15,
         fontWeight: FontWeight.w600,
         color: BrikolikColors.textPrimary,
@@ -209,7 +210,8 @@ class SectionHeader extends StatelessWidget {
               actionLabel!.tr(),
               style: const TextStyle(
                 color: BrikolikColors.accent,
-                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                fontFamily: 'Nunito',
+                fontFamilyFallback: ['Cairo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -261,7 +263,8 @@ class StatusBadge extends StatelessWidget {
       child: Text(
         label.tr(),
         style: TextStyle(
-          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+          fontFamily: 'Nunito',
+          fontFamilyFallback: ['Cairo'],
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: color,
@@ -314,7 +317,8 @@ class BrikolikAvatar extends StatelessWidget {
               child: Text(
                 _initials,
                 style: TextStyle(
-                  fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                  fontFamily: 'Nunito',
+                  fontFamilyFallback: ['Cairo'],
                   fontSize: size * 0.36,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -348,7 +352,8 @@ class StarRating extends StatelessWidget {
         Text(
           rating.toStringAsFixed(1),
           style: TextStyle(
-            fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+            fontFamily: 'Nunito',
+            fontFamilyFallback: ['Cairo'],
             fontSize: starSize,
             fontWeight: FontWeight.w700,
             color: BrikolikColors.textPrimary,
@@ -359,7 +364,8 @@ class StarRating extends StatelessWidget {
           Text(
             '($reviewCount)',
             style: TextStyle(
-              fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+              fontFamily: 'Nunito',
+              fontFamilyFallback: ['Cairo'],
               fontSize: starSize - 1,
               fontWeight: FontWeight.w500,
               color: BrikolikColors.textSecondary,
@@ -449,7 +455,8 @@ class CategoryChip extends StatelessWidget {
             Text(
               label.tr(),
               style: TextStyle(
-                fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+                fontFamily: 'Nunito',
+                fontFamilyFallback: ['Cairo'],
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: selected ? Colors.white : BrikolikColors.textPrimary,
@@ -714,7 +721,7 @@ class BrikolikBottomNav extends StatelessWidget {
         case 1:
           return '/jobs';
         case 2:
-          return '/chat';
+          return '/notifications';
         case 3:
           return '/customer-profile';
         default:
@@ -722,8 +729,8 @@ class BrikolikBottomNav extends StatelessWidget {
       }
     }
 
-    // Canonical tabs: 0=Home, 1=Jobs, 2=Chat, 3=Profile.
-    // Hide Chat when user has no account (not authenticated).
+    // Canonical tabs: 0=Home, 1=Jobs, 2=Notifications, 3=Profile.
+    // Hide Notifications when user has no account (not authenticated).
     final canonicalTabs = <int>[0, 1, if (isLoggedIn) 2, 3];
 
     int toVisibleIndex(int canonical) {
@@ -787,9 +794,9 @@ class BrikolikBottomNav extends StatelessWidget {
             ),
             if (isLoggedIn)
               BottomNavigationBarItem(
-                icon: const Icon(Icons.chat_bubble_outline_rounded),
-                activeIcon: const Icon(Icons.chat_bubble_rounded),
-                label: 'Messages'.tr(),
+                icon: const Icon(Icons.notifications_none_rounded),
+                activeIcon: const Icon(Icons.notifications_rounded),
+                label: 'Notifications'.tr(),
               ),
             BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline_rounded),
@@ -871,7 +878,8 @@ class _LocaleToggleButton extends StatelessWidget {
       child: Text(
         label,
         style: TextStyle(
-          fontFamily: 'Nunito', fontFamilyFallback: ['Cairo'],
+          fontFamily: 'Nunito',
+          fontFamilyFallback: ['Cairo'],
           fontSize: 12,
           fontWeight: FontWeight.w800,
           color: transparent ? Colors.white : foreground,

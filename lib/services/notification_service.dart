@@ -77,4 +77,96 @@ class NotificationService {
       jobId: jobId,
     );
   }
+
+  static Future<void> notifyRequestUpdated({
+    required String userId,
+    required String jobId,
+    required String jobTitle,
+    required String updateLabel,
+  }) {
+    return createNotification(
+      userId: userId,
+      type: 'request_updated',
+      title: 'Demande mise a jour',
+      body: '$updateLabel: "$jobTitle".',
+      jobId: jobId,
+      data: {
+        'jobTitle': jobTitle,
+        'updateLabel': updateLabel,
+      },
+    );
+  }
+
+  static Future<void> notifyWorkerProfileApproved({
+    required String workerId,
+  }) {
+    return createNotification(
+      userId: workerId,
+      type: 'worker_profile_approved',
+      title: 'Profil artisan approuve',
+      body:
+          'Votre profil est valide. Vous pouvez recevoir des demandes et envoyer des offres.',
+    );
+  }
+
+  static Future<void> notifyNearbyRequestForWorkers({
+    required String jobId,
+    required String customerId,
+    required String jobTitle,
+    required String category,
+    required String city,
+  }) async {
+    final cleanCategory = category.trim();
+    final cleanCity = city.trim().toLowerCase();
+
+    final workersSnapshot = await _db
+        .collection('users')
+        .where('role', isEqualTo: 'worker')
+        .limit(40)
+        .get();
+
+    final notifications = <Future<void>>[];
+    for (final doc in workersSnapshot.docs) {
+      if (doc.id == customerId) continue;
+
+      final data = doc.data();
+      if (data['isVerified'] != true) continue;
+
+      final workerCity = (data['city'] as String? ?? '').trim().toLowerCase();
+      if (cleanCity.isNotEmpty &&
+          workerCity.isNotEmpty &&
+          workerCity != cleanCity) {
+        continue;
+      }
+
+      final services = data['services'];
+      if (cleanCategory.isNotEmpty &&
+          services is List &&
+          services.isNotEmpty &&
+          !services
+              .map((service) => service.toString())
+              .contains(cleanCategory)) {
+        continue;
+      }
+
+      notifications.add(
+        createNotification(
+          userId: doc.id,
+          type: 'nearby_request',
+          title: 'Nouvelle demande proche',
+          body: cleanCity.isEmpty
+              ? 'Une demande "$jobTitle" correspond a vos services.'
+              : 'Une demande "$jobTitle" est disponible pres de chez vous.',
+          jobId: jobId,
+          data: {
+            'jobTitle': jobTitle,
+            'category': cleanCategory,
+            'city': city.trim(),
+          },
+        ),
+      );
+    }
+
+    await Future.wait(notifications);
+  }
 }

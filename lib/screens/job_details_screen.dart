@@ -309,6 +309,13 @@ class JobDetailsScreen extends StatelessWidget {
       return;
     }
 
+    final jobSnapshot =
+        await FirebaseFirestore.instance.collection('jobs').doc(jobId).get();
+    final jobData = jobSnapshot.data() ?? const <String, dynamic>{};
+    final customerId = (jobData['customerId'] as String? ?? '').trim();
+    final jobTitle = (jobData['title'] as String? ?? 'Votre demande').trim();
+    if (!context.mounted) return;
+
     final selectedPhotos = <_LocalUploadPhoto>[];
     var isSaving = false;
 
@@ -461,6 +468,24 @@ class JobDetailsScreen extends StatelessWidget {
                                 'completedAt': FieldValue.serverTimestamp(),
                                 'completedBy': workerId,
                               });
+
+                              if (customerId.isNotEmpty) {
+                                try {
+                                  await NotificationService
+                                      .notifyRequestUpdated(
+                                    userId: customerId,
+                                    jobId: jobId,
+                                    jobTitle: jobTitle,
+                                    updateLabel: alreadyDone
+                                        ? 'Preuves mises a jour'
+                                        : 'Mission terminee',
+                                  );
+                                } catch (e) {
+                                  debugPrint(
+                                    '=== REQUEST UPDATE NOTIFICATION ERROR: $e',
+                                  );
+                                }
+                              }
 
                               if (sheetContext.mounted) {
                                 Navigator.pop(sheetContext);
@@ -1291,7 +1316,7 @@ class JobDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 BrikolikInput(
                     hint: "Pourquoi vous choisir ?",
-                    label: "Message",
+                    label: "Note de l'offre",
                     controller: messageCtrl,
                     maxLines: 3),
                 const SizedBox(height: 20),

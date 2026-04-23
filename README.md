@@ -52,7 +52,7 @@
 ### 🏠 For Customers
 - Post a job in under 60 seconds
 - Browse verified workers nearby
-- Real-time chat & instant quotes
+- Direct WhatsApp/phone contact & instant quotes
 - Track jobs from request to completion
 - Rate & review after every service
 - Full MAD (درهم) support
@@ -80,9 +80,9 @@
 |:---:|:---:|:---:|:---:|
 | ![](screenshots/login.png) | ![](screenshots/role.png) | ![](screenshots/jobs.png) | ![](screenshots/details.png) |
 
-| Post Job | Worker Profile | Chat | Rating |
+| Post Job | Worker Profile | Notifications | Rating |
 |:---:|:---:|:---:|:---:|
-| ![](screenshots/post.png) | ![](screenshots/worker.png) | ![](screenshots/chat.png) | ![](screenshots/rating.png) |
+| ![](screenshots/post.png) | ![](screenshots/worker.png) | ![](screenshots/notifications.png) | ![](screenshots/rating.png) |
 
 <br/>
 
@@ -124,7 +124,7 @@ brikolik_mvp/
 │   │   ├── job_list_screen.dart     # Home feed
 │   │   ├── job_details_screen.dart
 │   │   ├── post_job_screen.dart     # 3-step job wizard
-│   │   ├── chat_screen.dart
+│   │   ├── notifications_screen.dart
 │   │   └── rating_screen.dart
 │   │
 │   ├── theme/
@@ -203,7 +203,7 @@ flutter run
 '/jobs'             →  JobListScreen
 '/job-details'      →  JobDetailsScreen
 '/post-job'         →  PostJobScreen
-'/chat'             →  ChatScreen
+'/notifications'    →  NotificationsScreen
 '/rating'           →  RatingScreen
 ```
 
@@ -227,7 +227,7 @@ flutter build apk       # Generate APK
 - [x] Job details with offer system
 - [x] Worker profile with verification
 - [x] Rating & review system
-- [x] Chat screen
+- [x] Notifications screen
 - [ ] Firebase backend integration
 - [ ] Real-time notifications
 - [ ] GPS-based job matching
